@@ -33,9 +33,10 @@
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
        padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
   .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
-  #canvasWrap{width:100%;display:flex;justify-content:center;background:#fff;
-       border:1px solid var(--line);border-radius:10px;overflow:hidden;}
-  canvas{display:block;max-width:100%;height:auto;background:#fff;}
+  #canvasWrap{width:100%;display:flex;justify-content:center;
+       border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       background:radial-gradient(120% 120% at 50% 8%,#ffffff 0%,#f5f8fc 60%,#eef3f9 100%);}
+  canvas{display:block;max-width:100%;height:auto;}
   .endpoint{text-align:center;font-size:1.05em;margin-top:10px;}
   .row{margin:8px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;}
   .row .lbl{color:var(--sub);font-size:13px;}
@@ -121,11 +122,30 @@
 <script>
 const canvas=document.getElementById("canvas");
 const ctx=canvas.getContext("2d");
+const CW=500, CH=500;                     // 逻辑尺寸（CSS 像素）
+// 高清渲染：物理像素按 devicePixelRatio 放大，CSS 尺寸保持 500，绘制坐标仍用逻辑像素
+(function initHiDPI(){
+    const dpr=Math.min(2, window.devicePixelRatio||1);
+    canvas.width=Math.round(CW*dpr); canvas.height=Math.round(CH*dpr);
+    canvas.style.width=CW+"px"; canvas.style.height=CH+"px";
+})();
+const DPR=Math.min(2, window.devicePixelRatio||1);
 let commands=[];
 let baseMatrix=identity();
 const armLength=120;
 let tracePoints=[];
 let stepHTML="";
+
+// 斜体数学体文字标签（白色描边，画布上清晰）— 需在当前变换下调用
+function drawMathLabel(text,x,y,color,px){
+    ctx.save();
+    ctx.font=`italic 700 ${px||16}px "Cambria Math","STIX Two Math","Times New Roman",serif`;
+    ctx.textAlign="left"; ctx.textBaseline="alphabetic";
+    ctx.lineJoin="round"; ctx.lineWidth=(px||16)*0.22; ctx.strokeStyle="rgba(255,255,255,.95)";
+    ctx.strokeText(text,x,y);
+    ctx.fillStyle=color; ctx.fillText(text,x,y);
+    ctx.restore();
+}
 
 function identity(){return [[1,0,0],[0,1,0],[0,0,1]];}
 function multiply(a,b){
@@ -150,35 +170,57 @@ function matMathML(m){
 }
 
 function drawCoordinateSystem(){
-    ctx.save(); ctx.translate(canvas.width/2, canvas.height/2);
-    ctx.strokeStyle="#e2e8f0"; ctx.lineWidth=1;
-    for(let x=-canvas.width/2;x<=canvas.width/2;x+=50){ctx.beginPath();ctx.moveTo(x,-canvas.height/2);ctx.lineTo(x,canvas.height/2);ctx.stroke();}
-    for(let y=-canvas.height/2;y<=canvas.height/2;y+=50){ctx.beginPath();ctx.moveTo(-canvas.width/2,y);ctx.lineTo(canvas.width/2,y);ctx.stroke();}
-    ctx.strokeStyle="#94a3b8"; ctx.lineWidth=1.4;
-    ctx.beginPath();ctx.moveTo(-canvas.width/2,0);ctx.lineTo(canvas.width/2,0);
-    ctx.moveTo(0,-canvas.height/2);ctx.lineTo(0,canvas.height/2);ctx.stroke();
-    ctx.fillStyle="#94a3b8"; ctx.font="11px system-ui";
-    for(let x=-canvas.width/2;x<=canvas.width/2;x+=50){ if(x!==0){ctx.beginPath();ctx.moveTo(x,-4);ctx.lineTo(x,4);ctx.stroke();ctx.fillText(x,x-8,15);}}
-    for(let y=-canvas.height/2;y<=canvas.height/2;y+=50){ if(y!==0){ctx.beginPath();ctx.moveTo(-4,y);ctx.lineTo(4,y);ctx.stroke();ctx.fillText(-y,8,y+4);}}
+    ctx.save(); ctx.translate(CW/2, CH/2);
+    const hx=CW/2, hy=CH/2;
+    // 次网格（柔和）
+    ctx.strokeStyle="#e6ecf4"; ctx.lineWidth=1;
+    for(let x=-hx;x<=hx;x+=50){const px=Math.round(x)+0.5;ctx.beginPath();ctx.moveTo(px,-hy);ctx.lineTo(px,hy);ctx.stroke();}
+    for(let y=-hy;y<=hy;y+=50){const py=Math.round(y)+0.5;ctx.beginPath();ctx.moveTo(-hx,py);ctx.lineTo(hx,py);ctx.stroke();}
+    // 主轴 + 端点箭头
+    ctx.strokeStyle="#94a3b8"; ctx.fillStyle="#94a3b8"; ctx.lineWidth=1.5; ctx.lineCap="round";
+    ctx.beginPath();ctx.moveTo(-hx+6,0);ctx.lineTo(hx-6,0);ctx.moveTo(0,hy-6);ctx.lineTo(0,-hy+6);ctx.stroke();
+    const ah=8;
+    ctx.beginPath();ctx.moveTo(hx-6,0);ctx.lineTo(hx-6-ah,-ah*0.55);ctx.lineTo(hx-6-ah,ah*0.55);ctx.closePath();ctx.fill();
+    ctx.beginPath();ctx.moveTo(0,-hy+6);ctx.lineTo(-ah*0.55,-hy+6+ah);ctx.lineTo(ah*0.55,-hy+6+ah);ctx.closePath();ctx.fill();
+    // 刻度 + 衬线数字
+    ctx.strokeStyle="#cbd5e1"; ctx.lineWidth=1.2;
+    ctx.fillStyle="#94a3b8"; ctx.font='12px "Cambria Math","Times New Roman",serif';
+    ctx.textAlign="center"; ctx.textBaseline="top";
+    for(let x=-hx;x<=hx;x+=50){ if(x!==0){ctx.beginPath();ctx.moveTo(x,-4);ctx.lineTo(x,4);ctx.stroke();ctx.fillText(x,x,8);} }
+    ctx.textAlign="left"; ctx.textBaseline="middle";
+    for(let y=-hy;y<=hy;y+=50){ if(y!==0){ctx.beginPath();ctx.moveTo(-4,y);ctx.lineTo(4,y);ctx.stroke();ctx.fillText(-y,7,y);} }
+    // 轴名（斜体数学体）
+    drawMathLabel("x", hx-16, -9, "#64748b", 17);
+    drawMathLabel("y", 10, -hy+20, "#64748b", 17);
+    drawMathLabel("O", -16, 15, "#64748b", 15);
     ctx.restore();
 }
 function drawTrace(){
     if(tracePoints.length<2) return;
-    ctx.save(); ctx.translate(canvas.width/2, canvas.height/2);
-    ctx.strokeStyle="#c53030"; ctx.lineWidth=2; ctx.beginPath();
+    ctx.save(); ctx.translate(CW/2, CH/2);
+    ctx.strokeStyle="#c53030"; ctx.lineWidth=2.2; ctx.lineCap="round"; ctx.lineJoin="round";
+    ctx.setLineDash([]); ctx.beginPath();
     tracePoints.forEach((p,i)=>{ if(i===0) ctx.moveTo(p[0],-p[1]); else ctx.lineTo(p[0],-p[1]); });
     ctx.stroke(); ctx.restore();
 }
 function drawArm(matrix){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.setTransform(DPR,0,0,DPR,0,0);       // 复位到高清基变换并清屏
+    ctx.clearRect(0,0,CW,CH);
     drawCoordinateSystem(); drawTrace();
-    ctx.save(); ctx.translate(canvas.width/2, canvas.height/2);
+    ctx.save(); ctx.translate(CW/2, CH/2);
     ctx.transform(matrix[0][0], -matrix[1][0], matrix[0][1], -matrix[1][1], matrix[0][2], -matrix[1][2]);
-    ctx.strokeStyle="#2b6cb0"; ctx.lineWidth=4;
+    // 连杆（带柔和描边的圆头粗线）
+    ctx.lineCap="round";
+    ctx.strokeStyle="#cbd9ec"; ctx.lineWidth=8;
     ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(armLength,0); ctx.stroke();
-    // 关节点 & 末端
-    ctx.fillStyle="#1e3a8a"; ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle="#c53030"; ctx.beginPath(); ctx.arc(armLength,0,5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle="#2b6cb0"; ctx.lineWidth=4.5;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(armLength,0); ctx.stroke();
+    // 基座关节（白底蓝环）
+    ctx.beginPath(); ctx.arc(0,0,6,0,Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();
+    ctx.lineWidth=2.6; ctx.strokeStyle="#1e3a8a"; ctx.stroke();
+    // 末端执行器（白底红环）
+    ctx.beginPath(); ctx.arc(armLength,0,6,0,Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();
+    ctx.lineWidth=2.6; ctx.strokeStyle="#c53030"; ctx.stroke();
     ctx.restore();
     const end=applyMatrix(matrix,[armLength,0]);
     document.getElementById("endPoint").innerHTML=

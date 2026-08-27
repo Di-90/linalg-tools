@@ -35,9 +35,10 @@
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
        padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
   .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
-  #canvasContainer{width:100%;background:#fff;border:1px solid var(--line);
-       border-radius:10px;overflow:hidden;display:flex;justify-content:center;}
-  canvas{background:#fbfcfe;touch-action:none;display:block;cursor:crosshair;max-width:100%;}
+  #canvasContainer{width:100%;border:1px solid var(--line);
+       border-radius:10px;overflow:hidden;display:flex;justify-content:center;
+       background:radial-gradient(120% 120% at 50% 8%,#ffffff 0%,#f5f8fc 60%,#eef3f9 100%);}
+  canvas{touch-action:none;display:block;cursor:crosshair;max-width:100%;}
   .row{margin:8px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:15px;}
   .row .lbl{color:var(--sub);font-size:13px;}
   input[type=number],input[type=text].mx{width:66px;font-size:15px;padding:5px 6px;
@@ -138,7 +139,11 @@ const RANGE=6;                     // 坐标范围 ±6
 function resize(){
     size=Math.min(container.clientWidth, Math.round(window.innerHeight*0.6));
     size=Math.max(size,300);
-    canvas.width=size; canvas.height=size;
+    // 高清渲染：物理像素按 devicePixelRatio 放大，CSS 尺寸保持 size，绘制坐标仍用 CSS 像素
+    const dpr=Math.min(2, window.devicePixelRatio||1);
+    canvas.width=Math.round(size*dpr); canvas.height=Math.round(size*dpr);
+    canvas.style.width=size+"px"; canvas.style.height=size+"px";
+    ctx.setTransform(dpr,0,0,dpr,0,0);
     origin=size/2; sf=size/(2*RANGE);
     updateDisplay();
 }
@@ -149,38 +154,78 @@ function fromPixel(p){return {x:(p.x-origin)/sf, y:(origin-p.y)/sf};}
 
 function drawAxes(){
     ctx.clearRect(0,0,size,size);
-    ctx.strokeStyle="#e8edf3"; ctx.lineWidth=1;
+    // 次网格（柔和）
+    ctx.strokeStyle="#eaeff6"; ctx.lineWidth=1;
     for(let k=-RANGE;k<=RANGE;k++){
-        const px=origin+k*sf, py=origin+k*sf;
+        const px=Math.round(origin+k*sf)+0.5, py=Math.round(origin+k*sf)+0.5;
         ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,size);ctx.stroke();
         ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(size,py);ctx.stroke();
     }
-    ctx.strokeStyle="#64748b"; ctx.lineWidth=1.4;
+    // 主轴 + 端点箭头
+    const oc=Math.round(origin)+0.5;
+    ctx.strokeStyle="#94a3b8"; ctx.fillStyle="#94a3b8"; ctx.lineWidth=1.5; ctx.lineCap="round";
     ctx.beginPath();
-    ctx.moveTo(0,origin);ctx.lineTo(size,origin);
-    ctx.moveTo(origin,0);ctx.lineTo(origin,size);
+    ctx.moveTo(6,oc);ctx.lineTo(size-6,oc);
+    ctx.moveTo(oc,size-6);ctx.lineTo(oc,6);
     ctx.stroke();
-    ctx.fillStyle="#94a3b8"; ctx.font="11px system-ui";
+    const ah=7;
+    ctx.beginPath();                                   // x 轴箭头（右）
+    ctx.moveTo(size-6,oc); ctx.lineTo(size-6-ah,oc-ah*0.55); ctx.lineTo(size-6-ah,oc+ah*0.55); ctx.closePath(); ctx.fill();
+    ctx.beginPath();                                   // y 轴箭头（上）
+    ctx.moveTo(oc,6); ctx.lineTo(oc-ah*0.55,6+ah); ctx.lineTo(oc+ah*0.55,6+ah); ctx.closePath(); ctx.fill();
+    // 刻度数字（正体小字）
+    ctx.fillStyle="#a0aec0"; ctx.font='11px "Segoe UI",system-ui'; ctx.textAlign="center"; ctx.textBaseline="top";
     for(let k=-RANGE;k<=RANGE;k++){
         if(k===0) continue;
-        ctx.fillText(k, origin+k*sf-3, origin+13);
-        ctx.fillText(k, origin+4, origin-k*sf+4);
+        ctx.fillText(k, origin+k*sf, origin+5);
     }
+    ctx.textAlign="left"; ctx.textBaseline="middle";
+    for(let k=-RANGE;k<=RANGE;k++){
+        if(k===0) continue;
+        ctx.fillText(k, origin+5, origin-k*sf);
+    }
+    // 轴名（斜体数学体）
+    drawMathLabel("x", size-16, oc+13, "#64748b", 15);
+    drawMathLabel("y", oc+11, 15, "#64748b", 15);
+    drawMathLabel("O", oc-13, oc+11, "#64748b", 14);
+}
+
+// 斜体数学体文字标签（白色描边，画布上清晰）
+function drawMathLabel(text,x,y,color,px){
+    ctx.save();
+    ctx.font=`italic 700 ${px||17}px "Cambria Math","STIX Two Math","Times New Roman",serif`;
+    ctx.textAlign="left"; ctx.textBaseline="middle";
+    ctx.lineJoin="round"; ctx.lineWidth=(px||17)*0.22; ctx.strokeStyle="rgba(255,255,255,.95)";
+    ctx.strokeText(text,x,y);
+    ctx.fillStyle=color; ctx.fillText(text,x,y);
+    ctx.restore();
 }
 
 function drawVector(d,color,label){
     const p=toPixel(d);
-    ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=2.5;
-    ctx.beginPath();ctx.moveTo(origin,origin);ctx.lineTo(p.x,p.y);ctx.stroke();
-    const angle=Math.atan2(p.y-origin,p.x-origin), aL=11;
-    ctx.beginPath();
-    ctx.moveTo(p.x,p.y);
-    ctx.lineTo(p.x-aL*Math.cos(angle-Math.PI/6), p.y-aL*Math.sin(angle-Math.PI/6));
-    ctx.moveTo(p.x,p.y);
-    ctx.lineTo(p.x-aL*Math.cos(angle+Math.PI/6), p.y-aL*Math.sin(angle+Math.PI/6));
-    ctx.stroke();
-    ctx.font="bold 14px system-ui";
-    ctx.fillText(label, p.x+6, p.y-6);
+    const dx=p.x-origin, dy=p.y-origin, len=Math.hypot(dx,dy);
+    ctx.save();
+    ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=3; ctx.lineCap="round"; ctx.lineJoin="round";
+    if(len>2){
+        const ang=Math.atan2(dy,dx);
+        const head=Math.min(15, Math.max(9, len*0.2)), hw=head*0.42;
+        // 杆（收到箭头根部，避免穿出）
+        const bx=origin+Math.cos(ang)*(len-head*0.85), by=origin+Math.sin(ang)*(len-head*0.85);
+        ctx.beginPath(); ctx.moveTo(origin,origin); ctx.lineTo(bx,by); ctx.stroke();
+        // 实心三角箭头
+        ctx.beginPath();
+        ctx.moveTo(p.x,p.y);
+        ctx.lineTo(p.x-head*Math.cos(ang)+hw*Math.sin(ang), p.y-head*Math.sin(ang)-hw*Math.cos(ang));
+        ctx.lineTo(p.x-head*Math.cos(ang)-hw*Math.sin(ang), p.y-head*Math.sin(ang)+hw*Math.cos(ang));
+        ctx.closePath(); ctx.fill();
+    }
+    // 原点小圆点
+    ctx.beginPath(); ctx.arc(origin,origin,2.6,0,2*Math.PI); ctx.fillStyle="#64748b"; ctx.fill();
+    ctx.restore();
+    // 标签（沿方向外移一点，避免压住箭头）
+    let lx=p.x+8, ly=p.y-8;
+    if(len>2){ const ang=Math.atan2(dy,dx); lx=p.x+10*Math.cos(ang)+ (dx<0?-6:4); ly=p.y+10*Math.sin(ang)-6; }
+    drawMathLabel(label, lx, ly, color, 17);
 }
 
 function transformed(){
