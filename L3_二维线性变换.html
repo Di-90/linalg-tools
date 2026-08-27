@@ -56,6 +56,42 @@
   .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:10px;justify-content:center;}
   .legend span{display:inline-flex;align-items:center;gap:6px;}
   .legend i{width:14px;height:6px;border-radius:2px;display:inline-block;}
+  /* ── 练习模式 ── */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;
+       flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;
+       text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;border-color:transparent;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody .ans{display:inline-flex;align-items:center;gap:6px;margin-top:8px;}
+  .qbody input.qin{width:74px;font-size:15px;padding:6px 7px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);
+       border-radius:8px;cursor:pointer;font-size:14px;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .opts input{accent-color:var(--blue);}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:13.5px;margin-top:6px;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .qbtns button:disabled{opacity:.45;cursor:not-allowed;}
+  /* 两栏：画布在左、控制/题目在右，同屏可见（窄屏回退为上下堆叠）*/
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,360px);gap:16px;align-items:start;}
+  .layout .card{margin-bottom:16px;}
+  @media(max-width:820px){ .layout{grid-template-columns:1fr;} }
   footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
        font-size:12px;color:#718096;text-align:center;}
 </style>
@@ -85,6 +121,13 @@
     拖动或点击画布移动蓝色向量 <math><mi class="bm">A</mi></math>，或改动矩阵 <math><mi class="bm">H</mi></math> 的四个元素，观察红色像 <math><mi class="bm">B</mi></math> 如何随之改变；<math><mi>&#x3BB;</mi><mo>=</mo><mfrac><mrow><mo>|</mo><mi class="bm">B</mi><mo>|</mo></mrow><mrow><mo>|</mo><mi class="bm">A</mi><mo>|</mo></mrow></mfrac></math> 是这个方向上的<b>长度伸缩比</b>。
   </div>
 
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div class="layout">
+  <div class="col-left">
   <div class="card">
     <div id="canvasContainer"><canvas id="canvas"></canvas></div>
     <div class="legend">
@@ -92,8 +135,26 @@
       <span><i style="background:var(--vecB)"></i>变换后 <math><mi class="bm">B</mi><mo>=</mo><mi class="bm">H</mi><mi class="bm">A</mi></math></span>
     </div>
   </div>
+  </div><!--/col-left-->
 
-  <div class="card">
+  <div class="col-right">
+  <div class="card" id="quizCard" style="display:none;">
+    <div class="quizhead">
+      <h2>练习 · 二维线性变换</h2>
+      <span class="stats" id="quizStats"></span>
+      <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+    </div>
+    <div class="qbody" id="qBody"></div>
+    <div class="feedback" id="qFeedback"></div>
+    <div class="qbtns">
+      <button class="primary" id="qSubmit">提交</button>
+      <button id="qHint">提示</button>
+      <button id="qReveal">看解析</button>
+      <button id="qNext">下一题 ▸</button>
+    </div>
+  </div>
+
+  <div class="card" id="exploreCard">
     <h2>向量 A 与变换矩阵 H</h2>
     <div class="row">
       <span class="lbl">向量 <math><mi class="bm">A</mi></math> 坐标：</span>
@@ -122,6 +183,8 @@
     </div>
     <div class="readout" id="vectorsInfo"></div>
   </div>
+  </div><!--/col-right-->
+  </div><!--/layout-->
 
   <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
 </div>
@@ -133,11 +196,15 @@ const container=document.getElementById("canvasContainer");
 
 let pointA={x:2,y:1};              // 数据坐标（非像素）
 let matrix=[[1,0],[0,1]];
+let mode="explore";                // "explore" | "practice"
+let quiz=null;                     // 练习模式当前题目
 let size, origin, sf;              // 画布边长 / 中心像素 / 每单位像素
 const RANGE=6;                     // 坐标范围 ±6
 
 function resize(){
-    size=Math.min(container.clientWidth, Math.round(window.innerHeight*0.6));
+    // 画布上限 420px：两栏时避免左栏(画布)远高于右栏(题目卡)而在其下方留出死空白，
+    // 否则滚到底部时题目卡底部的按钮会被顶出视口上沿。
+    size=Math.min(container.clientWidth, Math.round(window.innerHeight*0.6), 420);
     size=Math.max(size,300);
     // 高清渲染：物理像素按 devicePixelRatio 放大，CSS 尺寸保持 size，绘制坐标仍用 CSS 像素
     const dpr=Math.min(2, window.devicePixelRatio||1);
@@ -259,7 +326,8 @@ function updateDisplay(){
     drawAxes();
     const B=transformed();
     drawVector(pointA,"var(--vecA)".length?getCol("--vecA"):"#2b6cb0","A");
-    drawVector(B,getCol("--vecB"),"B");
+    // 练习模式下：计算题在提交/看解析前不画像 B（避免直接看出答案）；识别题一直画
+    if(mode!=="practice" || !quiz || !quiz.hideB || quiz.revealed) drawVector(B,getCol("--vecB"),"B");
 
     const lenA=Math.hypot(pointA.x,pointA.y);
     const lenB=Math.hypot(B.x,B.y);
@@ -320,6 +388,7 @@ function setPointAFromInputs(){
 // 拖动 / 点击设置向量 A
 let dragging=false;
 function setAFromEvent(e){
+    if(mode==="practice") return;   // 练习模式下 A 由题目决定，禁止拖动
     const rect=canvas.getBoundingClientRect();
     const cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;
     const cy=(e.touches?e.touches[0].clientY:e.clientY)-rect.top;
@@ -331,6 +400,201 @@ canvas.addEventListener("mousemove",e=>{if(dragging)setAFromEvent(e);});
 window.addEventListener("mouseup",()=>dragging=false);
 canvas.addEventListener("touchstart",e=>{e.preventDefault();setAFromEvent(e);},{passive:false});
 canvas.addEventListener("touchmove",e=>{e.preventDefault();setAFromEvent(e);},{passive:false});
+
+/* ══════════════════════════════════════════════════════════════════
+   练习模式（数值/选择题原型）
+   - 纯客户端出题 + 判分，只作自测/形成性练习，不上报、不记成绩
+   - 复用同一画布：计算题隐藏像 B 直到提交/看解析；识别题直接展示变换
+   - 本地进度（已答/答对/连对）存 localStorage，仅本机可见
+   ══════════════════════════════════════════════════════════════════ */
+const QUIZKEY="la-l3-quiz";
+let streak=0;
+let stats=loadStats();
+// 已答/答对/连对都持久保存到本机（跨刷新、跨关页面保留），仅“清零”按钮会归零
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){
+  if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return;
+  stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats();
+}
+
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }     // [a,b] 随机整数
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+// 具名变换（用于识别题的选项）
+const NAMED=[
+  {name:"单位变换（保持不变）", m:[[1,0],[0,1]]},
+  {name:"旋转 90°",           m:[[0,-1],[1,0]]},
+  {name:"放大 2 倍",          m:[[2,0],[0,2]]},
+  {name:"水平切变",           m:[[1,1],[0,1]]},
+  {name:"关于 x 轴反射",      m:[[1,0],[0,-1]]},
+  {name:"关于 y 轴反射",      m:[[-1,0],[0,1]]},
+];
+
+// ── MathML 小工具 ──
+function matML(m){
+  return `<math><mrow><mo>(</mo><mtable columnspacing="0.7em" rowspacing="0.2em">`
+    +`<mtr><mtd><mn>${m[0][0]}</mn></mtd><mtd><mn>${m[0][1]}</mn></mtd></mtr>`
+    +`<mtr><mtd><mn>${m[1][0]}</mn></mtd><mtd><mn>${m[1][1]}</mn></mtd></mtr>`
+    +`</mtable><mo>)</mo></mrow></math>`;
+}
+function bmML(n){ return `<math><mi class="bm">${n}</mi></math>`; }
+function coordML(x,y){ return `<math><mo>(</mo><mn>${x}</mn><mo>,</mo><mn>${y}</mn><mo>)</mo></math>`; }
+
+// ── 出题 ──
+function genProblem(){
+  const kind = Math.random()<0.6 ? "compute" : "identify";
+  if(kind==="compute"){
+    let H; do{ H=[[ri(-2,2),ri(-2,2)],[ri(-2,2),ri(-2,2)]]; }
+      while(H[0][0]===0&&H[0][1]===0&&H[1][0]===0&&H[1][1]===0);   // 排除零矩阵
+    let A; do{ A={x:ri(-3,3),y:ri(-3,3)}; } while(A.x===0&&A.y===0);
+    const B={x:H[0][0]*A.x+H[0][1]*A.y, y:H[1][0]*A.x+H[1][1]*A.y};
+    return {kind, H, A, B, hideB:true, done:false, correct:false, revealed:false, selected:-1};
+  }else{
+    const idx=ri(0,NAMED.length-1), correctN=NAMED[idx];
+    const others=shuffle(NAMED.filter((_,i)=>i!==idx)).slice(0,3);
+    const opts=shuffle([correctN,...others]);
+    const A={x:2,y:1};
+    const m=correctN.m;
+    const B={x:m[0][0]*A.x+m[0][1]*A.y, y:m[1][0]*A.x+m[1][1]*A.y};
+    return {kind, H:m, A, B, name:correctN.name, opts, ansIdx:opts.indexOf(correctN),
+            hideB:false, done:false, correct:false, revealed:false, selected:-1};
+  }
+}
+
+// ── 渲染题目 ──
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody");
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback"; fb.innerHTML="";
+  document.getElementById("qSubmit").disabled=false;
+  document.getElementById("qHint").disabled=false;
+  document.getElementById("qReveal").disabled=false;
+  if(q.kind==="compute"){
+    body.innerHTML=
+      `已知向量 ${bmML("A")} = ${coordML(q.A.x,q.A.y)}，变换矩阵 ${bmML("H")} = ${matML(q.H)}。<br>`
+      +`求像 <math><mi class="bm">B</mi><mo>=</mo><mi class="bm">H</mi><mi class="bm">A</mi></math> 的坐标：`
+      +`<div class="ans"><math><mi class="bm">B</mi><mo>=</mo><mo>(</mo></math>`
+      +`<input class="qin" id="qBx" type="number" step="1" placeholder="x">`
+      +`<math><mo>,</mo></math>`
+      +`<input class="qin" id="qBy" type="number" step="1" placeholder="y">`
+      +`<math><mo>)</mo></math></div>`
+      +`<div style="margin-top:6px;font-size:12.5px;color:#a0aec0;">左图蓝色向量即 A；提交或看解析后会画出正确的像 B。</div>`;
+    ["qBx","qBy"].forEach(id=>document.getElementById(id).addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); }));
+  }else{
+    let html=`左图蓝色 ${bmML("A")} 经矩阵 ${bmML("H")} = ${matML(q.H)} 变成红色 ${bmML("B")}。<br>`
+      +`它表示的是哪一种线性变换？<div class="opts" id="qOpts">`;
+    q.opts.forEach((o,i)=>{ html+=`<label data-i="${i}"><input type="radio" name="qopt" value="${i}"><span>${o.name}</span></label>`; });
+    html+=`</div>`;
+    body.innerHTML=html;
+    body.querySelectorAll('#qOpts label').forEach(l=>l.addEventListener("click",()=>{
+      body.querySelectorAll('#qOpts label').forEach(x=>x.classList.remove("sel"));
+      l.classList.add("sel");
+      const r=l.querySelector('input'); if(r) r.checked=true;
+      q.selected=+l.dataset.i;
+    }));
+  }
+  // 画布同步到本题
+  pointA={x:q.A.x,y:q.A.y};
+  matrix=[[q.H[0][0],q.H[0][1]],[q.H[1][0],q.H[1][1]]];
+  q.revealed=false;
+  updateDisplay();
+  renderStats();
+}
+
+function renderStats(){
+  const acc = stats.attempted ? Math.round(stats.correct/stats.attempted*100) : 0;
+  document.getElementById("quizStats").innerHTML=
+    `已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`;
+}
+
+// ── 判分 ──
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return;
+  const fb=document.getElementById("qFeedback");
+  if(q.kind==="compute"){
+    const bx=parseFloat(document.getElementById("qBx").value);
+    const by=parseFloat(document.getElementById("qBy").value);
+    if(Number.isNaN(bx)||Number.isNaN(by)){ fb.className="feedback no"; fb.textContent="请把 x、y 两个坐标都填上"; return; }
+    if(Math.abs(bx-q.B.x)<1e-6 && Math.abs(by-q.B.y)<1e-6) markCorrect();
+    else { fb.className="feedback no"; fb.textContent="还不对，再算算～（也可以点“看解析”）"; }
+  }else{
+    if(q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个选项"; return; }
+    if(q.selected===q.ansIdx) markCorrect();
+    else { fb.className="feedback no"; fb.textContent="不对哦，观察一下 B 相对 A 的变化～（也可以点“看解析”）"; }
+  }
+}
+
+function solHTML(){
+  const q=quiz;
+  if(q.kind==="compute")
+    return `<div class="sol"><math><mi class="bm">B</mi><mo>=</mo><mi class="bm">H</mi><mi class="bm">A</mi><mo>=</mo>`
+      +`${matML(q.H)}${coordML(q.A.x,q.A.y)}<mo>=</mo>${coordML(q.B.x,q.B.y)}</math></div>`;
+  return `<div class="sol">正确答案：<b>${q.name}</b>。看红色像 ${bmML("B")} 相对蓝色 ${bmML("A")} 的方向与长度变化即可判断。</div>`;
+}
+function showSolutionOnCanvas(){ quiz.revealed=true; updateDisplay(); }
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+
+function markCorrect(){
+  const q=quiz; q.done=true; q.correct=true;
+  stats.attempted++; stats.correct++; streak++; saveStats();
+  showSolutionOnCanvas();
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML();
+  lockQ(); renderStats();
+}
+function onReveal(){
+  const q=quiz; if(!q||q.done) return;
+  q.done=true; stats.attempted++; streak=0; saveStats();
+  showSolutionOnCanvas();
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML();
+  lockQ(); renderStats();
+}
+function onHint(){
+  const q=quiz; if(!q) return;
+  const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="compute"){
+    const s=(c)=>c<0?"−":"+", a=(c)=>Math.abs(c);
+    fb.innerHTML=`提示：先按行乘 —— `
+      +`<math><msub><mi>B</mi><mi>x</mi></msub><mo>=</mo><mn>${q.H[0][0]}</mn><mo>·</mo><mo>(</mo><mn>${q.A.x}</mn><mo>)</mo>`
+      +`<mo>${s(q.H[0][1])}</mo><mn>${a(q.H[0][1])}</mn><mo>·</mo><mo>(</mo><mn>${q.A.y}</mn><mo>)</mo></math>，`
+      +`<math><msub><mi>B</mi><mi>y</mi></msub><mo>=</mo><mn>${q.H[1][0]}</mn><mo>·</mo><mo>(</mo><mn>${q.A.x}</mn><mo>)</mo>`
+      +`<mo>${s(q.H[1][1])}</mo><mn>${a(q.H[1][1])}</mn><mo>·</mo><mo>(</mo><mn>${q.A.y}</mn><mo>)</mo></math>`;
+  }else{
+    fb.innerHTML=`提示：看红色 B 是把蓝色 A <b>转了角度</b>、<b>改了长度</b>、还是<b>翻转 / 错切</b>。`;
+  }
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+
+// ── 模式切换 ──
+let savedExplore=null;
+function setMode(m){
+  mode=m;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("exploreCard").style.display = m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display   = m==="practice"?"":"none";
+  if(m==="practice"){
+    savedExplore={A:{x:pointA.x,y:pointA.y}, H:matrix.map(r=>r.slice())};
+    quiz=genProblem(); renderProblem();
+  }else{
+    if(savedExplore){ pointA=savedExplore.A; matrix=savedExplore.H;
+      document.getElementById("matrix11").value=matrix[0][0];
+      document.getElementById("matrix12").value=matrix[0][1];
+      document.getElementById("matrix21").value=matrix[1][0];
+      document.getElementById("matrix22").value=matrix[1][1];
+    }
+    quiz=null; updateDisplay();
+  }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
 
 resize();
 </script>
