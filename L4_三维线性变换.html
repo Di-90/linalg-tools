@@ -38,9 +38,14 @@
        padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
   .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
   #canvas-container{width:100%;border:1px solid var(--line);border-radius:10px;
-       overflow:hidden;background:#fff;display:flex;justify-content:center;}
+       overflow:hidden;display:flex;justify-content:center;
+       background:radial-gradient(120% 120% at 50% 12%,#ffffff 0%,#f3f7fb 55%,#e8eef6 100%);}
   #canvas-container canvas{display:block;max-width:100%;cursor:grab;}
   #canvas-container canvas:active{cursor:grabbing;}
+  .toggle{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--sub);
+       cursor:pointer;user-select:none;}
+  .toggle input{width:15px;height:15px;accent-color:var(--blue);cursor:pointer;}
+  .legend i.dot{width:11px;height:11px;border-radius:50%;}
   .hint{font-size:12px;color:var(--sub);text-align:center;margin-top:8px;}
   .row{margin:8px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:15px;}
   .row .lbl{color:var(--sub);font-size:13px;}
@@ -93,6 +98,10 @@
     <div class="legend">
       <span><i style="background:var(--vecA)"></i>原向量 <math><mi class="bm">A</mi></math></span>
       <span><i style="background:var(--vecB)"></i>变换后 <math><mi class="bm">B</mi><mo>=</mo><mi class="bm">H</mi><mi class="bm">A</mi></math></span>
+      <span class="basisleg"><i class="dot" style="background:var(--gold)"></i><i class="dot" style="background:var(--green)"></i><i class="dot" style="background:var(--purple)"></i>基向量 <math><mrow><mover><mi>i</mi><mo>^</mo></mover><mo>,</mo><mover><mi>j</mi><mo>^</mo></mover><mo>,</mo><mover><mi>k</mi><mo>^</mo></mover></mrow></math> 与单位立方体的像</span>
+    </div>
+    <div style="text-align:center;margin-top:10px;">
+      <label class="toggle"><input type="checkbox" id="showBasis" checked>显示基向量 <math><mrow><mover><mi>i</mi><mo>^</mo></mover><mo>,</mo><mover><mi>j</mi><mo>^</mo></mover><mo>,</mo><mover><mi>k</mi><mo>^</mo></mover></mrow></math> 与单位立方体的像</label>
     </div>
     <div class="hint">拖动旋转视角 · 滚轮缩放 · 右键平移</div>
   </div>
@@ -134,19 +143,27 @@
 <script>
 const container=document.getElementById("canvas-container");
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0xffffff);
+scene.background=null;                 // 透明，透出容器的柔和渐变背景
 
 let size=Math.min(container.clientWidth||600, Math.round(window.innerHeight*0.6));
 size=Math.max(size,320);
-const camera=new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
-const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(window.devicePixelRatio||1);
+const camera=new THREE.PerspectiveCamera(55, 1, 0.1, 1000);
+const renderer=new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
 renderer.setSize(size,size);
+if("outputEncoding" in renderer && THREE.sRGBEncoding!==undefined) renderer.outputEncoding=THREE.sRGBEncoding;
 container.appendChild(renderer.domElement);
+
+// ── 光照：环境光打底 + 主方向光塑形 + 补光去死黑 ──
+scene.add(new THREE.AmbientLight(0xffffff, 0.72));
+const key=new THREE.DirectionalLight(0xffffff, 0.85); key.position.set(6,10,8); scene.add(key);
+const fill=new THREE.DirectionalLight(0xdce7f5, 0.35); fill.position.set(-7,-4,-6); scene.add(fill);
 
 const controls=new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping=true; controls.dampingFactor=0.06;
-camera.position.set(9,7,11);
+controls.minDistance=6; controls.maxDistance=40;
+controls.target.set(0,0,0);
+camera.position.set(8.5,6.5,10);
 camera.lookAt(0,0,0);
 
 let vectorA={x:1,y:1,z:1};
@@ -155,45 +172,134 @@ const scaleFactor=2;          // 仅用于显示放大，坐标读数仍为真�
 const dynamicGroup=new THREE.Group();
 scene.add(dynamicGroup);
 
-function makeSprite(text,color){
-    const c=document.createElement("canvas"); c.width=256; c.height=128;
+// 基向量 / 变换后立方体的配色（与向量 A 蓝、B 红区分开）
+const C_I=0xb7791f, C_J=0x2f855a, C_K=0x6b46c1;   // î ĵ k̂ → 金 / 绿 / 紫
+
+// ── 数学体标签：斜体衬线 + 白色描边，高清渲染，可选“戴帽” î ────────────
+function makeLabel(text,color,hat){
+    const dpr=Math.min(2, window.devicePixelRatio||1);
+    const fs=72, pad=14, hatH=hat?Math.round(fs*0.34):0;
+    const meas=document.createElement("canvas").getContext("2d");
+    const font=`italic 600 ${fs}px "Cambria Math","STIX Two Math","Times New Roman",serif`;
+    meas.font=font;
+    const tw=Math.ceil(meas.measureText(text).width);
+    const w=tw+pad*2, h=fs+pad*2+hatH;
+    const c=document.createElement("canvas");
+    c.width=Math.round(w*dpr); c.height=Math.round(h*dpr);
     const cx=c.getContext("2d");
-    cx.font="bold 60px Arial"; cx.fillStyle=color;
-    cx.textAlign="center"; cx.textBaseline="middle";
-    cx.fillText(text, c.width/2, c.height/2);
+    cx.scale(dpr,dpr);
+    cx.font=font; cx.textAlign="center"; cx.textBaseline="middle";
+    const baseY=hatH+pad+fs/2;
+    // 白色描边（在网格/立方体上也清晰）
+    cx.lineJoin="round"; cx.lineWidth=fs*0.16; cx.strokeStyle="rgba(255,255,255,.95)";
+    cx.strokeText(text, w/2, baseY);
+    cx.fillStyle=color; cx.fillText(text, w/2, baseY);
+    if(hat){                       // 手绘尖帽 ^，位置贴合斜体字符
+        const cxp=w/2+fs*0.06, topY=pad, wing=fs*0.20;
+        cx.lineWidth=fs*0.12; cx.lineCap="round"; cx.lineJoin="round";
+        cx.strokeStyle="rgba(255,255,255,.95)";
+        cx.beginPath(); cx.moveTo(cxp-wing, topY+wing); cx.lineTo(cxp, topY); cx.lineTo(cxp+wing, topY+wing); cx.stroke();
+        cx.strokeStyle=color; cx.lineWidth=fs*0.09;
+        cx.beginPath(); cx.moveTo(cxp-wing, topY+wing); cx.lineTo(cxp, topY); cx.lineTo(cxp+wing, topY+wing); cx.stroke();
+    }
     const tex=new THREE.CanvasTexture(c);
-    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true}));
-    sp.scale.set(2.2,1.1,1);
+    tex.anisotropy=4; tex.minFilter=THREE.LinearFilter;
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true, depthTest:false}));
+    sp.renderOrder=10;
+    const worldH=0.68;            // 目标世界高度（单位）
+    sp.scale.set(worldH*w/h, worldH, 1);
     return sp;
+}
+const hex=n=>"#"+n.toString(16).padStart(6,"0");
+
+// ── 实体箭头：圆柱杆 + 圆锥头，带光照材质 ──────────────────────────────
+function makeArrow(tx,ty,tz, colorHex, shaftR){
+    const g=new THREE.Group();
+    const v=new THREE.Vector3(tx,ty,tz), len=v.length();
+    if(len<1e-6) return g;
+    shaftR=shaftR||0.04;
+    const headLen=Math.min(0.7, Math.max(0.28, len*0.2));
+    const headR=shaftR*3.0, shaftLen=Math.max(0.001, len-headLen);
+    const mat=new THREE.MeshStandardMaterial({color:colorHex, roughness:0.42, metalness:0.12});
+    const shaft=new THREE.Mesh(new THREE.CylinderGeometry(shaftR,shaftR,shaftLen,24), mat);
+    shaft.position.y=shaftLen/2;
+    const head=new THREE.Mesh(new THREE.ConeGeometry(headR,headLen,28), mat);
+    head.position.y=shaftLen+headLen/2;
+    g.add(shaft,head);
+    g.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), v.clone().normalize());
+    return g;
 }
 
 function buildStatic(){
-    // 网格地面（XY 平面感）
-    const grid=new THREE.GridHelper(20,20,0xdfe6ee,0xeef2f7);
-    grid.rotation.x=Math.PI/2;      // 放到 XY 平面
+    // 柔和网格地面（XY 平面），淡出不抢戏
+    const grid=new THREE.GridHelper(20,20,0xc3d0e0,0xe4ebf3);
+    grid.rotation.x=Math.PI/2;
+    grid.material.transparent=true; grid.material.opacity=0.55; grid.material.depthWrite=false;
     dynamicGroup.add(grid);
-    const L=10;
+    // 坐标轴：细实体杆 + 锥尖
+    const L=9;
     const axes=[
-        {dir:new THREE.Vector3(1,0,0), col:0x64748b, name:"X", pos:[L+0.6,0,0]},
-        {dir:new THREE.Vector3(0,1,0), col:0x64748b, name:"Y", pos:[0,L+0.6,0]},
-        {dir:new THREE.Vector3(0,0,1), col:0x64748b, name:"Z", pos:[0,0,L+0.6]},
+        {v:[L,0,0], name:"X", pos:[L+0.7,0,0]},
+        {v:[0,L,0], name:"Y", pos:[0,L+0.7,0]},
+        {v:[0,0,L], name:"Z", pos:[0,0,L+0.7]},
     ];
     axes.forEach(a=>{
-        dynamicGroup.add(new THREE.ArrowHelper(a.dir, new THREE.Vector3(0,0,0), L, a.col, 0.5, 0.3));
-        const s=makeSprite(a.name, "#475569"); s.position.set(...a.pos); dynamicGroup.add(s);
+        const ax=makeArrow(a.v[0],a.v[1],a.v[2], 0x94a3b8, 0.018); dynamicGroup.add(ax);
+        const s=makeLabel(a.name, "#475569"); s.position.set(...a.pos); dynamicGroup.add(s);
     });
-    const o=makeSprite("O", "#475569"); o.position.set(-0.5,-0.5,0); dynamicGroup.add(o);
+    const o=makeLabel("O", "#475569"); o.position.set(-0.55,-0.55,-0.15); dynamicGroup.add(o);
 }
 
-function addVector(vec, colorHex, label){
+function addVector(vec, colorHex, label, shaftR, hat){
     const v=new THREE.Vector3(vec.x*scaleFactor, vec.y*scaleFactor, vec.z*scaleFactor);
     const len=v.length();
-    if(len>1e-6){
-        dynamicGroup.add(new THREE.ArrowHelper(v.clone().normalize(), new THREE.Vector3(0,0,0), len, colorHex, 0.5, 0.3));
-    }
-    const s=makeSprite(label, "#"+colorHex.toString(16).padStart(6,"0"));
-    s.position.set(v.x+0.6, v.y+0.6, v.z+0.6);
+    if(len>1e-6) dynamicGroup.add(makeArrow(v.x,v.y,v.z, colorHex, shaftR));
+    const s=makeLabel(label, hex(colorHex), hat);
+    const off=v.length()>1e-6 ? v.clone().normalize().multiplyScalar(0.75) : new THREE.Vector3(0.6,0.6,0.6);
+    s.position.set(v.x+off.x, v.y+off.y+0.15, v.z+off.z);
     dynamicGroup.add(s);
+}
+
+// ── 单位立方体的像：12 条棱 + 半透明体，原立方体以淡灰虚影作对照 ──────
+function addUnitCubeImage(){
+    const s=scaleFactor;
+    const corners=[[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]];
+    const edges=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+    const faces=[[0,1,2],[0,2,3],[4,6,5],[4,7,6],[0,4,5],[0,5,1],[1,5,6],[1,6,2],[2,6,7],[2,7,3],[3,7,4],[3,4,0]];
+    const orig=corners.map(c=>[c[0]*s,c[1]*s,c[2]*s]);
+    const img=corners.map(c=>{
+        const x=matrix[0][0]*c[0]+matrix[0][1]*c[1]+matrix[0][2]*c[2];
+        const y=matrix[1][0]*c[0]+matrix[1][1]*c[1]+matrix[1][2]*c[2];
+        const z=matrix[2][0]*c[0]+matrix[2][1]*c[1]+matrix[2][2]*c[2];
+        return [x*s,y*s,z*s];
+    });
+    // 原始单位立方体（淡灰对照）
+    const op=[]; edges.forEach(e=>{op.push(...orig[e[0]],...orig[e[1]]);});
+    const og=new THREE.BufferGeometry(); og.setAttribute("position",new THREE.Float32BufferAttribute(op,3));
+    dynamicGroup.add(new THREE.LineSegments(og, new THREE.LineBasicMaterial({color:0x9aa7b8, transparent:true, opacity:0.4})));
+    // 变换后立方体半透明体
+    const fp=[]; faces.forEach(f=>{ fp.push(...img[f[0]],...img[f[1]],...img[f[2]]); });
+    const fg=new THREE.BufferGeometry(); fg.setAttribute("position",new THREE.Float32BufferAttribute(fp,3)); fg.computeVertexNormals();
+    dynamicGroup.add(new THREE.Mesh(fg, new THREE.MeshStandardMaterial({color:0x3b82f6, transparent:true, opacity:0.1, side:THREE.DoubleSide, depthWrite:false, roughness:0.9})));
+    // 变换后立方体棱线
+    const ip=[]; edges.forEach(e=>{ip.push(...img[e[0]],...img[e[1]]);});
+    const ig=new THREE.BufferGeometry(); ig.setAttribute("position",new THREE.Float32BufferAttribute(ip,3));
+    dynamicGroup.add(new THREE.LineSegments(ig, new THREE.LineBasicMaterial({color:0x2b6cb0, transparent:true, opacity:0.75})));
+    // 基向量 î ĵ k̂ = H 的三列
+    const cols=[[matrix[0][0],matrix[1][0],matrix[2][0]],
+                [matrix[0][1],matrix[1][1],matrix[2][1]],
+                [matrix[0][2],matrix[1][2],matrix[2][2]]];
+    const meta=[{c:C_I,l:"i"},{c:C_J,l:"j"},{c:C_K,l:"k"}];
+    cols.forEach((col,i)=>{
+        const v=new THREE.Vector3(col[0]*s,col[1]*s,col[2]*s);
+        if(v.length()>1e-6){
+            dynamicGroup.add(makeArrow(v.x,v.y,v.z, meta[i].c, 0.036));
+            const lab=makeLabel(meta[i].l, hex(meta[i].c), true);
+            const off=v.clone().normalize().multiplyScalar(0.7);
+            lab.position.set(v.x+off.x, v.y+off.y+0.1, v.z+off.z);
+            dynamicGroup.add(lab);
+        }
+    });
 }
 
 function transformed(){
@@ -212,13 +318,24 @@ function colVec(a,b,c){
       +`</mtable><mo>)</mo></mrow>`;
 }
 
+function disposeNode(o){
+    o.traverse&&o.traverse(n=>{
+        if(n.geometry) n.geometry.dispose();
+        if(n.material){ const m=n.material; if(m.map)m.map.dispose(); m.dispose&&m.dispose(); }
+    });
+    if(o.geometry) o.geometry.dispose();
+    if(o.material){ if(o.material.map)o.material.map.dispose(); o.material.dispose&&o.material.dispose(); }
+}
+
 function updateDisplay(){
-    // 重建动态内容
-    while(dynamicGroup.children.length) dynamicGroup.remove(dynamicGroup.children[0]);
+    // 重建动态内容（释放上一帧的几何/贴图，避免显存泄漏）
+    while(dynamicGroup.children.length){ const c=dynamicGroup.children[0]; disposeNode(c); dynamicGroup.remove(c); }
     buildStatic();
-    addVector(vectorA, 0x2b6cb0, "A");
+    const showBasis=document.getElementById("showBasis").checked;
+    if(showBasis) addUnitCubeImage();
+    addVector(vectorA, 0x2b6cb0, "A", 0.045);
     const B=transformed();
-    addVector(B, 0xc53030, "B");
+    addVector(B, 0xc53030, "B", 0.045);
 
     const lenA=Math.hypot(vectorA.x,vectorA.y,vectorA.z);
     const lenB=Math.hypot(B.x,B.y,B.z);
@@ -268,6 +385,12 @@ function setVectorAFromInputs(){
 
 ["matrix11","matrix12","matrix13","matrix21","matrix22","matrix23","matrix31","matrix32","matrix33"]
     .forEach(id=>document.getElementById(id).addEventListener("input",updateMatrix));
+
+const basisLeg=document.querySelector(".legend .basisleg");
+document.getElementById("showBasis").addEventListener("change",e=>{
+    if(basisLeg) basisLeg.style.display=e.target.checked?"":"none";
+    updateDisplay();
+});
 
 function onResize(){
     let s=Math.min(container.clientWidth, Math.round(window.innerHeight*0.6));

@@ -36,7 +36,8 @@
        padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
   .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
   #canvas-container{width:100%;border:1px solid var(--line);border-radius:10px;
-       overflow:hidden;background:#fff;display:flex;justify-content:center;}
+       overflow:hidden;display:flex;justify-content:center;
+       background:radial-gradient(120% 120% at 50% 12%,#ffffff 0%,#f3f7fb 55%,#e8eef6 100%);}
   #canvas-container canvas{display:block;max-width:100%;cursor:grab;}
   #canvas-container canvas:active{cursor:grabbing;}
   .hint{font-size:12px;color:var(--sub);text-align:center;margin-top:8px;}
@@ -122,15 +123,16 @@
 <script>
 const container=document.getElementById("canvas-container");
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0xffffff);
+scene.background=null;                 // 透明，透出容器的柔和渐变背景
 
 let size=Math.min(container.clientWidth||600, Math.round(window.innerHeight*0.6));
 size=Math.max(size,320);
 const camera=new THREE.PerspectiveCamera(50,1,0.1,1000);
-camera.position.set(4,3,5); camera.lookAt(0,0,0);
-const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(window.devicePixelRatio||1);
+camera.position.set(5,3.6,6.2); camera.lookAt(0,0,0);
+const renderer=new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
 renderer.setSize(size,size);
+if("outputEncoding" in renderer && THREE.sRGBEncoding!==undefined) renderer.outputEncoding=THREE.sRGBEncoding;
 container.appendChild(renderer.domElement);
 
 const controls=new THREE.OrbitControls(camera,renderer.domElement);
@@ -141,19 +143,51 @@ scene.add(new THREE.AmbientLight(0xffffff,0.65));
 const dir=new THREE.DirectionalLight(0xffffff,0.7); dir.position.set(4,6,5); scene.add(dir);
 const fill=new THREE.DirectionalLight(0xbcd0ff,0.35); fill.position.set(-3,-2,-4); scene.add(fill);
 
-// 网格 + 坐标轴 + 文字标签
-const grid=new THREE.GridHelper(8,16,0xcbd5e1,0xe2e8f0); scene.add(grid);
-scene.add(new THREE.AxesHelper(3.5));
-function makeSprite(text,color){
-    const cvs=document.createElement("canvas"); cvs.width=128; cvs.height=64;
-    const cx=cvs.getContext("2d"); cx.font="bold 44px Arial"; cx.fillStyle=color;
-    cx.textAlign="center"; cx.textBaseline="middle"; cx.fillText(text,64,32);
-    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cvs),transparent:true}));
-    sp.scale.set(0.9,0.45,1); return sp;
+// ── 柔和网格地面（XY 平面），淡出不抢戏 ──
+const grid=new THREE.GridHelper(8,16,0xc3d0e0,0xe4ebf3);
+grid.material.transparent=true; grid.material.opacity=0.55; grid.material.depthWrite=false; scene.add(grid);
+
+// ── 数学体标签：斜体衬线 + 白色描边，高清渲染（与 L4 一致）──
+function makeLabel(text,color){
+    const dpr=Math.min(2, window.devicePixelRatio||1);
+    const fs=72, pad=14;
+    const meas=document.createElement("canvas").getContext("2d");
+    const font=`italic 600 ${fs}px "Cambria Math","STIX Two Math","Times New Roman",serif`;
+    meas.font=font;
+    const tw=Math.ceil(meas.measureText(text).width), w=tw+pad*2, h=fs+pad*2;
+    const c=document.createElement("canvas"); c.width=Math.round(w*dpr); c.height=Math.round(h*dpr);
+    const cx=c.getContext("2d"); cx.scale(dpr,dpr);
+    cx.font=font; cx.textAlign="center"; cx.textBaseline="middle";
+    cx.lineJoin="round"; cx.lineWidth=fs*0.16; cx.strokeStyle="rgba(255,255,255,.95)";
+    cx.strokeText(text, w/2, h/2);
+    cx.fillStyle=color; cx.fillText(text, w/2, h/2);
+    const tex=new THREE.CanvasTexture(c); tex.anisotropy=4; tex.minFilter=THREE.LinearFilter;
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true, depthTest:false}));
+    sp.renderOrder=10;
+    const worldH=0.38; sp.scale.set(worldH*w/h, worldH, 1);
+    return sp;
 }
-[["X","#c53030",[3.9,0,0]],["Y","#2f855a",[0,3.9,0]],["Z","#2b6cb0",[0,0,3.9]]].forEach(([t,c,p])=>{
-    const s=makeSprite(t,c); s.position.set(...p); scene.add(s);
+// ── 细实体箭头：圆柱杆 + 圆锥头（与 L4 一致）──
+function makeArrow(tx,ty,tz, colorHex, shaftR){
+    const g=new THREE.Group();
+    const v=new THREE.Vector3(tx,ty,tz), len=v.length();
+    if(len<1e-6) return g;
+    shaftR=shaftR||0.012;
+    const headLen=Math.min(0.5, Math.max(0.18, len*0.13)), headR=shaftR*3.0, shaftLen=Math.max(0.001, len-headLen);
+    const mat=new THREE.MeshStandardMaterial({color:colorHex, roughness:0.42, metalness:0.12});
+    const shaft=new THREE.Mesh(new THREE.CylinderGeometry(shaftR,shaftR,shaftLen,24), mat); shaft.position.y=shaftLen/2;
+    const head=new THREE.Mesh(new THREE.ConeGeometry(headR,headLen,28), mat); head.position.y=shaftLen+headLen/2;
+    g.add(shaft,head);
+    g.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), v.clone().normalize());
+    return g;
+}
+// 坐标轴（中性灰细箭头）+ 数学体标签
+const AL=3.5;
+[[AL,0,0,"X",[AL+0.35,0,0]],[0,AL,0,"Y",[0,AL+0.35,0]],[0,0,AL,"Z",[0,0,AL+0.35]]].forEach(a=>{
+    scene.add(makeArrow(a[0],a[1],a[2], 0x94a3b8, 0.012));
+    const s=makeLabel(a[3], "#475569"); s.position.set(...a[4]); scene.add(s);
 });
+const oLab=makeLabel("O","#475569"); oLab.position.set(-0.28,-0.28,-0.08); scene.add(oLab);
 
 let currentMesh=null, currentMaterial=null, wireframeMode=false;
 let surfType="ellipsoid";
@@ -280,7 +314,7 @@ document.getElementById("wireframeBtn").addEventListener("click",e=>{
     e.currentTarget.classList.toggle("on",wireframeMode);
 });
 document.getElementById("resetViewBtn").addEventListener("click",()=>{
-    camera.position.set(4,3,5); controls.target.set(0,0,0); controls.update();
+    camera.position.set(5,3.6,6.2); controls.target.set(0,0,0); controls.update();
 });
 
 function onResize(){
