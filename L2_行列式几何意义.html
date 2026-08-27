@@ -189,32 +189,47 @@ function drawAxes(){
     drawMathLabel("O", ox-13, oy+11, "#64748b", 15, true);
 }
 
-// 与正文 MathML 一致的画布数学体：同一字体栈；bold=向量/点名(class="bm")粗斜体，
-// 默认=标量细斜体(fw400)；白描边收细，避免发胖。
+// 与正文 MathML 一致的画布数学体：Cambria Math 是数学字体、无 italic 字面，
+// CSS/canvas 的 italic 对它是空操作 → 必须把字母映射到 Unicode 数学(粗)斜体码位，
+// 才能拿到与 MathML <mi> 完全相同的字形。bold=向量/点名粗斜体，默认=标量细斜体。
 const CMFONT='"Cambria Math","STIX Two Math",serif';
+function toMath(str,bold){
+    let out="";
+    for(const ch of str){
+        const cp=ch.codePointAt(0);
+        if(cp>=0x41&&cp<=0x5A) out+=String.fromCodePoint((bold?0x1D468:0x1D434)+(cp-0x41));      // A–Z
+        else if(cp>=0x61&&cp<=0x7A){                                                             // a–z
+            if(!bold&&ch==="h") out+="ℎ";     // 斜体 h 保留位，用 ℎ(Planck)
+            else out+=String.fromCodePoint((bold?0x1D482:0x1D44E)+(cp-0x61));
+        }
+        else out+=ch;                              // 数字/符号/组合记号原样(数字保持正体)
+    }
+    return out;
+}
 function drawMathLabel(text,x,y,color,px,bold){
     px=px||16;
     ctx.save();
-    ctx.font=`italic ${bold?700:400} ${px}px ${CMFONT}`;
+    ctx.font=`${px}px ${CMFONT}`;                  // 码位自带(粗)斜体，不用 CSS italic/weight
     ctx.textAlign="left"; ctx.textBaseline="middle";
     ctx.lineJoin="round"; ctx.lineWidth=px*0.15; ctx.strokeStyle="rgba(255,255,255,.9)";
-    ctx.strokeText(text,x,y);
-    ctx.fillStyle=color; ctx.fillText(text,x,y);
+    const s=toMath(text,bold);
+    ctx.strokeText(s,x,y);
+    ctx.fillStyle=color; ctx.fillText(s,x,y);
     ctx.restore();
 }
 
-// 向量名 + 下标：主字母粗斜体，下标数字正体（与正文 <msub><mi class="bm">…<mn>… 一致）
+// 向量名 + 下标：主字母粗斜体(数学码位)，下标数字正体（与正文 <msub><mi class="bm">…<mn>… 一致）
 function drawVecLabel(base,sub,x,y,color){
     ctx.save();
     ctx.textAlign="left"; ctx.textBaseline="alphabetic";
     ctx.lineJoin="round"; ctx.strokeStyle="rgba(255,255,255,.9)";
-    const fs=18;
-    ctx.font=`italic 700 ${fs}px ${CMFONT}`;
+    const fs=18, mb=toMath(base,true);
+    ctx.font=`${fs}px ${CMFONT}`;
     ctx.lineWidth=fs*0.15;
-    ctx.strokeText(base,x,y); ctx.fillStyle=color; ctx.fillText(base,x,y);
-    const bw=ctx.measureText(base).width;
+    ctx.strokeText(mb,x,y); ctx.fillStyle=color; ctx.fillText(mb,x,y);
+    const bw=ctx.measureText(mb).width;
     const sfs=Math.round(fs*0.66);
-    ctx.font=`normal 400 ${sfs}px ${CMFONT}`;      // 下标数字正体
+    ctx.font=`${sfs}px ${CMFONT}`;                 // 下标数字正体(ASCII 数字本就直立)
     ctx.lineWidth=sfs*0.15;
     const sx=x+bw+1.5, sy=y+fs*0.22;
     ctx.strokeText(sub,sx,sy); ctx.fillStyle=color; ctx.fillText(sub,sx,sy);

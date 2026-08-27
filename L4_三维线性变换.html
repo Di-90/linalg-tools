@@ -175,15 +175,31 @@ scene.add(dynamicGroup);
 // 基向量 / 变换后立方体的配色（与向量 A 蓝、B 红区分开）
 const C_I=0xb7791f, C_J=0x2f855a, C_K=0x6b46c1;   // î ĵ k̂ → 金 / 绿 / 紫
 
-// ── 数学体标签：斜体衬线 + 白色描边，高清渲染，可选“戴帽” î ────────────
+// Cambria Math 无 italic 字面，canvas 的 italic 是空操作 → 映射到 Unicode 数学(粗)斜体码位，
+// 才能与正文 MathML <mi> 拿到完全相同的字形。
+function toMath(str,bold){
+    let out="";
+    for(const ch of str){
+        const cp=ch.codePointAt(0);
+        if(cp>=0x41&&cp<=0x5A) out+=String.fromCodePoint((bold?0x1D468:0x1D434)+(cp-0x41));      // A–Z
+        else if(cp>=0x61&&cp<=0x7A){                                                             // a–z
+            if(!bold&&ch==="h") out+="ℎ";
+            else out+=String.fromCodePoint((bold?0x1D482:0x1D44E)+(cp-0x61));
+        }
+        else out+=ch;
+    }
+    return out;
+}
+// ── 数学体标签：数学码位斜体衬线 + 白色描边，高清渲染，可选“戴帽” î ────────────
 function makeLabel(text,color,hat,bold){
     const dpr=Math.min(2, window.devicePixelRatio||1);
     const fs=72, pad=14, hatH=hat?Math.round(fs*0.34):0;
     const meas=document.createElement("canvas").getContext("2d");
-    // 与正文/2D 画布一致：Cambria Math 字体栈；bold=向量/点名粗斜体，默认=坐标轴变量细斜体
-    const font=`italic ${bold?700:400} ${fs}px "Cambria Math","STIX Two Math",serif`;
+    // 与正文 MathML 一致：字母映射到数学(粗)斜体码位；字体不加 CSS italic/weight（码位自带字形）
+    const T=toMath(text,bold);
+    const font=`${fs}px "Cambria Math","STIX Two Math",serif`;
     meas.font=font;
-    const tw=Math.ceil(meas.measureText(text).width);
+    const tw=Math.ceil(meas.measureText(T).width);
     const w=tw+pad*2, h=fs+pad*2+hatH;
     const c=document.createElement("canvas");
     c.width=Math.round(w*dpr); c.height=Math.round(h*dpr);
@@ -193,8 +209,8 @@ function makeLabel(text,color,hat,bold){
     const baseY=hatH+pad+fs/2;
     // 白色描边（在网格/立方体上也清晰）
     cx.lineJoin="round"; cx.lineWidth=fs*0.16; cx.strokeStyle="rgba(255,255,255,.95)";
-    cx.strokeText(text, w/2, baseY);
-    cx.fillStyle=color; cx.fillText(text, w/2, baseY);
+    cx.strokeText(T, w/2, baseY);
+    cx.fillStyle=color; cx.fillText(T, w/2, baseY);
     if(hat){                       // 手绘尖帽 ^，位置贴合斜体字符
         const cxp=w/2+fs*0.06, topY=pad, wing=fs*0.20;
         cx.lineWidth=fs*0.12; cx.lineCap="round"; cx.lineJoin="round";
