@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>机械臂齐次变换 · L7 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  /* 矩阵/向量=加粗且斜体：单字母 mi 默认即斜体，加 class .bm 只叠加 font-weight 得粗斜体（mathvariant="bold" 在 Chrome/MathML Core 不生效，mathvariant="normal" 又会去掉斜体，故用 class 钩子） */
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.15em;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:920px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  #canvasWrap{width:100%;display:flex;justify-content:center;background:#fff;
+       border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  canvas{display:block;max-width:100%;height:auto;background:#fff;}
+  .endpoint{text-align:center;font-size:1.05em;margin-top:10px;}
+  .row{margin:8px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;}
+  .row .lbl{color:var(--sub);font-size:13px;}
+  input[type=number]{width:70px;font-size:14px;padding:6px 7px;border:1px solid var(--line);
+       border-radius:6px;font-variant-numeric:tabular-nums;text-align:center;}
+  input:focus{outline:none;border-color:var(--blue);}
+  button{padding:7px 13px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  button.accent{background:var(--blue);color:#fff;border-color:var(--blue);}
+  ol#commandList{padding-left:22px;margin:6px 0;font-size:14px;color:var(--ink);}
+  ol#commandList li{margin:2px 0;}
+  .empty{color:#a0aec0;font-size:13px;}
+  #matrixDisplay .mstep{margin:6px 0;padding:6px 0;border-bottom:1px dashed var(--line);}
+  #matrixDisplay .mstep:last-child{border-bottom:none;}
+  #matrixDisplay .mlbl{font-size:12.5px;color:var(--sub);margin-right:8px;}
+  #matrixDisplay .total{color:var(--blue);font-weight:600;}
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
+       font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>机械臂齐次变换</h1>
+  <span class="sub">旋转 + 平移 = 一个 <math><mn>3</mn><mo>&#xD7;</mo><mn>3</mn></math> 齐次矩阵 <math><mi class="bm">T</mi></math></span>
+  <span class="tag">L7 · 线性代数</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    平面上的<b>刚体运动</b>（旋转角 <math><mi>&#x3B8;</mi></math> + 平移 <math><mo>(</mo><mi>d</mi><mi>x</mi><mo>,</mo><mi>d</mi><mi>y</mi><mo>)</mo></math>）借助<b>齐次坐标</b> <math><mo>(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo>,</mo><mn>1</mn><msup><mo>)</mo><mi>T</mi></msup></math> 可统一写成一次矩阵乘法：
+    <div class="formula">
+      <math display="block">
+        <msup><mi class="bm">p</mi><mo>&#x2032;</mo></msup>
+        <mo>=</mo>
+        <mi class="bm">T</mi><mi class="bm">p</mi>
+        <mo>,</mo><mspace width="0.6em"/>
+        <mi class="bm">T</mi><mo>=</mo>
+        <mrow><mo>(</mo><mtable columnspacing="0.9em" rowspacing="0.3em">
+          <mtr><mtd><mi>cos</mi><mi>&#x3B8;</mi></mtd><mtd><mo>&#x2212;</mo><mi>sin</mi><mi>&#x3B8;</mi></mtd><mtd><mi>d</mi><mi>x</mi></mtd></mtr>
+          <mtr><mtd><mi>sin</mi><mi>&#x3B8;</mi></mtd><mtd><mi>cos</mi><mi>&#x3B8;</mi></mtd><mtd><mi>d</mi><mi>y</mi></mtd></mtr>
+          <mtr><mtd><mn>0</mn></mtd><mtd><mn>0</mn></mtd><mtd><mn>1</mn></mtd></mtr>
+        </mtable><mo>)</mo></mrow>
+      </math>
+    </div>
+    连续多步运动就是矩阵<b>连乘</b>：<math><msub><mi class="bm">T</mi><mtext>总</mtext></msub><mo>=</mo><msub><mi class="bm">T</mi><mi>n</mi></msub><mo>&#x22EF;</mo><msub><mi class="bm">T</mi><mn>2</mn></msub><msub><mi class="bm">T</mi><mn>1</mn></msub></math>（本工具每条指令相对<b>世界坐标系</b>作用，即左乘）。添加若干指令后点“执行指令”，看机械臂末端（红色轨迹）如何随累计矩阵移动。
+  </div>
+
+  <div class="card">
+    <div id="canvasWrap"><canvas id="canvas" width="500" height="500"></canvas></div>
+    <div class="endpoint" id="endPoint"></div>
+  </div>
+
+  <div class="card">
+    <h2>指令与控制</h2>
+    <div class="row">
+      <button class="accent" onclick="addRotate()">添加旋转</button>
+      <span class="lbl">角度</span><input type="number" id="rotateAngle" value="45"><span class="lbl">°</span>
+    </div>
+    <div class="row">
+      <button class="accent" onclick="addTranslate()">添加平移</button>
+      <span class="lbl">dx</span><input type="number" id="dx" value="80">
+      <span class="lbl">dy</span><input type="number" id="dy" value="0">
+    </div>
+    <div class="row">
+      <button class="primary" onclick="runCommandsWithSmoothAnimation()">执行指令</button>
+      <button onclick="reset()">重置</button>
+    </div>
+    <div><strong style="font-size:13px;color:var(--sub);">指令列表</strong>
+      <ol id="commandList"></ol></div>
+  </div>
+
+  <div class="card">
+    <h2>变换矩阵（每步 &amp; 累计）</h2>
+    <div id="matrixDisplay"><span class="empty">点击“执行指令”后，这里显示每一步的矩阵与累计矩阵。</span></div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+let commands=[];
+let baseMatrix=identity();
+const armLength=120;
+let tracePoints=[];
+let stepHTML="";
+
+function identity(){return [[1,0,0],[0,1,0],[0,0,1]];}
+function multiply(a,b){
+    const r=[[0,0,0],[0,0,0],[0,0,0]];
+    for(let i=0;i<3;i++)for(let j=0;j<3;j++)for(let k=0;k<3;k++) r[i][j]+=a[i][k]*b[k][j];
+    return r;
+}
+function rotateMatrix(deg){const t=deg*Math.PI/180;
+    return [[Math.cos(t),-Math.sin(t),0],[Math.sin(t),Math.cos(t),0],[0,0,1]];}
+function translateMatrix(dx,dy){return [[1,0,dx],[0,1,dy],[0,0,1]];}
+function applyMatrix(m,p){return [m[0][0]*p[0]+m[0][1]*p[1]+m[0][2], m[1][0]*p[0]+m[1][1]*p[1]+m[1][2]];}
+
+// ── 3×3 矩阵 → MathML ──
+function matMathML(m){
+    let rows="";
+    for(let i=0;i<3;i++){
+        let cells="";
+        for(let j=0;j<3;j++) cells+=`<mtd><mn>${m[i][j].toFixed(2)}</mn></mtd>`;
+        rows+=`<mtr>${cells}</mtr>`;
+    }
+    return `<math><mrow><mo>(</mo><mtable columnspacing="0.8em" rowspacing="0.25em">${rows}</mtable><mo>)</mo></mrow></math>`;
+}
+
+function drawCoordinateSystem(){
+    ctx.save(); ctx.translate(canvas.width/2, canvas.height/2);
+    ctx.strokeStyle="#e2e8f0"; ctx.lineWidth=1;
+    for(let x=-canvas.width/2;x<=canvas.width/2;x+=50){ctx.beginPath();ctx.moveTo(x,-canvas.height/2);ctx.lineTo(x,canvas.height/2);ctx.stroke();}
+    for(let y=-canvas.height/2;y<=canvas.height/2;y+=50){ctx.beginPath();ctx.moveTo(-canvas.width/2,y);ctx.lineTo(canvas.width/2,y);ctx.stroke();}
+    ctx.strokeStyle="#94a3b8"; ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.moveTo(-canvas.width/2,0);ctx.lineTo(canvas.width/2,0);
+    ctx.moveTo(0,-canvas.height/2);ctx.lineTo(0,canvas.height/2);ctx.stroke();
+    ctx.fillStyle="#94a3b8"; ctx.font="11px system-ui";
+    for(let x=-canvas.width/2;x<=canvas.width/2;x+=50){ if(x!==0){ctx.beginPath();ctx.moveTo(x,-4);ctx.lineTo(x,4);ctx.stroke();ctx.fillText(x,x-8,15);}}
+    for(let y=-canvas.height/2;y<=canvas.height/2;y+=50){ if(y!==0){ctx.beginPath();ctx.moveTo(-4,y);ctx.lineTo(4,y);ctx.stroke();ctx.fillText(-y,8,y+4);}}
+    ctx.restore();
+}
+function drawTrace(){
+    if(tracePoints.length<2) return;
+    ctx.save(); ctx.translate(canvas.width/2, canvas.height/2);
+    ctx.strokeStyle="#c53030"; ctx.lineWidth=2; ctx.beginPath();
+    tracePoints.forEach((p,i)=>{ if(i===0) ctx.moveTo(p[0],-p[1]); else ctx.lineTo(p[0],-p[1]); });
+    ctx.stroke(); ctx.restore();
+}
+function drawArm(matrix){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawCoordinateSystem(); drawTrace();
+    ctx.save(); ctx.translate(canvas.width/2, canvas.height/2);
+    ctx.transform(matrix[0][0], -matrix[1][0], matrix[0][1], -matrix[1][1], matrix[0][2], -matrix[1][2]);
+    ctx.strokeStyle="#2b6cb0"; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(armLength,0); ctx.stroke();
+    // 关节点 & 末端
+    ctx.fillStyle="#1e3a8a"; ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="#c53030"; ctx.beginPath(); ctx.arc(armLength,0,5,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+    const end=applyMatrix(matrix,[armLength,0]);
+    document.getElementById("endPoint").innerHTML=
+      `末端 <math><msup><mi class="bm">p</mi><mo>&#x2032;</mo></msup></math> = `
+      +`<math><mo>(</mo><mn>${end[0].toFixed(1)}</mn><mo>,</mo><mn>${end[1].toFixed(1)}</mn><mo>)</mo></math>`;
+    tracePoints.push(end);
+}
+
+function addRotate(){
+    const a=parseFloat(document.getElementById("rotateAngle").value);
+    if(Number.isNaN(a)){alert("请输入有效角度");return;}
+    commands.push({type:"rotate",value:a}); updateCommandList();
+}
+function addTranslate(){
+    const dx=parseFloat(document.getElementById("dx").value);
+    const dy=parseFloat(document.getElementById("dy").value);
+    if(Number.isNaN(dx)||Number.isNaN(dy)){alert("请输入有效的 dx, dy");return;}
+    commands.push({type:"translate",dx:dx,dy:dy}); updateCommandList();
+}
+function updateCommandList(){
+    const list=document.getElementById("commandList"); list.innerHTML="";
+    if(commands.length===0){ list.innerHTML='<span class="empty">（暂无指令，先添加旋转或平移）</span>'; return; }
+    commands.forEach(cmd=>{
+        const li=document.createElement("li");
+        li.innerText = cmd.type==="rotate" ? `旋转 ${cmd.value}°` : `平移 dx=${cmd.dx}, dy=${cmd.dy}`;
+        list.appendChild(li);
+    });
+}
+function reset(){
+    commands=[]; tracePoints=[]; updateCommandList();
+    baseMatrix=identity(); drawArm(baseMatrix); tracePoints=[];
+    stepHTML="";
+    document.getElementById("matrixDisplay").innerHTML='<span class="empty">点击“执行指令”后，这里显示每一步的矩阵与累计矩阵。</span>';
+    document.getElementById("endPoint").innerHTML="";
+}
+function renderMatrixPanel(){ document.getElementById("matrixDisplay").innerHTML=stepHTML; }
+
+let running=false;
+function runCommandsWithSmoothAnimation(){
+    if(running) return;
+    if(commands.length===0){ alert("请先添加至少一条指令"); return; }
+    running=true;
+    baseMatrix=identity(); tracePoints=[]; stepHTML=""; renderMatrixPanel();
+    let index=0;
+    function animateStep(cmd,onComplete){
+        const totalFrames=60; let frame=0;
+        let mInc, stepMatrix=identity();
+        if(cmd.type==="rotate") mInc=rotateMatrix(cmd.value/totalFrames);
+        else mInc=translateMatrix(cmd.dx/totalFrames, cmd.dy/totalFrames);
+        function step(){
+            baseMatrix=multiply(mInc,baseMatrix);
+            stepMatrix=multiply(mInc,stepMatrix);
+            drawArm(baseMatrix); frame++;
+            if(frame<totalFrames) requestAnimationFrame(step);
+            else{
+                const lbl = cmd.type==="rotate" ? `第 ${index+1} 步：旋转 ${cmd.value}°` : `第 ${index+1} 步：平移 (${cmd.dx}, ${cmd.dy})`;
+                stepHTML+=`<div class="mstep"><span class="mlbl">${lbl}</span>${matMathML(stepMatrix)}</div>`;
+                renderMatrixPanel(); onComplete();
+            }
+        }
+        step();
+    }
+    function nextCommand(){
+        if(index>=commands.length){
+            stepHTML+=`<div class="mstep total"><span class="mlbl total">累计变换矩阵 T总</span>${matMathML(baseMatrix)}</div>`;
+            renderMatrixPanel(); running=false; return;
+        }
+        animateStep(commands[index], ()=>{ index++; nextCommand(); });
+    }
+    nextCommand();
+}
+
+reset();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-robot-arm";             // ← 计数键：与编号 L# 解耦的稳定标识，永不改动（改编号/文件名都不影响计数）
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

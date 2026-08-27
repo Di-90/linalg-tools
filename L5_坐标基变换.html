@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>坐标与基变换 · L5 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  /* 矩阵/向量=加粗且斜体：单字母 mi 默认即斜体，加 class .bm 只叠加 font-weight 得粗斜体（mathvariant="bold" 在 Chrome/MathML Core 不生效，mathvariant="normal" 又会去掉斜体，故用 class 钩子） */
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.2em;}
+  var{font-style:italic;font-family:"Cambria Math","STIX Two Math",serif;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:920px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  #status{background:#fffbeb;border:1px solid #fde68a;border-left:3px solid var(--gold);
+       border-radius:8px;padding:8px 14px;font-size:14px;color:#92400e;margin-bottom:12px;}
+  #status b{color:#b45309;}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+  button,label.filebtn{padding:7px 14px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover,label.filebtn:hover{border-color:var(--blue);}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  #canvasWrap{width:100%;display:flex;justify-content:center;background:#fff;
+       border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  canvas{display:block;max-width:100%;height:auto;cursor:crosshair;background:#fff;}
+  .readout{font-size:15px;line-height:2.1;background:#f8fafc;border:1px solid var(--line);
+       border-radius:8px;padding:10px 14px;margin-top:12px;min-height:22px;}
+  .readout .sysline{display:flex;align-items:center;gap:8px;}
+  .readout .dot{width:12px;height:12px;border-radius:50%;display:inline-block;}
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
+       font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>坐标与基变换</h1>
+  <span class="sub">同一点在不同（可斜交）基下的坐标</span>
+  <span class="tag">L5 · 线性代数</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    平面上任取一点 <math><mi>P</mi></math>，再自定义一个坐标系：原点 <math><mi>O</mi></math>、两条基向量 <math><msub><mi class="bm">e</mi><mn>1</mn></msub><mo>=</mo><mover><mrow><mi class="bm">O</mi><mi class="bm">X</mi></mrow><mo>&#x2192;</mo></mover></math>、<math><msub><mi class="bm">e</mi><mn>2</mn></msub><mo>=</mo><mover><mrow><mi class="bm">O</mi><mi class="bm">Y</mi></mrow><mo>&#x2192;</mo></mover></math>。点 <math><mi>P</mi></math> 在这组基下的坐标 <math><mo>(</mo><mi>a</mi><mo>,</mo><mi>b</mi><mo>)</mo></math> 满足：
+    <div class="formula">
+      <math display="block">
+        <mover><mrow><mi class="bm">O</mi><mi class="bm">P</mi></mrow><mo>&#x2192;</mo></mover>
+        <mo>=</mo>
+        <mi>a</mi><msub><mi class="bm">e</mi><mn>1</mn></msub>
+        <mo>+</mo>
+        <mi>b</mi><msub><mi class="bm">e</mi><mn>2</mn></msub>
+        <mo>&#x27F9;</mo>
+        <mrow><mo>(</mo><mtable><mtr><mtd><mi>a</mi></mtd></mtr><mtr><mtd><mi>b</mi></mtd></mtr></mtable><mo>)</mo></mrow>
+        <mo>=</mo>
+        <msup><mi class="bm">B</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup>
+        <mover><mrow><mi class="bm">O</mi><mi class="bm">P</mi></mrow><mo>&#x2192;</mo></mover>
+        <mo>,</mo>
+        <mspace width="0.4em"/>
+        <mi class="bm">B</mi><mo>=</mo><mo>(</mo><msub><mi class="bm">e</mi><mn>1</mn></msub><mspace width="0.4em"/><msub><mi class="bm">e</mi><mn>2</mn></msub><mo>)</mo>
+      </math>
+    </div>
+    可先<b>上传一张图片</b>作底图（例如地图），再在图上取点、定坐标系；不上传则用默认网格。同一个点在不同基下坐标不同——这正是<b>坐标依赖于基</b>的含义。
+  </div>
+
+  <div class="card">
+    <div id="status"></div>
+    <div class="toolbar">
+      <label class="filebtn">上传底图<input type="file" id="upload" accept="image/*" hidden></label>
+      <button id="undo">撤销上一步</button>
+      <button class="primary" id="reset">全部重置</button>
+    </div>
+    <div id="canvasWrap"><canvas id="canvas" width="600" height="600"></canvas></div>
+    <div class="readout" id="output"></div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+const upload=document.getElementById("upload");
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+const resetBtn=document.getElementById("reset");
+const undoBtn=document.getElementById("undo");
+const output=document.getElementById("output");
+const statusEl=document.getElementById("status");
+
+let img=new Image();
+let targetPoint=null;
+let tempPoints=[];
+let systems=[];
+const colors=["#c53030","#2b6cb0","#2f855a","#6b46c1","#dd6b20","#805ad5"];
+let dragging=false;
+let hasImage=false;
+const gridSize=50;
+const center={x:300,y:300};
+
+function getLuminance(r,g,b){return 0.299*r+0.587*g+0.114*b;}
+function drawTextWithContrast(text,x,y){
+    const px=Math.max(0,Math.min(canvas.width-1,Math.round(x)));
+    const py=Math.max(0,Math.min(canvas.height-1,Math.round(y)));
+    const pixel=ctx.getImageData(px,py,1,1).data;
+    ctx.fillStyle=getLuminance(pixel[0],pixel[1],pixel[2])>128?"#111":"#fff";
+    ctx.fillText(text,x,y);
+}
+
+function drawDefaultGrid(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle="#fff"; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.strokeStyle="#e8edf3"; ctx.lineWidth=1;
+    for(let x=0;x<=canvas.width;x+=gridSize){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke();}
+    for(let y=0;y<=canvas.height;y+=gridSize){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke();}
+    ctx.strokeStyle="#64748b"; ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(0,center.y);ctx.lineTo(canvas.width,center.y);
+    ctx.moveTo(center.x,0);ctx.lineTo(center.x,canvas.height);
+    ctx.stroke();
+    ctx.fillStyle="#64748b";
+    ctx.beginPath();ctx.moveTo(canvas.width-10,center.y);ctx.lineTo(canvas.width-20,center.y-5);ctx.lineTo(canvas.width-20,center.y+5);ctx.closePath();ctx.fill();
+    ctx.beginPath();ctx.moveTo(center.x,10);ctx.lineTo(center.x-5,20);ctx.lineTo(center.x+5,20);ctx.closePath();ctx.fill();
+    ctx.font="bold 18px 'Microsoft YaHei'";
+    drawTextWithContrast("x",canvas.width-28,center.y-12);
+    drawTextWithContrast("y",center.x+14,24);
+    ctx.font="14px 'Microsoft YaHei'";
+    for(let i=-5;i<=5;i++){
+        if(i===0) continue;
+        ctx.strokeStyle="#64748b";ctx.lineWidth=1.5;
+        ctx.beginPath();ctx.moveTo(center.x+i*gridSize,center.y-5);ctx.lineTo(center.x+i*gridSize,center.y+5);ctx.stroke();
+        drawTextWithContrast(i.toString(),center.x+i*gridSize-6,center.y+22);
+        ctx.beginPath();ctx.moveTo(center.x-5,center.y-i*gridSize);ctx.lineTo(center.x+5,center.y-i*gridSize);ctx.stroke();
+        drawTextWithContrast(i.toString(),center.x+10,center.y-i*gridSize+5);
+    }
+}
+drawDefaultGrid();
+
+upload.addEventListener("change",e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=evt=>{
+        img.onload=()=>{ canvas.width=img.width; canvas.height=img.height; hasImage=true;
+            targetPoint=null; tempPoints=[]; systems=[]; redraw(); };
+        img.src=evt.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+function getPos(e){
+    const rect=canvas.getBoundingClientRect();
+    const clientX=e.touches?e.touches[0].clientX:e.clientX;
+    const clientY=e.touches?e.touches[0].clientY:e.clientY;
+    // 修正 CSS 缩放：canvas 内部像素 ÷ 显示像素
+    const sx=canvas.width/rect.width, sy=canvas.height/rect.height;
+    return {x:(clientX-rect.left)*sx, y:(clientY-rect.top)*sy};
+}
+function snap(p){
+    if(hasImage) return p;
+    return {x:Math.round((p.x-center.x)/gridSize)*gridSize+center.x,
+            y:Math.round((p.y-center.y)/gridSize)*gridSize+center.y};
+}
+function distance(x1,y1,x2,y2){return Math.sqrt((x1-x2)**2+(y1-y2)**2);}
+
+function onDown(e){
+    e.preventDefault();
+    let p=snap(getPos(e));
+    if(targetPoint && distance(p.x,p.y,targetPoint.x,targetPoint.y)<12){ dragging=true; return; }
+    if(!targetPoint){ targetPoint=p; }
+    else{
+        tempPoints.push(p);
+        if(tempPoints.length===3){
+            const color=colors[systems.length%colors.length];
+            systems.push({color, O:tempPoints[0], Xp:tempPoints[1], Yp:tempPoints[2]});
+            tempPoints=[];
+        }
+    }
+    redraw();
+}
+function onMove(e){
+    if(!dragging||!targetPoint) return;
+    e.preventDefault();
+    targetPoint=snap(getPos(e));
+    redraw();
+}
+function onUp(){ dragging=false; }
+
+canvas.addEventListener("mousedown",onDown);
+canvas.addEventListener("mousemove",onMove);
+window.addEventListener("mouseup",onUp);
+canvas.addEventListener("touchstart",onDown,{passive:false});
+canvas.addEventListener("touchmove",onMove,{passive:false});
+canvas.addEventListener("touchend",onUp);
+
+function computeCoords(P,O,Xp,Yp){
+    const Px=P.x-O.x, Py=P.y-O.y;
+    const Xv=[Xp.x-O.x, Xp.y-O.y];
+    const Yv=[Yp.x-O.x, Yp.y-O.y];
+    const det=Xv[0]*Yv[1]-Xv[1]*Yv[0];
+    if(Math.abs(det)<1e-6) return [NaN,NaN];
+    const a=(Px*Yv[1]-Py*Yv[0])/det;
+    const b=(Py*Xv[0]-Px*Xv[1])/det;
+    return [a,b];
+}
+function drawPoint(P,color,r){
+    ctx.fillStyle=color; ctx.beginPath(); ctx.arc(P.x,P.y,r||5,0,Math.PI*2); ctx.fill();
+    ctx.lineWidth=1.5; ctx.strokeStyle="#fff"; ctx.stroke();
+}
+function drawVector(O,P,color){
+    ctx.strokeStyle=color; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(O.x,O.y); ctx.lineTo(P.x,P.y); ctx.stroke();
+    const angle=Math.atan2(P.y-O.y,P.x-O.x), h=12;
+    ctx.beginPath(); ctx.moveTo(P.x,P.y);
+    ctx.lineTo(P.x-h*Math.cos(angle-Math.PI/6), P.y-h*Math.sin(angle-Math.PI/6));
+    ctx.lineTo(P.x-h*Math.cos(angle+Math.PI/6), P.y-h*Math.sin(angle+Math.PI/6));
+    ctx.closePath(); ctx.fillStyle=color; ctx.fill();
+}
+
+function updateStatus(){
+    let msg;
+    if(!targetPoint) msg='<b>第 1 步</b>：点击画布放置目标点 <b>P</b>（放好后可拖动微调）。';
+    else{
+        const n=systems.length+1;
+        if(tempPoints.length===0) msg=`<b>第 2 步</b>：点击设定第 ${n} 个坐标系的<b>原点 O</b>。`;
+        else if(tempPoints.length===1) msg=`点击设定该坐标系 <b>x 方向的单位点</b>（基向量 e₁ 的端点）。`;
+        else msg=`点击设定该坐标系 <b>y 方向的单位点</b>（基向量 e₂ 的端点），完成后自动计算坐标。`;
+    }
+    statusEl.innerHTML=msg;
+}
+
+function redraw(){
+    if(hasImage && img.src){ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0); }
+    else drawDefaultGrid();
+
+    // 正在定义中的临时点
+    tempPoints.forEach((p,i)=>{ drawPoint(p,"#94a3b8",5);
+        ctx.fillStyle="#475569"; ctx.font="bold 13px 'Microsoft YaHei'";
+        ctx.fillText(["O","X","Y"][i], p.x+8, p.y-8); });
+
+    output.innerHTML="";
+    systems.forEach((s,i)=>{
+        drawVector(s.O,s.Xp,s.color);
+        drawVector(s.O,s.Yp,s.color);
+        drawPoint(s.O,s.color,4);
+        if(targetPoint){
+            const [a,b]=computeCoords(targetPoint,s.O,s.Xp,s.Yp);
+            const disp = (Number.isNaN(a))
+              ? `<span style="color:#c53030">基向量共线，无法定义坐标</span>`
+              : `<math><mo>(</mo><mn>${a.toFixed(2)}</mn><mo>,</mo><mn>${b.toFixed(2)}</mn><mo>)</mo></math>`;
+            output.innerHTML+=`<div class="sysline"><span class="dot" style="background:${s.color}"></span>`
+              +`坐标系 ${i+1}：<math><mi>P</mi></math> 的坐标 ${disp}</div>`;
+            if(!Number.isNaN(a)){
+                ctx.fillStyle=s.color; ctx.font="bold 15px 'Microsoft YaHei'";
+                ctx.fillText(`(${a.toFixed(2)}, ${b.toFixed(2)})`, targetPoint.x+12, targetPoint.y-16*(i+1));
+            }
+        }
+    });
+    if(targetPoint){ drawPoint(targetPoint,"#111",6);
+        ctx.fillStyle="#111"; ctx.font="bold 15px 'Microsoft YaHei'";
+        ctx.fillText("P", targetPoint.x+10, targetPoint.y+18); }
+
+    if(systems.length===0 && targetPoint===null) output.innerHTML="";
+    updateStatus();
+}
+
+undoBtn.addEventListener("click",()=>{
+    if(tempPoints.length>0) tempPoints.pop();
+    else if(systems.length>0) systems.pop();
+    else if(targetPoint) targetPoint=null;
+    redraw();
+});
+resetBtn.addEventListener("click",()=>{
+    targetPoint=null; tempPoints=[]; systems=[]; hasImage=false; img=new Image();
+    canvas.width=600; canvas.height=600;
+    drawDefaultGrid(); output.innerHTML=""; updateStatus();
+});
+
+updateStatus();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-basis-change";          // ← 计数键：与编号 L# 解耦的稳定标识，永不改动（改编号/文件名都不影响计数）
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

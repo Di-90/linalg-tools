@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>二次型与二次曲面 · L6 · 线性代数</title>
+<script src="./vendor/three.min.js"></script>
+<script src="./vendor/OrbitControls.js"></script>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  /* 矩阵/向量=加粗且斜体：单字母 mi 默认即斜体，加 class .bm 只叠加 font-weight 得粗斜体（mathvariant="bold" 在 Chrome/MathML Core 不生效，mathvariant="normal" 又会去掉斜体，故用 class 钩子） */
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.2em;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:920px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  #canvas-container{width:100%;border:1px solid var(--line);border-radius:10px;
+       overflow:hidden;background:#fff;display:flex;justify-content:center;}
+  #canvas-container canvas{display:block;max-width:100%;cursor:grab;}
+  #canvas-container canvas:active{cursor:grabbing;}
+  .hint{font-size:12px;color:var(--sub);text-align:center;margin-top:8px;}
+  .eqbox{text-align:center;font-size:1.15em;background:#f8fafc;border:1px solid var(--line);
+       border-radius:8px;padding:10px 14px;margin-top:12px;}
+  .row{margin:10px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px;}
+  .row .lbl{color:var(--sub);font-size:13px;min-width:74px;}
+  select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;
+       background:#fff;color:var(--ink);cursor:pointer;min-width:240px;}
+  select:focus{outline:none;border-color:var(--blue);}
+  .slider{display:flex;align-items:center;gap:10px;flex:1;min-width:220px;}
+  .slider input[type=range]{flex:1;accent-color:var(--blue);cursor:pointer;}
+  .slider .val{font-variant-numeric:tabular-nums;color:var(--blue);font-weight:600;min-width:42px;text-align:right;}
+  button{padding:7px 14px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .legend{font-size:12px;color:var(--sub);margin-top:10px;}
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
+       font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>二次型与二次曲面</h1>
+  <span class="sub">对称矩阵 <math><mi class="bm">A</mi></math> 的等值面 <math><msup><mi class="bm">x</mi><mi>T</mi></msup><mi class="bm">A</mi><mi class="bm">x</mi><mo>=</mo><mi>c</mi></math></span>
+  <span class="tag">L6 · 线性代数</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    三元二次型 <math><mi>Q</mi><mo>(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo>,</mo><mi>z</mi><mo>)</mo><mo>=</mo><msup><mi class="bm">x</mi><mi>T</mi></msup><mi class="bm">A</mi><mi class="bm">x</mi></math>（<math><mi class="bm">A</mi></math> 为实对称矩阵）取定值时，在空间中描出的曲面就是<b>二次曲面</b>。经正交对角化 <math><mi class="bm">A</mi><mo>=</mo><mi class="bm">Q</mi><mi mathvariant="normal">&#x39B;</mi><msup><mi class="bm">Q</mi><mi>T</mi></msup></math> 后，二次型化为主轴上的标准形：
+    <div class="formula">
+      <math display="block">
+        <msub><mi>&#x3BB;</mi><mn>1</mn></msub><msubsup><mi>x</mi><mn>1</mn><mn>2</mn></msubsup>
+        <mo>+</mo>
+        <msub><mi>&#x3BB;</mi><mn>2</mn></msub><msubsup><mi>x</mi><mn>2</mn><mn>2</mn></msubsup>
+        <mo>+</mo>
+        <msub><mi>&#x3BB;</mi><mn>3</mn></msub><msubsup><mi>x</mi><mn>3</mn><mn>2</mn></msubsup>
+        <mo>=</mo>
+        <mi>c</mi>
+      </math>
+    </div>
+    特征值 <math><msub><mi>&#x3BB;</mi><mi>i</mi></msub></math> 的<b>符号</b>决定了曲面类型（全正 → 椭球；有正有负 → 双曲面/马鞍面；有零 → 抛物面/柱面/锥面）。下面选择曲面类型、拖动 <math><mi>a</mi></math>、<math><mi>b</mi></math>、<math><mi>c</mi></math> 观察形状；用鼠标<b>拖动旋转</b>、<b>滚轮缩放</b>。
+  </div>
+
+  <div class="card">
+    <div id="canvas-container"></div>
+    <div class="eqbox" id="equation"></div>
+    <div class="hint">拖动旋转视角 · 滚轮缩放 · 右键平移</div>
+  </div>
+
+  <div class="card">
+    <h2>曲面类型与参数</h2>
+    <div class="row">
+      <span class="lbl">曲面类型</span>
+      <select id="surfaceType">
+        <option value="ellipsoid">椭球面（Ellipsoid）</option>
+        <option value="hyperboloid1">单叶双曲面（Hyperboloid, 1 sheet）</option>
+        <option value="hyperboloid2">双叶双曲面（Hyperboloid, 2 sheets）</option>
+        <option value="paraboloidEll">椭圆抛物面（Elliptic Paraboloid）</option>
+        <option value="paraboloidHyp">双曲抛物面 / 马鞍面（Hyperbolic Paraboloid）</option>
+        <option value="cone">二次锥面（Elliptic Cone）</option>
+      </select>
+    </div>
+    <div class="row"><span class="lbl"><math><mi>a</mi></math>（X 方向）</span>
+      <div class="slider"><input type="range" id="paramA" min="0.5" max="2.5" step="0.01" value="1.5"><span class="val" id="aVal">1.50</span></div></div>
+    <div class="row"><span class="lbl"><math><mi>b</mi></math>（Y 方向）</span>
+      <div class="slider"><input type="range" id="paramB" min="0.5" max="2.5" step="0.01" value="1.2"><span class="val" id="bVal">1.20</span></div></div>
+    <div class="row"><span class="lbl"><math><mi>c</mi></math>（Z 方向）</span>
+      <div class="slider"><input type="range" id="paramC" min="0.5" max="2.5" step="0.01" value="1.0"><span class="val" id="cVal">1.00</span></div></div>
+    <div class="row">
+      <button id="wireframeBtn">线框模式</button>
+      <button id="resetViewBtn">重置视角</button>
+    </div>
+    <div class="legend">💡 抛物面/马鞍面时 <math><mi>c</mi></math> 不参与方程（形状由 <math><mi>a</mi></math>、<math><mi>b</mi></math> 决定）。</div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+const container=document.getElementById("canvas-container");
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xffffff);
+
+let size=Math.min(container.clientWidth||600, Math.round(window.innerHeight*0.6));
+size=Math.max(size,320);
+const camera=new THREE.PerspectiveCamera(50,1,0.1,1000);
+camera.position.set(4,3,5); camera.lookAt(0,0,0);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(window.devicePixelRatio||1);
+renderer.setSize(size,size);
+container.appendChild(renderer.domElement);
+
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=0.06; controls.target.set(0,0,0);
+
+// 光照
+scene.add(new THREE.AmbientLight(0xffffff,0.65));
+const dir=new THREE.DirectionalLight(0xffffff,0.7); dir.position.set(4,6,5); scene.add(dir);
+const fill=new THREE.DirectionalLight(0xbcd0ff,0.35); fill.position.set(-3,-2,-4); scene.add(fill);
+
+// 网格 + 坐标轴 + 文字标签
+const grid=new THREE.GridHelper(8,16,0xcbd5e1,0xe2e8f0); scene.add(grid);
+scene.add(new THREE.AxesHelper(3.5));
+function makeSprite(text,color){
+    const cvs=document.createElement("canvas"); cvs.width=128; cvs.height=64;
+    const cx=cvs.getContext("2d"); cx.font="bold 44px Arial"; cx.fillStyle=color;
+    cx.textAlign="center"; cx.textBaseline="middle"; cx.fillText(text,64,32);
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cvs),transparent:true}));
+    sp.scale.set(0.9,0.45,1); return sp;
+}
+[["X","#c53030",[3.9,0,0]],["Y","#2f855a",[0,3.9,0]],["Z","#2b6cb0",[0,0,3.9]]].forEach(([t,c,p])=>{
+    const s=makeSprite(t,c); s.position.set(...p); scene.add(s);
+});
+
+let currentMesh=null, currentMaterial=null, wireframeMode=false;
+let surfType="ellipsoid";
+let params={a:1.5,b:1.2,c:1.0};
+
+const aSlider=document.getElementById("paramA"), bSlider=document.getElementById("paramB"), cSlider=document.getElementById("paramC");
+const aVal=document.getElementById("aVal"), bVal=document.getElementById("bVal"), cVal=document.getElementById("cVal");
+const equationDiv=document.getElementById("equation");
+
+function updateParamDisplays(){
+    aVal.innerText=params.a.toFixed(2); bVal.innerText=params.b.toFixed(2); cVal.innerText=params.c.toFixed(2);
+}
+
+// ── 方程 MathML ──
+function fracSq(v,den){ // v²/den²
+    return `<mfrac><msup><mi>${v}</mi><mn>2</mn></msup><msup><mn>${den}</mn><mn>2</mn></msup></mfrac>`;
+}
+function fracLin(v,den){ // v²/den
+    return `<mfrac><msup><mi>${v}</mi><mn>2</mn></msup><mn>${den}</mn></mfrac>`;
+}
+function updateEquationText(){
+    const a=params.a.toFixed(2), b=params.b.toFixed(2), c=params.c.toFixed(2);
+    const a2=(2*params.a).toFixed(2), b2=(2*params.b).toFixed(2);
+    let body="";
+    switch(surfType){
+        case "ellipsoid":
+            body=`${fracSq("x",a)}<mo>+</mo>${fracSq("y",b)}<mo>+</mo>${fracSq("z",c)}<mo>=</mo><mn>1</mn>`; break;
+        case "hyperboloid1":
+            body=`${fracSq("x",a)}<mo>+</mo>${fracSq("y",b)}<mo>&#x2212;</mo>${fracSq("z",c)}<mo>=</mo><mn>1</mn>`; break;
+        case "hyperboloid2":
+            body=`<mo>&#x2212;</mo>${fracSq("x",a)}<mo>&#x2212;</mo>${fracSq("y",b)}<mo>+</mo>${fracSq("z",c)}<mo>=</mo><mn>1</mn>`; break;
+        case "paraboloidEll":
+            body=`<mi>z</mi><mo>=</mo>${fracLin("x",a2)}<mo>+</mo>${fracLin("y",b2)}`; break;
+        case "paraboloidHyp":
+            body=`<mi>z</mi><mo>=</mo>${fracLin("x",a2)}<mo>&#x2212;</mo>${fracLin("y",b2)}`; break;
+        case "cone":
+            body=`${fracSq("x",a)}<mo>+</mo>${fracSq("y",b)}<mo>&#x2212;</mo>${fracSq("z",c)}<mo>=</mo><mn>0</mn>`; break;
+    }
+    equationDiv.innerHTML=`<math>${body}</math>`;
+}
+
+// ── 几何生成（保留原参数化逻辑）──
+function generateUVGrid(func,uMin,uMax,vMin,vMax,usub,vsub){
+    const g=new THREE.BufferGeometry(), verts=[], idx=[];
+    const uStep=(uMax-uMin)/usub, vStep=(vMax-vMin)/vsub;
+    for(let i=0;i<=usub;i++){const u=uMin+i*uStep;
+        for(let j=0;j<=vsub;j++){const v=vMin+j*vStep; const p=func(u,v); verts.push(p.x,p.y,p.z);}}
+    for(let i=0;i<usub;i++)for(let j=0;j<vsub;j++){
+        const A=i*(vsub+1)+j,B=i*(vsub+1)+j+1,C=(i+1)*(vsub+1)+j,D=(i+1)*(vsub+1)+j+1;
+        idx.push(A,B,C, B,D,C);}
+    g.setAttribute("position",new THREE.BufferAttribute(new Float32Array(verts),3));
+    g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+function generateGrid(func,xMin,xMax,yMin,yMax,seg){
+    const g=new THREE.BufferGeometry(), verts=[], idx=[];
+    const xStep=(xMax-xMin)/seg, yStep=(yMax-yMin)/seg;
+    for(let i=0;i<=seg;i++){const x=xMin+i*xStep;
+        for(let j=0;j<=seg;j++){const y=yMin+j*yStep; const p=func(x,y); verts.push(p.x,p.y,p.z);}}
+    for(let i=0;i<seg;i++)for(let j=0;j<seg;j++){
+        const A=i*(seg+1)+j,B=i*(seg+1)+j+1,C=(i+1)*(seg+1)+j,D=(i+1)*(seg+1)+j+1;
+        idx.push(A,B,C, B,D,C);}
+    g.setAttribute("position",new THREE.BufferAttribute(new Float32Array(verts),3));
+    g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+function makeGeometry(type,a,b,c){
+    switch(type){
+        case "ellipsoid":
+            return generateUVGrid((u,v)=>new THREE.Vector3(a*Math.cos(u)*Math.cos(v), b*Math.sin(u)*Math.cos(v), c*Math.sin(v)),
+                0,2*Math.PI,-Math.PI/2,Math.PI/2,90,70);
+        case "hyperboloid1":
+            return generateUVGrid((u,v)=>{const vv=v*1.8;
+                return new THREE.Vector3(a*Math.cosh(vv)*Math.cos(u), b*Math.cosh(vv)*Math.sin(u), c*Math.sinh(vv));},
+                0,2*Math.PI,-1.2,1.2,90,70);
+        case "hyperboloid2":{
+            // 上下两叶合并到一个 BufferGeometry
+            const segs=70, uStep=2*Math.PI/segs, vStart=0.2, vEnd=1.8, vStep=(vEnd-vStart)/segs;
+            const up=[], down=[], idxUp=[];
+            for(let i=0;i<=segs;i++){const u=i*uStep;
+                for(let j=0;j<=segs;j++){const v=vStart+j*vStep;
+                    const sh=Math.sinh(v), ch=Math.cosh(v);
+                    const x=a*sh*Math.cos(u), y=b*sh*Math.sin(u), z=c*ch;
+                    up.push(x,y,z); down.push(x,y,-z);}}
+            for(let i=0;i<segs;i++)for(let j=0;j<segs;j++){
+                const A=i*(segs+1)+j,B=i*(segs+1)+j+1,C=(i+1)*(segs+1)+j,D=(i+1)*(segs+1)+j+1;
+                idxUp.push(A,B,C, B,D,C);}
+            const allV=up.concat(down);
+            const off=up.length/3;
+            const allI=idxUp.concat(idxUp.map(k=>k+off));
+            const g=new THREE.BufferGeometry();
+            g.setAttribute("position",new THREE.BufferAttribute(new Float32Array(allV),3));
+            g.setIndex(allI); g.computeVertexNormals(); return g;
+        }
+        case "paraboloidEll":
+            return generateGrid((x,y)=>new THREE.Vector3(x,y,Math.min((x*x)/(2*a)+(y*y)/(2*b),2.5)),
+                -2.2,2.2,-2.0,2.0,80);
+        case "paraboloidHyp":
+            return generateGrid((x,y)=>{let z=(x*x)/(2*a)-(y*y)/(2*b); z=Math.min(Math.max(z,-1.8),1.8);
+                return new THREE.Vector3(x,y,z);}, -2.2,2.2,-2.0,2.0,90);
+        case "cone":
+            return generateUVGrid((u,v)=>new THREE.Vector3(a*v*Math.cos(u), b*v*Math.sin(u), c*v),
+                0,2*Math.PI,-1.5,1.5,80,60);
+        default: return new THREE.BoxGeometry(1,1,1);
+    }
+}
+
+const colorMap={ellipsoid:0x2b6cb0,hyperboloid1:0xdd6b20,hyperboloid2:0xc53030,
+    paraboloidEll:0x2f855a,paraboloidHyp:0x6b46c1,cone:0x334155};
+
+function updateSurface(){
+    if(currentMesh){ scene.remove(currentMesh); if(currentMesh.geometry) currentMesh.geometry.dispose(); }
+    const geo=makeGeometry(surfType,params.a,params.b,params.c);
+    const mat=new THREE.MeshStandardMaterial({color:colorMap[surfType]||0x2b6cb0, side:THREE.DoubleSide,
+        roughness:0.45, metalness:0.05, transparent:true, opacity:0.85, wireframe:wireframeMode});
+    currentMesh=new THREE.Mesh(geo,mat); scene.add(currentMesh); currentMaterial=mat;
+    updateEquationText();
+}
+
+document.getElementById("surfaceType").addEventListener("change",e=>{surfType=e.target.value; updateSurface();});
+function onParam(){ params.a=parseFloat(aSlider.value); params.b=parseFloat(bSlider.value); params.c=parseFloat(cSlider.value);
+    updateParamDisplays(); updateSurface(); }
+aSlider.addEventListener("input",onParam); bSlider.addEventListener("input",onParam); cSlider.addEventListener("input",onParam);
+document.getElementById("wireframeBtn").addEventListener("click",e=>{
+    wireframeMode=!wireframeMode; if(currentMaterial) currentMaterial.wireframe=wireframeMode;
+    e.currentTarget.classList.toggle("on",wireframeMode);
+});
+document.getElementById("resetViewBtn").addEventListener("click",()=>{
+    camera.position.set(4,3,5); controls.target.set(0,0,0); controls.update();
+});
+
+function onResize(){
+    let s=Math.min(container.clientWidth, Math.round(window.innerHeight*0.6)); s=Math.max(s,320);
+    renderer.setSize(s,s); camera.aspect=1; camera.updateProjectionMatrix();
+}
+window.addEventListener("resize",onResize);
+
+function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene,camera); }
+updateParamDisplays(); updateSurface(); animate(); onResize();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-quadric";               // ← 计数键：与编号 L# 解耦的稳定标识，永不改动（改编号/文件名都不影响计数）
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

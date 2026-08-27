@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>希尔密码 · L8 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  /* 矩阵/向量=加粗且斜体：单字母 mi 默认即斜体，加 class .bm 只叠加 font-weight 得粗斜体（mathvariant="bold" 在 Chrome/MathML Core 不生效，mathvariant="normal" 又会去掉斜体，故用 class 钩子） */
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.2em;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:920px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  label.field{display:block;font-size:13px;color:var(--sub);margin:10px 0 4px;}
+  textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;
+       font-size:14px;font-family:"Consolas","Microsoft YaHei",monospace;resize:vertical;}
+  textarea:focus,input:focus{outline:none;border-color:var(--blue);}
+  textarea[readonly]{background:#f8fafc;}
+  .row{margin:8px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;}
+  .row .lbl{color:var(--sub);font-size:13px;}
+  input[type=number]{width:70px;font-size:14px;padding:6px 7px;border:1px solid var(--line);
+       border-radius:6px;font-variant-numeric:tabular-nums;text-align:center;}
+  .mgrid{display:inline-grid;gap:6px;margin-top:6px;padding:8px 12px;
+       border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-radius:3px;}
+  .mgrid input{width:52px;font-size:14px;padding:5px 4px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .tip{margin-top:8px;font-size:12.5px;color:var(--sub);}
+  .tip button{background:none;border:none;color:var(--blue);cursor:pointer;font-size:12.5px;
+       text-decoration:underline;padding:0 2px;}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;}
+  button.act{padding:8px 16px;border:none;border-radius:8px;color:#fff;font-size:14px;cursor:pointer;transition:.15s;}
+  button.enc{background:var(--blue);} button.dec{background:var(--green);}
+  button.clr{background:#718096;} button.chk{background:var(--purple);}
+  button.act:hover{filter:brightness(1.08);}
+  .infobox{margin-top:12px;font-size:13.5px;border-radius:8px;padding:0;}
+  .infobox.ok{background:#f0fdf4;border:1px solid #bbf7d0;padding:10px 14px;color:#166534;}
+  .infobox.bad{background:#fef2f2;border:1px solid #fecaca;padding:10px 14px;color:#991b1b;}
+  .infobox .mats{display:flex;gap:22px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+  .infobox .mats .mlbl{font-size:12.5px;color:var(--sub);margin-right:6px;}
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
+       font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>希尔密码</h1>
+  <span class="sub">用可逆密钥矩阵 <math><mi class="bm">K</mi></math> 对字母向量模 26 加密</span>
+  <span class="tag">L8 · 线性代数</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    希尔密码把每 <math><mi>n</mi></math> 个字母（<math><mi>a</mi><mo>=</mo><mn>0</mn><mo>,</mo><mo>&#x2026;</mo><mo>,</mo><mi>z</mi><mo>=</mo><mn>25</mn></math>）看作向量 <math><mi class="bm">p</mi></math>，用 <math><mi>n</mi><mo>&#xD7;</mo><mi>n</mi></math> 密钥矩阵 <math><mi class="bm">K</mi></math> 做模 26 的矩阵乘法完成加密，解密则用逆矩阵：
+    <div class="formula">
+      <math display="block">
+        <mi class="bm">c</mi><mo>=</mo><mi class="bm">K</mi><mi class="bm">p</mi><mspace width="0.3em"/><mo>(</mo><mi>mod</mi><mspace width="0.2em"/><mn>26</mn><mo>)</mo>
+        <mo>,</mo><mspace width="1em"/>
+        <mi class="bm">p</mi><mo>=</mo><msup><mi class="bm">K</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup><mi class="bm">c</mi><mspace width="0.3em"/><mo>(</mo><mi>mod</mi><mspace width="0.2em"/><mn>26</mn><mo>)</mo>
+      </math>
+    </div>
+    密钥矩阵 <math><mi class="bm">K</mi></math> 可逆的充要条件是 <math><mi>det</mi><mo>&#x2009;</mo><mi class="bm">K</mi></math> 与 26 <b>互质</b>（即 <math><mi>gcd</mi><mo>(</mo><mi>det</mi><mo>&#x2009;</mo><mi class="bm">K</mi><mo>,</mo><mn>26</mn><mo>)</mo><mo>=</mo><mn>1</mn></math>），此时模逆存在，才能解密。点“检查矩阵”查看行列式与逆矩阵。
+  </div>
+
+  <div class="card">
+    <h2>明文 / 密文</h2>
+    <label class="field">请输入明文或密文（仅英文字母，其余字符自动忽略）：</label>
+    <textarea id="text-input" rows="3" placeholder="例如：hello world"></textarea>
+
+    <div class="row" style="margin-top:12px;">
+      <span class="lbl">密钥矩阵维度 <math><mi>n</mi></math>（2–5）：</span>
+      <input type="number" id="matrix-size" min="2" max="5" value="2">
+    </div>
+    <label class="field">密钥矩阵 <math><mi class="bm">K</mi></math>（每格 0–25 整数）：</label>
+    <div id="matrix-inputs" class="mgrid"></div>
+    <div class="tip">💡 行列式须与 26 互质（值为 1,3,5,7,9,11,15,17,19,21,23,25 之一）方可解密。
+      <button id="example-btn">填入可逆示例</button></div>
+  </div>
+
+  <div class="card">
+    <div class="btns">
+      <button class="act enc" id="encrypt-btn">加密</button>
+      <button class="act dec" id="decrypt-btn">解密</button>
+      <button class="act chk" id="check-matrix-btn">检查矩阵</button>
+      <button class="act clr" id="clear-btn">清除</button>
+    </div>
+    <label class="field">结果（加密 / 解密）：</label>
+    <textarea id="output-text" rows="3" readonly></textarea>
+    <div id="info" class="infobox"></div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+function mod(n,m){return ((n%m)+m)%m;}
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b!==0){const t=b;b=a%b;a=t;}return a;}
+function modInverse(a){a=mod(a,26);for(let x=1;x<26;x++){if((a*x)%26===1)return x;}return -1;}
+
+function determinant(matrix){
+    const n=matrix.length;
+    if(n===1) return mod(matrix[0][0],26);
+    if(n===2) return mod(matrix[0][0]*matrix[1][1]-matrix[0][1]*matrix[1][0],26);
+    let det=0;
+    for(let i=0;i<n;i++){
+        const sub=[];
+        for(let j=1;j<n;j++){ sub.push([]); for(let k=0;k<n;k++){ if(k!==i) sub[j-1].push(matrix[j][k]); } }
+        const cof=Math.pow(-1,i)*determinant(sub);
+        det+=matrix[0][i]*cof;
+    }
+    return mod(det,26);
+}
+function isMatrixInvertible(matrix){ return gcd(Math.abs(determinant(matrix)),26)===1; }
+function getMatrixInfo(matrix){
+    const det=determinant(matrix), g=gcd(Math.abs(det),26), inv=g===1;
+    return {determinant:det, gcd:g, isInvertible:inv,
+        message: inv ? `矩阵可逆：det K = ${det}，与 26 互质。` :
+                       `矩阵不可逆：det K = ${det}，与 26 的最大公约数为 ${g}，无法求模逆。`};
+}
+function adjoint(matrix){
+    const n=matrix.length, adj=Array(n).fill().map(()=>Array(n).fill(0));
+    if(n===1){adj[0][0]=1;return adj;}
+    for(let i=0;i<n;i++)for(let j=0;j<n;j++){
+        const sub=[];
+        for(let k=0;k<n;k++){ if(k===i)continue; sub.push([]); for(let l=0;l<n;l++){ if(l===j)continue; sub[sub.length-1].push(matrix[k][l]); } }
+        adj[j][i]=mod(Math.pow(-1,i+j)*determinant(sub),26);
+    }
+    return adj;
+}
+function inverseMatrix(matrix){
+    if(!isMatrixInvertible(matrix)) return null;
+    const detInv=modInverse(determinant(matrix));
+    if(detInv===-1) return null;
+    const adj=adjoint(matrix), inv=[];
+    for(let i=0;i<matrix.length;i++){ inv[i]=[]; for(let j=0;j<matrix.length;j++) inv[i][j]=mod(adj[i][j]*detInv,26); }
+    return inv;
+}
+function matrixMultiply(matrix,vector,modVal){
+    const res=[];
+    for(let i=0;i<matrix.length;i++){ let s=0; for(let j=0;j<vector.length;j++) s+=matrix[i][j]*vector[j]; res.push(mod(s,modVal)); }
+    return res;
+}
+
+// n×n 整数矩阵 → MathML
+function matMathML(m){
+    let rows="";
+    for(let i=0;i<m.length;i++){ let c=""; for(let j=0;j<m.length;j++) c+=`<mtd><mn>${m[i][j]}</mn></mtd>`; rows+=`<mtr>${c}</mtr>`; }
+    return `<math><mrow><mo>(</mo><mtable columnspacing="0.7em" rowspacing="0.25em">${rows}</mtable><mo>)</mo></mrow></math>`;
+}
+
+function generateMatrixInputs(size){
+    const mi=document.getElementById("matrix-inputs"); mi.innerHTML="";
+    mi.style.gridTemplateColumns=`repeat(${size}, auto)`;
+    for(let i=0;i<size;i++)for(let j=0;j<size;j++){
+        const input=document.createElement("input");
+        input.type="number"; input.min="0"; input.max="25"; input.placeholder=`${i+1},${j+1}`;
+        mi.appendChild(input);
+    }
+}
+function setExampleMatrix(){
+    const size=parseInt(document.getElementById("matrix-size").value);
+    const inp=document.querySelectorAll("#matrix-inputs input");
+    if(size===2 && inp.length===4){ [3,2,3,5].forEach((v,k)=>inp[k].value=v); }        // det=9
+    else if(size===3 && inp.length===9){ [6,24,1, 13,16,10, 20,17,15].forEach((v,k)=>inp[k].value=v); } // 经典可逆 det与26互质
+    else { alert("示例仅提供 2×2 与 3×3，请先把维度设为 2 或 3。"); }
+}
+
+function hillEncrypt(plaintext,keyMatrix,size){
+    plaintext=plaintext.replace(/[^a-zA-Z]/g,"").toLowerCase();
+    if(plaintext.length===0){ alert("请输入有效的英文字母文本！"); return ""; }
+    while(plaintext.length%size!==0) plaintext+="x";
+    let ct="";
+    for(let i=0;i<plaintext.length;i+=size){
+        const v=[]; for(let j=0;j<size;j++) v.push(plaintext.charCodeAt(i+j)-97);
+        const r=matrixMultiply(keyMatrix,v,26);
+        for(let j=0;j<size;j++) ct+=String.fromCharCode((r[j]%26)+97);
+    }
+    return ct.toUpperCase();
+}
+function hillDecrypt(ciphertext,keyMatrix,size){
+    ciphertext=ciphertext.replace(/[^a-zA-Z]/g,"").toLowerCase();
+    if(ciphertext.length===0){ alert("请输入有效的英文字母文本！"); return ""; }
+    if(ciphertext.length%size!==0){ alert(`密文长度必须是 ${size} 的倍数！当前为 ${ciphertext.length}。`); return ""; }
+    const invM=inverseMatrix(keyMatrix);
+    if(!invM){ showInfo(getMatrixInfo(keyMatrix),keyMatrix); alert("密钥矩阵不可逆，无法解密（详见下方信息）。"); return ""; }
+    let pt="";
+    for(let i=0;i<ciphertext.length;i+=size){
+        const v=[]; for(let j=0;j<size;j++) v.push(ciphertext.charCodeAt(i+j)-97);
+        const r=matrixMultiply(invM,v,26);
+        for(let j=0;j<size;j++) pt+=String.fromCharCode((r[j]%26)+97);
+    }
+    return pt.replace(/x+$/,"").toUpperCase();
+}
+function getKeyMatrix(size){
+    const inp=document.querySelectorAll("#matrix-inputs input"); const K=[]; let ok=true;
+    for(let i=0;i<size;i++){ K[i]=[]; for(let j=0;j<size;j++){
+        const val=parseInt(inp[i*size+j].value);
+        if(isNaN(val)||val<0||val>25){ ok=false; break; } K[i][j]=val; } if(!ok)break; }
+    if(!ok){ alert("密钥矩阵必须全部填 0–25 的整数！"); return null; }
+    return K;
+}
+
+function showInfo(info,K){
+    const box=document.getElementById("info");
+    box.className="infobox "+(info.isInvertible?"ok":"bad");
+    let html=`<div>${info.isInvertible?"✅":"❌"} ${info.message}</div>`;
+    html+=`<div class="mats"><span><span class="mlbl">K =</span>${matMathML(K)}</span>`;
+    if(info.isInvertible){
+        const inv=inverseMatrix(K);
+        html+=`<span><span class="mlbl">K⁻¹ (mod 26) =</span>${matMathML(inv)}</span>`;
+    }
+    html+=`</div>`;
+    box.innerHTML=html;
+}
+function clearInfo(){ const box=document.getElementById("info"); box.className="infobox"; box.innerHTML=""; }
+
+function init(){
+    generateMatrixInputs(2);
+    document.getElementById("matrix-size").addEventListener("change",e=>{
+        let size=parseInt(e.target.value); if(isNaN(size))size=2; size=Math.max(2,Math.min(5,size));
+        e.target.value=size; generateMatrixInputs(size); clearInfo();
+    });
+    document.getElementById("encrypt-btn").addEventListener("click",()=>{
+        const text=document.getElementById("text-input").value;
+        const size=parseInt(document.getElementById("matrix-size").value);
+        const K=getKeyMatrix(size); if(!K)return;
+        if(text.length===0){ alert("请输入要加密的文本！"); return; }
+        document.getElementById("output-text").value=hillEncrypt(text,K,size);
+    });
+    document.getElementById("decrypt-btn").addEventListener("click",()=>{
+        const text=document.getElementById("text-input").value;
+        const size=parseInt(document.getElementById("matrix-size").value);
+        const K=getKeyMatrix(size); if(!K)return;
+        if(text.length===0){ alert("请输入要解密的文本！"); return; }
+        document.getElementById("output-text").value=hillDecrypt(text,K,size);
+    });
+    document.getElementById("clear-btn").addEventListener("click",()=>{
+        document.getElementById("text-input").value="";
+        document.getElementById("output-text").value="";
+        document.getElementById("matrix-size").value="2";
+        generateMatrixInputs(2); clearInfo();
+    });
+    document.getElementById("check-matrix-btn").addEventListener("click",()=>{
+        const size=parseInt(document.getElementById("matrix-size").value);
+        const K=getKeyMatrix(size); if(!K)return;
+        showInfo(getMatrixInfo(K),K);
+    });
+    document.getElementById("example-btn").addEventListener("click",()=>{ setExampleMatrix(); clearInfo(); });
+}
+init();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-hill-cipher";           // ← 计数键：与编号 L# 解耦的稳定标识，永不改动（改编号/文件名都不影响计数）
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

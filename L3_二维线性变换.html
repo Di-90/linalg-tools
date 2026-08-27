@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>二维线性变换 · L3 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --vecA:#2b6cb0; --vecB:#c53030;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  /* 矩阵/向量=加粗且斜体：单字母 mi 默认即斜体，加 class .bm 只叠加 font-weight 得粗斜体（mathvariant="bold" 在 Chrome/MathML Core 不生效，class="bm" 又会去掉斜体，故用 class 钩子） */
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.2em;}
+  var{font-style:italic;font-family:"Cambria Math","STIX Two Math",serif;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:920px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  #canvasContainer{width:100%;background:#fff;border:1px solid var(--line);
+       border-radius:10px;overflow:hidden;display:flex;justify-content:center;}
+  canvas{background:#fbfcfe;touch-action:none;display:block;cursor:crosshair;max-width:100%;}
+  .row{margin:8px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:15px;}
+  .row .lbl{color:var(--sub);font-size:13px;}
+  input[type=number],input[type=text].mx{width:66px;font-size:15px;padding:5px 6px;
+       border:1px solid var(--line);border-radius:6px;font-variant-numeric:tabular-nums;text-align:center;}
+  input:focus{outline:none;border-color:var(--blue);}
+  .matrix-grid{display:inline-grid;grid-template-columns:repeat(2,auto);gap:6px;
+       padding:8px 12px;border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-radius:3px;}
+  button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .readout{font-size:15px;line-height:2.1;background:#f8fafc;border:1px solid var(--line);
+       border-radius:8px;padding:10px 14px;margin-top:12px;}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:10px;justify-content:center;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:14px;height:6px;border-radius:2px;display:inline-block;}
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
+       font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>二维线性变换</h1>
+  <span class="sub">向量 <math><mi class="bm">A</mi></math> 经矩阵 <math><mi class="bm">H</mi></math> 变成 <math><mi class="bm">B</mi></math></span>
+  <span class="tag">L3 · 线性代数</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    一个 <math><mn>2</mn><mo>&#xD7;</mo><mn>2</mn></math> 矩阵 <math><mi class="bm">H</mi></math> 把平面上的向量 <math><mover><mrow><mi class="bm">O</mi><mi class="bm">A</mi></mrow><mo>&#x2192;</mo></mover></math> 线性地映射为新向量 <math><mover><mrow><mi class="bm">O</mi><mi class="bm">B</mi></mrow><mo>&#x2192;</mo></mover></math>：
+    <div class="formula">
+      <math display="block">
+        <mover><mrow><mi class="bm">O</mi><mi class="bm">B</mi></mrow><mo>&#x2192;</mo></mover>
+        <mo>=</mo>
+        <mi class="bm">H</mi>
+        <mover><mrow><mi class="bm">O</mi><mi class="bm">A</mi></mrow><mo>&#x2192;</mo></mover>
+        <mo>=</mo>
+        <mrow><mo>(</mo><mtable columnspacing="0.7em"><mtr><mtd><msub><mi>h</mi><mn>11</mn></msub></mtd><mtd><msub><mi>h</mi><mn>12</mn></msub></mtd></mtr><mtr><mtd><msub><mi>h</mi><mn>21</mn></msub></mtd><mtd><msub><mi>h</mi><mn>22</mn></msub></mtd></mtr></mtable><mo>)</mo></mrow>
+        <mrow><mo>(</mo><mtable><mtr><mtd><msub><mi>x</mi><mi>A</mi></msub></mtd></mtr><mtr><mtd><msub><mi>y</mi><mi>A</mi></msub></mtd></mtr></mtable><mo>)</mo></mrow>
+      </math>
+    </div>
+    拖动或点击画布移动蓝色向量 <math><mi class="bm">A</mi></math>，或改动矩阵 <math><mi class="bm">H</mi></math> 的四个元素，观察红色像 <math><mi class="bm">B</mi></math> 如何随之改变；<math><mi>&#x3BB;</mi><mo>=</mo><mfrac><mrow><mo>|</mo><mi class="bm">B</mi><mo>|</mo></mrow><mrow><mo>|</mo><mi class="bm">A</mi><mo>|</mo></mrow></mfrac></math> 是这个方向上的<b>长度伸缩比</b>。
+  </div>
+
+  <div class="card">
+    <div id="canvasContainer"><canvas id="canvas"></canvas></div>
+    <div class="legend">
+      <span><i style="background:var(--vecA)"></i>原向量 <math><mi class="bm">A</mi></math></span>
+      <span><i style="background:var(--vecB)"></i>变换后 <math><mi class="bm">B</mi><mo>=</mo><mi class="bm">H</mi><mi class="bm">A</mi></math></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>向量 A 与变换矩阵 H</h2>
+    <div class="row">
+      <span class="lbl">向量 <math><mi class="bm">A</mi></math> 坐标：</span>
+      <input type="number" id="inputAx" step="0.5" placeholder="x"> ,
+      <input type="number" id="inputAy" step="0.5" placeholder="y">
+      <button onclick="setPointAFromInputs()">设置</button>
+    </div>
+    <div class="row" style="align-items:flex-start;">
+      <span class="lbl">矩阵 <math><mi class="bm">H</mi></math>：</span>
+      <div class="matrix-grid">
+        <input class="mx" type="text" id="matrix11" value="1">
+        <input class="mx" type="text" id="matrix12" value="0">
+        <input class="mx" type="text" id="matrix21" value="0">
+        <input class="mx" type="text" id="matrix22" value="1">
+      </div>
+    </div>
+    <div class="row">
+      <span class="lbl">常用变换：</span>
+      <div class="presets">
+        <button onclick="setMatrix(1,0,0,1)">单位</button>
+        <button onclick="setMatrix(0,-1,1,0)">旋转 90°</button>
+        <button onclick="setMatrix(2,0,0,2)">放大 2×</button>
+        <button onclick="setMatrix(1,1,0,1)">水平切变</button>
+        <button onclick="setMatrix(1,0,0,-1)">关于 x 轴反射</button>
+      </div>
+    </div>
+    <div class="readout" id="vectorsInfo"></div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+const container=document.getElementById("canvasContainer");
+
+let pointA={x:2,y:1};              // 数据坐标（非像素）
+let matrix=[[1,0],[0,1]];
+let size, origin, sf;              // 画布边长 / 中心像素 / 每单位像素
+const RANGE=6;                     // 坐标范围 ±6
+
+function resize(){
+    size=Math.min(container.clientWidth, Math.round(window.innerHeight*0.6));
+    size=Math.max(size,300);
+    canvas.width=size; canvas.height=size;
+    origin=size/2; sf=size/(2*RANGE);
+    updateDisplay();
+}
+window.addEventListener("resize",resize);
+
+function toPixel(d){return {x:origin+d.x*sf, y:origin-d.y*sf};}
+function fromPixel(p){return {x:(p.x-origin)/sf, y:(origin-p.y)/sf};}
+
+function drawAxes(){
+    ctx.clearRect(0,0,size,size);
+    ctx.strokeStyle="#e8edf3"; ctx.lineWidth=1;
+    for(let k=-RANGE;k<=RANGE;k++){
+        const px=origin+k*sf, py=origin+k*sf;
+        ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,size);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(size,py);ctx.stroke();
+    }
+    ctx.strokeStyle="#64748b"; ctx.lineWidth=1.4;
+    ctx.beginPath();
+    ctx.moveTo(0,origin);ctx.lineTo(size,origin);
+    ctx.moveTo(origin,0);ctx.lineTo(origin,size);
+    ctx.stroke();
+    ctx.fillStyle="#94a3b8"; ctx.font="11px system-ui";
+    for(let k=-RANGE;k<=RANGE;k++){
+        if(k===0) continue;
+        ctx.fillText(k, origin+k*sf-3, origin+13);
+        ctx.fillText(k, origin+4, origin-k*sf+4);
+    }
+}
+
+function drawVector(d,color,label){
+    const p=toPixel(d);
+    ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(origin,origin);ctx.lineTo(p.x,p.y);ctx.stroke();
+    const angle=Math.atan2(p.y-origin,p.x-origin), aL=11;
+    ctx.beginPath();
+    ctx.moveTo(p.x,p.y);
+    ctx.lineTo(p.x-aL*Math.cos(angle-Math.PI/6), p.y-aL*Math.sin(angle-Math.PI/6));
+    ctx.moveTo(p.x,p.y);
+    ctx.lineTo(p.x-aL*Math.cos(angle+Math.PI/6), p.y-aL*Math.sin(angle+Math.PI/6));
+    ctx.stroke();
+    ctx.font="bold 14px system-ui";
+    ctx.fillText(label, p.x+6, p.y-6);
+}
+
+function transformed(){
+    const xB=matrix[0][0]*pointA.x + matrix[0][1]*pointA.y;
+    const yB=matrix[1][0]*pointA.x + matrix[1][1]*pointA.y;
+    return {x:xB, y:yB};
+}
+
+function fmt(n){return (Math.round(n*100)/100).toString();}
+
+function updateDisplay(){
+    drawAxes();
+    const B=transformed();
+    drawVector(pointA,"var(--vecA)".length?getCol("--vecA"):"#2b6cb0","A");
+    drawVector(B,getCol("--vecB"),"B");
+
+    const lenA=Math.hypot(pointA.x,pointA.y);
+    const lenB=Math.hypot(B.x,B.y);
+
+    const oaMath=`<math><mover><mrow><mi class="bm">O</mi><mi class="bm">A</mi></mrow><mo>&#x2192;</mo></mover>`
+      +`<mo>=</mo><mo>(</mo><mn>${fmt(pointA.x)}</mn><mo>,</mo><mn>${fmt(pointA.y)}</mn><mo>)</mo></math>`;
+    const obMath=`<math><mover><mrow><mi class="bm">O</mi><mi class="bm">B</mi></mrow><mo>&#x2192;</mo></mover>`
+      +`<mo>=</mo><mi class="bm">H</mi><mspace width="0.15em"/>`
+      +`<mover><mrow><mi class="bm">O</mi><mi class="bm">A</mi></mrow><mo>&#x2192;</mo></mover>`
+      +`<mo>=</mo><mo>(</mo><mn>${fmt(B.x)}</mn><mo>,</mo><mn>${fmt(B.y)}</mn><mo>)</mo></math>`;
+    let lamMath;
+    if(lenA<1e-9){
+        lamMath=`<math><mi>&#x3BB;</mi></math> = —（向量 <math><mi class="bm">A</mi></math> 在原点，无法计算长度比）`;
+    }else{
+        lamMath=`<math><mi>&#x3BB;</mi><mo>=</mo>`
+          +`<mfrac><mrow><mo>|</mo><mi class="bm">B</mi><mo>|</mo></mrow><mrow><mo>|</mo><mi class="bm">A</mi><mo>|</mo></mrow></mfrac>`
+          +`<mo>=</mo><mfrac><mn>${lenB.toFixed(2)}</mn><mn>${lenA.toFixed(2)}</mn></mfrac>`
+          +`<mo>=</mo><mn>${(lenB/lenA).toFixed(2)}</mn></math>`;
+    }
+    document.getElementById("vectorsInfo").innerHTML=
+        `<div>${oaMath}</div><div>${obMath}</div><div>${lamMath}</div>`;
+}
+
+function getCol(name){
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim()||"#000";
+}
+
+function updateMatrix(){
+    const v=[["matrix11","matrix12"],["matrix21","matrix22"]];
+    const m=[[0,0],[0,0]];
+    for(let r=0;r<2;r++)for(let c=0;c<2;c++){
+        const val=parseFloat(document.getElementById(v[r][c]).value);
+        if(Number.isNaN(val)) return;   // 输入未填完整，暂不重算
+        m[r][c]=val;
+    }
+    matrix=m;
+    updateDisplay();
+}
+
+function setMatrix(a,b,c,d){
+    document.getElementById("matrix11").value=a;
+    document.getElementById("matrix12").value=b;
+    document.getElementById("matrix21").value=c;
+    document.getElementById("matrix22").value=d;
+    updateMatrix();
+}
+
+function setPointAFromInputs(){
+    const ax=parseFloat(document.getElementById("inputAx").value);
+    const ay=parseFloat(document.getElementById("inputAy").value);
+    if(!Number.isNaN(ax)&&!Number.isNaN(ay)){ pointA={x:ax,y:ay}; updateDisplay(); }
+    else alert("请输入有效的坐标值");
+}
+
+["matrix11","matrix12","matrix21","matrix22"].forEach(id=>
+    document.getElementById(id).addEventListener("input",updateMatrix));
+
+// 拖动 / 点击设置向量 A
+let dragging=false;
+function setAFromEvent(e){
+    const rect=canvas.getBoundingClientRect();
+    const cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;
+    const cy=(e.touches?e.touches[0].clientY:e.clientY)-rect.top;
+    pointA=fromPixel({x:cx,y:cy});
+    updateDisplay();
+}
+canvas.addEventListener("mousedown",e=>{dragging=true;setAFromEvent(e);});
+canvas.addEventListener("mousemove",e=>{if(dragging)setAFromEvent(e);});
+window.addEventListener("mouseup",()=>dragging=false);
+canvas.addEventListener("touchstart",e=>{e.preventDefault();setAFromEvent(e);},{passive:false});
+canvas.addEventListener("touchmove",e=>{e.preventDefault();setAFromEvent(e);},{passive:false});
+
+resize();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-linmap-2d";             // ← 计数键：与编号 L# 解耦的稳定标识，永不改动（改编号/文件名都不影响计数）
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

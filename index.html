@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>线性代数 · 可视化小工具</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --card:#fff;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink); background:var(--bg); line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;}
+  /* 矩阵/向量=加粗且斜体（与各工具页一致）：单字母 mi 默认斜体，加 .bm 叠加 font-weight 得粗斜体 */
+  math .bm{font-weight:bold;}
+  .wrap{max-width:960px; margin:0 auto; padding:32px 20px 60px;}
+  header{border-bottom:2px solid var(--line); padding-bottom:20px; margin-bottom:28px;}
+  h1{font-size:26px; margin:0 0 8px; letter-spacing:.5px;}
+  .course{color:var(--sub); font-size:15px;}
+  .lead{color:var(--sub); font-size:14.5px; margin:16px 0 0; max-width:760px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:18px; margin-top:26px;}
+  .card{display:flex; flex-direction:column; background:var(--card); border:1px solid var(--line);
+        border-radius:12px; padding:18px 18px 16px; text-decoration:none; color:inherit;
+        transition:box-shadow .15s, transform .15s, border-color .15s;}
+  a.card:hover{box-shadow:0 6px 20px rgba(0,0,0,.09); transform:translateY(-2px); border-color:var(--blue);}
+  .card .tag{font-size:12px; color:var(--blue); font-weight:600; letter-spacing:1px;}
+  .card h3{margin:6px 0 6px; font-size:17px;}
+  .card p{margin:0; font-size:13.5px; color:var(--sub); flex:1;}
+  .card .foot{margin-top:12px; font-size:12.5px; color:var(--green); font-weight:600;}
+  .card.soon{opacity:.62; cursor:default; background:#fbfcfd;}
+  .card.soon .tag{color:var(--sub);}
+  .card.soon .foot{color:var(--sub);}
+  .sect{margin-top:34px; font-size:14px; color:var(--sub); font-weight:600;
+        border-left:3px solid var(--gold); padding-left:10px;}
+  footer{margin-top:44px; padding-top:18px; border-top:1px solid var(--line);
+          font-size:12.5px; color:#718096;}
+  .note{background:#fffaf0; border:1px solid #f6e05e; border-radius:8px;
+        padding:10px 14px; font-size:13px; color:#744210; margin-top:20px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>线性代数 · 交互式可视化小工具</h1>
+    <div class="course">北京信息科技大学 · 线性代数 · 课程组</div>
+    <p class="lead">下面每个卡片是一个可直接在浏览器里操作的可视化工具，配合课堂相应章节使用。点开即用，无需安装；手机、平板、电脑都能打开。</p>
+  </header>
+
+  <div class="sect">核心概念（矩阵、行列式与线性变换）</div>
+  <div class="grid">
+    <a class="card" href="./L1_矩阵乘法.html">
+      <span class="tag">L1</span>
+      <h3>矩阵乘法</h3>
+      <p>逐格演示矩阵乘法 <math><mi class="bm">C</mi><mo>=</mo><mi class="bm">A</mi><mi class="bm">B</mi></math> 的“行 × 列”过程：高亮当前行与列，一步步算出每个元素，看清乘法到底在做什么。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
+    <a class="card" href="./L2_行列式几何意义.html">
+      <span class="tag">L2</span>
+      <h3>行列式的几何意义</h3>
+      <p>拖动两个向量，实时看它们张成的平行四边形（有向）面积就是 <math><mi>det</mi></math>：符号表示定向、<math><mi>det</mi><mo>=</mo><mn>0</mn></math> 表示线性相关。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
+    <a class="card" href="./L3_二维线性变换.html">
+      <span class="tag">L3</span>
+      <h3>二维线性变换</h3>
+      <p>拖动向量 <math><mi class="bm">A</mi></math>、调 2×2 矩阵 <math><mi class="bm">H</mi></math>，实时看变换后的向量 <math><mi class="bm">B</mi><mo>=</mo><mi class="bm">H</mi><mi class="bm">A</mi></math> 与长度比，理解矩阵如何“作用”在向量上。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
+    <a class="card" href="./L4_三维线性变换.html">
+      <span class="tag">L4</span>
+      <h3>三维线性变换</h3>
+      <p>3×3 矩阵作用于三维向量，可用鼠标旋转/缩放场景，直观看到向量在空间中被拉伸、旋转、投影后的样子。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
+    <a class="card" href="./L5_坐标基变换.html">
+      <span class="tag">L5</span>
+      <h3>坐标与基变换</h3>
+      <p>用三个点定义任意（可斜交）坐标系，读出同一个点在不同基下的坐标；可上传一张图片（如地图）作为底图，把抽象的基变换落到实景上。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
+  </div>
+
+  <div class="sect">应用与拓展（变换的实际用途）</div>
+  <div class="grid">
+    <a class="card" href="./L6_二次型与二次曲面.html">
+      <span class="tag">L6</span>
+      <h3>二次型与二次曲面</h3>
+      <p>调节参数观察椭球、单/双叶双曲面、抛物面、马鞍面、锥面等二次曲面的形状变化，把二次型与它的几何图形对应起来。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
+    <a class="card" href="./L7_机械臂齐次变换.html">
+      <span class="tag">L7</span>
+      <h3>机械臂 · 齐次变换连乘</h3>
+      <p>用齐次坐标把旋转、平移写成矩阵，把一串指令依次相乘，动画演示机械臂末端如何随复合变换运动、画出轨迹。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
+    <a class="card" href="./L8_希尔密码.html">
+      <span class="tag">L8</span>
+      <h3>希尔密码 · 矩阵在密码学</h3>
+      <p>用密钥矩阵模 26 做加解密：涉及矩阵乘法、行列式、模逆与可逆性判定，是矩阵运算的一个有趣应用。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
+  </div>
+
+  <div class="note">建议用电脑或平板的横屏浏览器打开，操作空间更充裕；手机也可使用。</div>
+
+  <footer>
+    © 北京信息科技大学 线性代数课程组 · 本页仅用于教学。<br>
+    网页开发维护：何迪
+  </footer>
+</div>
+
+<script>
+// ── 首页访问统计（PV+UV，与各工具同一套计数服务）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter"; // 腾讯云 CloudBase 计数服务（国内可达）
+  var TOOL = "la-home";   // ← 线代站首页；带 la- 前缀与复变站 _home 区分（两站共用同一计数端点）
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

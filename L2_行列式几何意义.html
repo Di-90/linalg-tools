@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>行列式的几何意义 · L2 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --vec1:#2b6cb0; --vec2:#dd6b20;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  /* 矩阵/向量=加粗且斜体：单字母 mi 默认即斜体，加 class .bm 只叠加 font-weight 得粗斜体（mathvariant="bold" 在 Chrome/MathML Core 不生效，class="bm" 又会去掉斜体，故用 class 钩子） */
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.2em;}
+  var{font-style:italic;font-family:"Cambria Math","STIX Two Math",serif;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:920px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  #canvasContainer{width:100%;height:52vh;min-height:320px;background:#fff;
+       border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  canvas{background:#fff;touch-action:none;display:block;cursor:crosshair;}
+  .row{margin:8px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:15px;}
+  .row .lbl{min-width:34px;}
+  input[type=number]{width:72px;font-size:15px;padding:5px 6px;border:1px solid var(--line);
+       border-radius:6px;font-variant-numeric:tabular-nums;}
+  input[type=number]:focus{outline:none;border-color:var(--blue);}
+  button{padding:7px 14px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:14px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.selected{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .readout{font-size:15px;line-height:2;background:#f8fafc;border:1px solid var(--line);
+       border-radius:8px;padding:10px 14px;margin-top:10px;font-variant-numeric:tabular-nums;}
+  .readout .num{font-weight:600;}
+  #relation .dep{color:#c53030;font-weight:600;}
+  #relation .ind{color:var(--green);font-weight:600;}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:10px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:14px;height:6px;border-radius:2px;display:inline-block;}
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
+       font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>行列式的几何意义</h1>
+  <span class="sub">有向面积 · 定向 · 线性相关</span>
+  <span class="tag">L2 · 线性代数</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    把两个向量 <math><msub><mi class="bm">v</mi><mn>1</mn></msub></math>、<math><msub><mi class="bm">v</mi><mn>2</mn></msub></math>
+    作为矩阵 <math><mi class="bm">A</mi><mo>=</mo><mrow><mo>(</mo><mtable columnspacing="0.8em"><mtr><mtd><msub><mi>x</mi><mn>1</mn></msub></mtd><mtd><msub><mi>x</mi><mn>2</mn></msub></mtd></mtr><mtr><mtd><msub><mi>y</mi><mn>1</mn></msub></mtd><mtd><msub><mi>y</mi><mn>2</mn></msub></mtd></mtr></mtable><mo>)</mo></mrow></math> 的两列，则行列式
+    <div class="formula">
+      <math display="block">
+        <mi>det</mi><mo>&#x2009;</mo><mi class="bm">A</mi>
+        <mo>=</mo>
+        <msub><mi>x</mi><mn>1</mn></msub><msub><mi>y</mi><mn>2</mn></msub>
+        <mo>&#x2212;</mo>
+        <msub><mi>x</mi><mn>2</mn></msub><msub><mi>y</mi><mn>1</mn></msub>
+      </math>
+    </div>
+    的<b>绝对值</b>就等于两向量张成的平行四边形<b>面积</b>；<b>符号</b>表示定向（正 = 从 <math><msub><mi class="bm">v</mi><mn>1</mn></msub></math> 到 <math><msub><mi class="bm">v</mi><mn>2</mn></msub></math> 逆时针，负 = 顺时针）；<math><mi>det</mi><mo>&#x2009;</mo><mi class="bm">A</mi><mo>=</mo><mn>0</mn></math> 表示两向量共线（<b>线性相关</b>，面积为 0）。拖动蓝、橙两个端点，或直接输入坐标试试。
+  </div>
+
+  <div class="card">
+    <div id="canvasContainer"><canvas id="canvas"></canvas></div>
+    <div class="legend">
+      <span><i style="background:var(--vec1)"></i><math><msub><mi class="bm">v</mi><mn>1</mn></msub></math></span>
+      <span><i style="background:var(--vec2)"></i><math><msub><mi class="bm">v</mi><mn>2</mn></msub></math></span>
+      <span><i style="background:rgba(47,133,90,.5)"></i>面积（<math><mi>det</mi><mo>&gt;</mo><mn>0</mn></math>）</span>
+      <span><i style="background:rgba(197,48,48,.5)"></i>面积（<math><mi>det</mi><mo>&lt;</mo><mn>0</mn></math>）</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>向量坐标</h2>
+    <div class="row">
+      当前编辑：
+      <button onclick="selectVector('v1')" id="btn1"><math><msub><mi class="bm">v</mi><mn>1</mn></msub></math></button>
+      <button onclick="selectVector('v2')" id="btn2"><math><msub><mi class="bm">v</mi><mn>2</mn></msub></math></button>
+      <button onclick="resetVectors()">重置</button>
+    </div>
+    <div class="row">
+      <span class="lbl"><math><msub><mi class="bm">v</mi><mn>1</mn></msub></math></span> = (
+      <input id="v1x" type="number" step="0.1"> ,
+      <input id="v1y" type="number" step="0.1"> )
+    </div>
+    <div class="row">
+      <span class="lbl"><math><msub><mi class="bm">v</mi><mn>2</mn></msub></math></span> = (
+      <input id="v2x" type="number" step="0.1"> ,
+      <input id="v2y" type="number" step="0.1"> )
+    </div>
+    <div class="readout">
+      <div id="detValue"></div>
+      <div id="absDetValue"></div>
+      <div id="areaValue"></div>
+      <div id="relation"></div>
+    </div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+const container=document.getElementById("canvasContainer");
+
+let origin, scale;
+let v1={x:1,y:0};
+let v2={x:0,y:1};
+let selected="v1";
+let dragging=null;
+
+function resize(){
+    canvas.width=container.clientWidth;
+    canvas.height=container.clientHeight;
+    origin={x:canvas.width/2,y:canvas.height/2};
+    scale=Math.min(canvas.width,canvas.height)/6;
+    draw();
+}
+window.addEventListener("resize",resize);
+
+function toCanvas(v){return {x:origin.x+v.x*scale, y:origin.y-v.y*scale};}
+function fromCanvas(p){return {x:(p.x-origin.x)/scale, y:(origin.y-p.y)/scale};}
+
+function drawGrid(){
+    ctx.strokeStyle="#eef2f7";
+    ctx.lineWidth=1;
+    const maxX=Math.ceil(origin.x/scale), maxY=Math.ceil(origin.y/scale);
+    for(let k=-maxX;k<=maxX;k++){
+        const cx=origin.x+k*scale;
+        ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,canvas.height);ctx.stroke();
+    }
+    for(let k=-maxY;k<=maxY;k++){
+        const cy=origin.y+k*scale;
+        ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(canvas.width,cy);ctx.stroke();
+    }
+}
+
+function drawAxes(){
+    ctx.strokeStyle="#94a3b8";
+    ctx.lineWidth=1.4;
+    ctx.beginPath();
+    ctx.moveTo(0,origin.y);ctx.lineTo(canvas.width,origin.y);
+    ctx.moveTo(origin.x,0);ctx.lineTo(origin.x,canvas.height);
+    ctx.stroke();
+}
+
+function drawVector(v,color){
+    const end=toCanvas(v);
+    ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(origin.x,origin.y);ctx.lineTo(end.x,end.y);ctx.stroke();
+    ctx.beginPath();ctx.arc(end.x,end.y,9,0,Math.PI*2);ctx.fill();
+}
+
+function drawParallelogram(){
+    const p1=toCanvas(v1);
+    const p2=toCanvas(v2);
+    const p3=toCanvas({x:v1.x+v2.x,y:v1.y+v2.y});
+    const det=v1.x*v2.y-v1.y*v2.x;
+
+    if(det>0) ctx.fillStyle="rgba(47,133,90,0.28)";
+    else if(det<0) ctx.fillStyle="rgba(197,48,48,0.28)";
+    else ctx.fillStyle="rgba(150,150,150,0.30)";
+
+    ctx.beginPath();
+    ctx.moveTo(origin.x,origin.y);
+    ctx.lineTo(p1.x,p1.y);
+    ctx.lineTo(p3.x,p3.y);
+    ctx.lineTo(p2.x,p2.y);
+    ctx.closePath();
+    ctx.fill();
+}
+
+function updatePanel(){
+    document.getElementById("v1x").value=v1.x.toFixed(2);
+    document.getElementById("v1y").value=v1.y.toFixed(2);
+    document.getElementById("v2x").value=v2.x.toFixed(2);
+    document.getElementById("v2y").value=v2.y.toFixed(2);
+
+    const det=v1.x*v2.y-v1.y*v2.x;
+    const area=Math.abs(det);
+
+    document.getElementById("detValue").innerHTML=
+        `<math><mi>det</mi><mo>&#x2009;</mo><mi class="bm">A</mi><mo>=</mo></math> <span class="num">${det.toFixed(4)}</span>`;
+    document.getElementById("absDetValue").innerHTML=
+        `<math><mo>|</mo><mi>det</mi><mo>&#x2009;</mo><mi class="bm">A</mi><mo>|</mo><mo>=</mo></math> <span class="num">${area.toFixed(4)}</span>`;
+    document.getElementById("areaValue").innerHTML=
+        `平行四边形面积 = <span class="num">${area.toFixed(4)}</span>`;
+
+    if(area<0.0001){
+        document.getElementById("relation").innerHTML=
+        `<span class="dep">两向量共线 → 线性相关（面积为 0）</span>`;
+    }else{
+        const dir = det>0 ? "逆时针（正向）" : "顺时针（负向）";
+        document.getElementById("relation").innerHTML=
+        `<span class="ind">线性无关</span>　·　定向：${dir}`;
+    }
+}
+
+function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawGrid();
+    drawAxes();
+    drawParallelogram();
+    drawVector(v1,"var(--vec1)".includes("var")?getCol("--vec1"):"#2b6cb0");
+    drawVector(v2,getCol("--vec2"));
+    updatePanel();
+}
+function getCol(name){
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim()||"#000";
+}
+
+function selectVector(name){
+    selected=name;
+    document.getElementById("btn1").classList.remove("selected");
+    document.getElementById("btn2").classList.remove("selected");
+    document.getElementById(name==="v1"?"btn1":"btn2").classList.add("selected");
+}
+
+function resetVectors(){
+    v1={x:1,y:0};
+    v2={x:0,y:1};
+    draw();
+}
+
+canvas.addEventListener("mousedown",startDrag);
+canvas.addEventListener("mousemove",moveDrag);
+canvas.addEventListener("mouseup",()=>dragging=null);
+canvas.addEventListener("mouseleave",()=>dragging=null);
+canvas.addEventListener("touchstart",startDrag);
+canvas.addEventListener("touchmove",moveDrag);
+canvas.addEventListener("touchend",()=>dragging=null);
+
+function getPos(e){
+    const rect=canvas.getBoundingClientRect();
+    if(e.touches){return {x:e.touches[0].clientX-rect.left, y:e.touches[0].clientY-rect.top};}
+    return {x:e.clientX-rect.left, y:e.clientY-rect.top};
+}
+
+function startDrag(e){
+    const pos=getPos(e);
+    if(dist(pos,toCanvas(v1))<16) dragging="v1";
+    else if(dist(pos,toCanvas(v2))<16) dragging="v2";
+    else{
+        const v=fromCanvas(pos);
+        if(selected==="v1"){v1=v;} else{v2=v;}
+        draw();
+    }
+}
+
+function moveDrag(e){
+    if(!dragging) return;
+    e.preventDefault();
+    const pos=getPos(e);
+    const v=fromCanvas(pos);
+    if(dragging==="v1"){v1=v;} else{v2=v;}
+    draw();
+}
+
+function dist(a,b){return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2);}
+
+document.querySelectorAll("input").forEach(input=>{
+    input.addEventListener("input",()=>{
+        const nx1=parseFloat(document.getElementById("v1x").value);
+        const ny1=parseFloat(document.getElementById("v1y").value);
+        const nx2=parseFloat(document.getElementById("v2x").value);
+        const ny2=parseFloat(document.getElementById("v2y").value);
+        if([nx1,ny1,nx2,ny2].some(Number.isNaN)) return;
+        v1={x:nx1,y:ny1}; v2={x:nx2,y:ny2};
+        draw();
+    });
+});
+
+resize();
+selectVector("v1");
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-det-area";              // ← 计数键：与编号 L# 解耦的稳定标识，永不改动（改编号/文件名都不影响计数）
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

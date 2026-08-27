@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>矩阵乘法 · L1 · 线性代数</title>
+<style>
+  /* ===== 线性代数工具箱 · 共用脚手架样式 ===== */
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --hl-row:#d1e7dd; --hl-col:#f8d7da; --hl-cell:#fff3cd;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  /* 矩阵/向量=加粗且斜体：单字母 mi 默认即斜体，加 class .bm 只叠加 font-weight 得粗斜体（mathvariant="bold" 在 Chrome/MathML Core 不生效，class="bm" 又会去掉斜体，故用 class 钩子） */
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.25em;}
+  var,.va{font-style:italic;font-family:"Cambria Math","STIX Two Math",serif;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);
+       padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:920px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  .inputs{display:flex;gap:20px;flex-wrap:wrap;}
+  .inputs .fld{flex:1 1 220px;}
+  .inputs label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px;}
+  textarea{width:100%;height:96px;border:1px solid var(--line);border-radius:8px;
+       padding:8px 10px;font-family:"Consolas","Courier New",monospace;font-size:14px;resize:vertical;}
+  textarea:focus{outline:none;border-color:var(--blue);}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+  .actions button{padding:9px 16px;border:1px solid var(--line);background:#fff;
+       border-radius:8px;font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  .actions button:hover{border-color:var(--blue);}
+  .actions button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  .actions button.primary:hover{filter:brightness(1.06);}
+  .matrix-container{display:flex;justify-content:center;align-items:flex-start;
+       gap:34px;flex-wrap:wrap;}
+  .matrix-container > div{text-align:center;}
+  .matrix-container h3{font-size:15px;color:var(--sub);margin:0 0 8px;}
+  table{border-collapse:collapse;margin:0 auto;}
+  td{border:1px solid #cbd5e1;width:44px;height:44px;text-align:center;vertical-align:middle;
+     font-size:16px;font-variant-numeric:tabular-nums;}
+  .highlight-row{background-color:var(--hl-row);}
+  .highlight-col{background-color:var(--hl-col);}
+  .highlight-cell{background-color:var(--hl-cell);font-weight:700;}
+  .legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;
+       font-size:12.5px;color:var(--sub);margin-top:14px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:14px;height:14px;border:1px solid #cbd5e1;border-radius:3px;display:inline-block;}
+  #info{text-align:center;margin-top:14px;font-size:15px;min-height:22px;}
+  #info.err{color:#c53030;font-weight:600;}
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
+       font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>矩阵乘法</h1>
+  <span class="sub">“行 × 列”逐格演示 <math><mi class="bm">C</mi><mo>=</mo><mi class="bm">A</mi><mi class="bm">B</mi></math></span>
+  <span class="tag">L1 · 线性代数</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    矩阵乘法 <math><mi class="bm">C</mi><mo>=</mo><mi class="bm">A</mi><mi class="bm">B</mi></math> 中，结果第 <var>i</var> 行第 <var>j</var> 列的元素
+    <math><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></math>，
+    等于 <b><math><mi class="bm">A</mi></math> 的第 <var>i</var> 行</b>与 <b><math><mi class="bm">B</mi></math> 的第 <var>j</var> 列</b>对应相乘再求和：
+    <div class="formula">
+      <math display="block">
+        <msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub>
+        <mo>=</mo>
+        <munderover><mo>&#x2211;</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover>
+        <msub><mi>a</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub>
+        <msub><mi>b</mi><mrow><mi>k</mi><mi>j</mi></mrow></msub>
+      </math>
+    </div>
+    因此必须满足 <b><math><mi class="bm">A</mi></math> 的列数 = <math><mi class="bm">B</mi></math> 的行数</b>，乘出来的 <math><mi class="bm">C</mi></math> 尺寸是「<math><mi class="bm">A</mi></math> 的行数 × <math><mi class="bm">B</mi></math> 的列数」。
+    下面高亮当前参与计算的行（绿）与列（红），一步步填出 <math><mi class="bm">C</mi></math> 的每个黄色格子。
+  </div>
+
+  <div class="card">
+    <h2>输入矩阵（每行用逗号分隔元素，换行分隔各行）</h2>
+    <div class="inputs">
+      <div class="fld">
+        <label>矩阵 A</label>
+        <textarea id="matrixAInput">1,2,3
+4,5,6</textarea>
+      </div>
+      <div class="fld">
+        <label>矩阵 B</label>
+        <textarea id="matrixBInput">7,8
+9,10
+11,12</textarea>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="primary" onclick="initMatrices()">加载矩阵</button>
+      <button onclick="startDemo()">▶ 开始演示</button>
+      <button onclick="stopDemo()">⏸ 停止</button>
+      <button onclick="nextStep()">下一步 ›</button>
+      <button onclick="resetDemo()">重置</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="matrix-container">
+      <div><h3><math><mi class="bm">A</mi></math></h3><div id="matrixA"></div></div>
+      <div><h3><math><mi class="bm">B</mi></math></h3><div id="matrixB"></div></div>
+      <div><h3><math><mi class="bm">C</mi><mo>=</mo><mi class="bm">A</mi><mi class="bm">B</mi></math></h3><div id="matrixC"></div></div>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--hl-row)"></i>当前 A 的行</span>
+      <span><i style="background:var(--hl-col)"></i>当前 B 的列</span>
+      <span><i style="background:var(--hl-cell)"></i>正在计算的 C 元素</span>
+    </div>
+    <div id="info"></div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+  let A = [], B = [], C = [];
+  let i = 0, j = 0;
+  let timer = null;
+
+  // 解析文本为矩阵：兼容 \r\n、每格去空格；返回 {matrix, error}
+  function parseMatrix(text) {
+    const rows = text.trim().split(/\r?\n/).map(s => s.trim()).filter(s => s.length > 0);
+    if (rows.length === 0) return { error: "输入为空" };
+    const matrix = [];
+    let cols = null;
+    for (const row of rows) {
+      const cells = row.split(",").map(s => Number(s.trim()));
+      if (cells.some(v => Number.isNaN(v))) return { error: "含有无法识别的数字，请检查输入" };
+      if (cols === null) cols = cells.length;
+      else if (cells.length !== cols) return { error: "各行元素个数不一致" };
+      matrix.push(cells);
+    }
+    return { matrix };
+  }
+
+  function showError(msg) {
+    const el = document.getElementById("info");
+    el.textContent = "⚠ " + msg;
+    el.classList.add("err");
+  }
+
+  function initMatrices() {
+    const ra = parseMatrix(document.getElementById("matrixAInput").value);
+    const rb = parseMatrix(document.getElementById("matrixBInput").value);
+    stopDemo();
+    if (ra.error) { showError("矩阵 A：" + ra.error); return; }
+    if (rb.error) { showError("矩阵 B：" + rb.error); return; }
+    A = ra.matrix; B = rb.matrix;
+    const rowsA = A.length, colsA = A[0].length;
+    const rowsB = B.length, colsB = B[0].length;
+
+    if (colsA !== rowsB) {
+      showError(`维度不匹配：A 是 ${rowsA}×${colsA}，B 是 ${rowsB}×${colsB}，需要 A 的列数(${colsA}) = B 的行数(${rowsB})。`);
+      document.getElementById("matrixA").innerHTML = "";
+      document.getElementById("matrixB").innerHTML = "";
+      document.getElementById("matrixC").innerHTML = "";
+      return;
+    }
+
+    C = Array.from({ length: rowsA }, () => Array(colsB).fill(""));
+    i = 0; j = 0;
+    renderMatrix("matrixA", A);
+    renderMatrix("matrixB", B);
+    renderMatrix("matrixC", C);
+    updateInfo();
+  }
+
+  function renderMatrix(id, matrix, highlight = {}) {
+    const table = document.createElement("table");
+    for (let r = 0; r < matrix.length; r++) {
+      const tr = document.createElement("tr");
+      for (let c = 0; c < matrix[0].length; c++) {
+        const td = document.createElement("td");
+        td.textContent = matrix[r][c];
+        if (highlight.row === r) td.classList.add("highlight-row");
+        if (highlight.col === c) td.classList.add("highlight-col");
+        if (highlight.cell && highlight.cell[0] === r && highlight.cell[1] === c) td.classList.add("highlight-cell");
+        tr.appendChild(td);
+      }
+      table.appendChild(tr);
+    }
+    document.getElementById(id).innerHTML = "";
+    document.getElementById(id).appendChild(table);
+  }
+
+  function nextStep() {
+    if (!A.length || !B.length) { initMatrices(); if (!A.length) return; }
+    const rowsA = A.length;
+    const colsB = B[0].length;
+
+    if (i >= rowsA) {
+      updateInfo("✅ 演示完成！C 的每个元素都算好了。");
+      stopDemo();
+      return;
+    }
+
+    const sum = A[i].reduce((acc, val, k) => acc + val * B[k][j], 0);
+    C[i][j] = sum;
+
+    renderMatrix("matrixA", A, { row: i });
+    renderMatrix("matrixB", B, { col: j });
+    renderMatrix("matrixC", C, { cell: [i, j] });
+    const infoEl = document.getElementById("info");
+    infoEl.classList.remove("err");
+    infoEl.innerHTML =
+      `<math><msub><mi>c</mi><mrow><mn>${i + 1}</mn><mn>${j + 1}</mn></mrow></msub>`
+      + `<mo>=</mo><mn>${sum}</mn></math>`
+      + `　（A 第 ${i + 1} 行 · B 第 ${j + 1} 列，对应相乘再求和）`;
+
+    j++;
+    if (j >= colsB) { j = 0; i++; }
+  }
+
+  function startDemo() {
+    if (timer) return;
+    if (!A.length) { initMatrices(); if (!A.length) return; }
+    timer = setInterval(nextStep, 1000);
+  }
+
+  function stopDemo() {
+    clearInterval(timer);
+    timer = null;
+  }
+
+  function resetDemo() {
+    stopDemo();
+    initMatrices();
+  }
+
+  function updateInfo(msg) {
+    const el = document.getElementById("info");
+    el.classList.remove("err");
+    el.textContent = msg || "准备就绪。点击“开始演示”自动逐步计算，或点“下一步”手动推进。";
+  }
+
+  window.onload = initMatrices;
+</script>
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-matmul";                // ← 计数键：与编号 L# 解耦的稳定标识，永不改动（改编号/文件名都不影响计数）
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

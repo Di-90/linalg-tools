@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三维线性变换 · L4 · 线性代数</title>
+<script src="./vendor/three.min.js"></script>
+<script src="./vendor/OrbitControls.js"></script>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --vecA:#2b6cb0; --vecB:#c53030;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  /* 矩阵/向量=加粗且斜体：单字母 mi 默认即斜体，加 class .bm 只叠加 font-weight 得粗斜体（mathvariant="bold" 在 Chrome/MathML Core 不生效，mathvariant="normal" 又会去掉斜体，故用 class 钩子） */
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.2em;}
+  var{font-style:italic;font-family:"Cambria Math","STIX Two Math",serif;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:920px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  #canvas-container{width:100%;border:1px solid var(--line);border-radius:10px;
+       overflow:hidden;background:#fff;display:flex;justify-content:center;}
+  #canvas-container canvas{display:block;max-width:100%;cursor:grab;}
+  #canvas-container canvas:active{cursor:grabbing;}
+  .hint{font-size:12px;color:var(--sub);text-align:center;margin-top:8px;}
+  .row{margin:8px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:15px;}
+  .row .lbl{color:var(--sub);font-size:13px;}
+  input[type=number],input[type=text].mx{width:64px;font-size:15px;padding:5px 6px;
+       border:1px solid var(--line);border-radius:6px;font-variant-numeric:tabular-nums;text-align:center;}
+  input:focus{outline:none;border-color:var(--blue);}
+  .matrix-grid{display:inline-grid;grid-template-columns:repeat(3,auto);gap:6px;
+       padding:8px 12px;border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-radius:3px;}
+  button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .readout{font-size:15px;line-height:2.1;background:#f8fafc;border:1px solid var(--line);
+       border-radius:8px;padding:10px 14px;margin-top:12px;}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:10px;justify-content:center;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:14px;height:6px;border-radius:2px;display:inline-block;}
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
+       font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>三维线性变换</h1>
+  <span class="sub">3×3 矩阵 <math><mi class="bm">H</mi></math> 作用于空间向量，可拖动旋转视角</span>
+  <span class="tag">L4 · 线性代数</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    一个 <math><mn>3</mn><mo>&#xD7;</mo><mn>3</mn></math> 矩阵 <math><mi class="bm">H</mi></math> 把空间向量 <math><mover><mrow><mi class="bm">O</mi><mi class="bm">A</mi></mrow><mo>&#x2192;</mo></mover></math> 线性映射为 <math><mover><mrow><mi class="bm">O</mi><mi class="bm">B</mi></mrow><mo>&#x2192;</mo></mover></math>：
+    <div class="formula">
+      <math display="block">
+        <mrow><mo>(</mo><mtable><mtr><mtd><msub><mi>x</mi><mi>B</mi></msub></mtd></mtr><mtr><mtd><msub><mi>y</mi><mi>B</mi></msub></mtd></mtr><mtr><mtd><msub><mi>z</mi><mi>B</mi></msub></mtd></mtr></mtable><mo>)</mo></mrow>
+        <mo>=</mo>
+        <mrow><mo>(</mo><mtable columnspacing="0.7em">
+          <mtr><mtd><msub><mi>h</mi><mn>11</mn></msub></mtd><mtd><msub><mi>h</mi><mn>12</mn></msub></mtd><mtd><msub><mi>h</mi><mn>13</mn></msub></mtd></mtr>
+          <mtr><mtd><msub><mi>h</mi><mn>21</mn></msub></mtd><mtd><msub><mi>h</mi><mn>22</mn></msub></mtd><mtd><msub><mi>h</mi><mn>23</mn></msub></mtd></mtr>
+          <mtr><mtd><msub><mi>h</mi><mn>31</mn></msub></mtd><mtd><msub><mi>h</mi><mn>32</mn></msub></mtd><mtd><msub><mi>h</mi><mn>33</mn></msub></mtd></mtr>
+        </mtable><mo>)</mo></mrow>
+        <mrow><mo>(</mo><mtable><mtr><mtd><msub><mi>x</mi><mi>A</mi></msub></mtd></mtr><mtr><mtd><msub><mi>y</mi><mi>A</mi></msub></mtd></mtr><mtr><mtd><msub><mi>z</mi><mi>A</mi></msub></mtd></mtr></mtable><mo>)</mo></mrow>
+      </math>
+    </div>
+    修改向量 <math><mi class="bm">A</mi></math> 的坐标或矩阵 <math><mi class="bm">H</mi></math> 的元素，观察蓝色 <math><mi class="bm">A</mi></math> 与红色像 <math><mi class="bm">B</mi></math>；用鼠标<b>拖动可旋转</b>三维视角、<b>滚轮缩放</b>。<math><mi>&#x3BB;</mi><mo>=</mo><mfrac><mrow><mo>|</mo><mi class="bm">B</mi><mo>|</mo></mrow><mrow><mo>|</mo><mi class="bm">A</mi><mo>|</mo></mrow></mfrac></math> 为该方向上的长度伸缩比。
+  </div>
+
+  <div class="card">
+    <div id="canvas-container"></div>
+    <div class="legend">
+      <span><i style="background:var(--vecA)"></i>原向量 <math><mi class="bm">A</mi></math></span>
+      <span><i style="background:var(--vecB)"></i>变换后 <math><mi class="bm">B</mi><mo>=</mo><mi class="bm">H</mi><mi class="bm">A</mi></math></span>
+    </div>
+    <div class="hint">拖动旋转视角 · 滚轮缩放 · 右键平移</div>
+  </div>
+
+  <div class="card">
+    <h2>向量 A 与变换矩阵 H</h2>
+    <div class="row">
+      <span class="lbl">向量 <math><mi class="bm">A</mi></math> 坐标：</span>
+      <input type="number" id="inputAx" step="0.5" placeholder="x">
+      <input type="number" id="inputAy" step="0.5" placeholder="y">
+      <input type="number" id="inputAz" step="0.5" placeholder="z">
+      <button onclick="setVectorAFromInputs()">设置</button>
+    </div>
+    <div class="row" style="align-items:flex-start;">
+      <span class="lbl">矩阵 <math><mi class="bm">H</mi></math>：</span>
+      <div class="matrix-grid">
+        <input class="mx" type="text" id="matrix11" value="1"><input class="mx" type="text" id="matrix12" value="0"><input class="mx" type="text" id="matrix13" value="0">
+        <input class="mx" type="text" id="matrix21" value="0"><input class="mx" type="text" id="matrix22" value="1"><input class="mx" type="text" id="matrix23" value="0">
+        <input class="mx" type="text" id="matrix31" value="0"><input class="mx" type="text" id="matrix32" value="0"><input class="mx" type="text" id="matrix33" value="1">
+      </div>
+    </div>
+    <div class="row">
+      <span class="lbl">常用变换：</span>
+      <div class="presets">
+        <button onclick="setMatrix([1,0,0, 0,1,0, 0,0,1])">单位</button>
+        <button onclick="setMatrix([0,-1,0, 1,0,0, 0,0,1])">绕 Z 轴转 90°</button>
+        <button onclick="setMatrix([1,0,0, 0,0.7071,-0.7071, 0,0.7071,0.7071])">绕 X 轴转 45°</button>
+        <button onclick="setMatrix([1.5,0,0, 0,1.5,0, 0,0,1.5])">放大 1.5×</button>
+        <button onclick="setMatrix([1,0.6,0, 0,1,0, 0,0,1])">XY 切变</button>
+        <button onclick="setMatrix([1,0,0, 0,1,0, 0,0,-1])">关于 XY 面反射</button>
+      </div>
+    </div>
+    <div class="readout" id="vectorsInfo"></div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+const container=document.getElementById("canvas-container");
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xffffff);
+
+let size=Math.min(container.clientWidth||600, Math.round(window.innerHeight*0.6));
+size=Math.max(size,320);
+const camera=new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(window.devicePixelRatio||1);
+renderer.setSize(size,size);
+container.appendChild(renderer.domElement);
+
+const controls=new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=0.06;
+camera.position.set(9,7,11);
+camera.lookAt(0,0,0);
+
+let vectorA={x:1,y:1,z:1};
+let matrix=[[1,0,0],[0,1,0],[0,0,1]];
+const scaleFactor=2;          // 仅用于显示放大，坐标读数仍为真实值
+const dynamicGroup=new THREE.Group();
+scene.add(dynamicGroup);
+
+function makeSprite(text,color){
+    const c=document.createElement("canvas"); c.width=256; c.height=128;
+    const cx=c.getContext("2d");
+    cx.font="bold 60px Arial"; cx.fillStyle=color;
+    cx.textAlign="center"; cx.textBaseline="middle";
+    cx.fillText(text, c.width/2, c.height/2);
+    const tex=new THREE.CanvasTexture(c);
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true}));
+    sp.scale.set(2.2,1.1,1);
+    return sp;
+}
+
+function buildStatic(){
+    // 网格地面（XY 平面感）
+    const grid=new THREE.GridHelper(20,20,0xdfe6ee,0xeef2f7);
+    grid.rotation.x=Math.PI/2;      // 放到 XY 平面
+    dynamicGroup.add(grid);
+    const L=10;
+    const axes=[
+        {dir:new THREE.Vector3(1,0,0), col:0x64748b, name:"X", pos:[L+0.6,0,0]},
+        {dir:new THREE.Vector3(0,1,0), col:0x64748b, name:"Y", pos:[0,L+0.6,0]},
+        {dir:new THREE.Vector3(0,0,1), col:0x64748b, name:"Z", pos:[0,0,L+0.6]},
+    ];
+    axes.forEach(a=>{
+        dynamicGroup.add(new THREE.ArrowHelper(a.dir, new THREE.Vector3(0,0,0), L, a.col, 0.5, 0.3));
+        const s=makeSprite(a.name, "#475569"); s.position.set(...a.pos); dynamicGroup.add(s);
+    });
+    const o=makeSprite("O", "#475569"); o.position.set(-0.5,-0.5,0); dynamicGroup.add(o);
+}
+
+function addVector(vec, colorHex, label){
+    const v=new THREE.Vector3(vec.x*scaleFactor, vec.y*scaleFactor, vec.z*scaleFactor);
+    const len=v.length();
+    if(len>1e-6){
+        dynamicGroup.add(new THREE.ArrowHelper(v.clone().normalize(), new THREE.Vector3(0,0,0), len, colorHex, 0.5, 0.3));
+    }
+    const s=makeSprite(label, "#"+colorHex.toString(16).padStart(6,"0"));
+    s.position.set(v.x+0.6, v.y+0.6, v.z+0.6);
+    dynamicGroup.add(s);
+}
+
+function transformed(){
+    const a=vectorA;
+    return {
+        x:matrix[0][0]*a.x+matrix[0][1]*a.y+matrix[0][2]*a.z,
+        y:matrix[1][0]*a.x+matrix[1][1]*a.y+matrix[1][2]*a.z,
+        z:matrix[2][0]*a.x+matrix[2][1]*a.y+matrix[2][2]*a.z,
+    };
+}
+function fmt(n){return (Math.round(n*100)/100).toString();}
+
+function colVec(a,b,c){
+    return `<mrow><mo>(</mo><mtable>`
+      +`<mtr><mtd><mn>${a}</mn></mtd></mtr><mtr><mtd><mn>${b}</mn></mtd></mtr><mtr><mtd><mn>${c}</mn></mtd></mtr>`
+      +`</mtable><mo>)</mo></mrow>`;
+}
+
+function updateDisplay(){
+    // 重建动态内容
+    while(dynamicGroup.children.length) dynamicGroup.remove(dynamicGroup.children[0]);
+    buildStatic();
+    addVector(vectorA, 0x2b6cb0, "A");
+    const B=transformed();
+    addVector(B, 0xc53030, "B");
+
+    const lenA=Math.hypot(vectorA.x,vectorA.y,vectorA.z);
+    const lenB=Math.hypot(B.x,B.y,B.z);
+
+    const oa=`<math><mover><mrow><mi class="bm">O</mi><mi class="bm">A</mi></mrow><mo>&#x2192;</mo></mover>`
+      +`<mo>=</mo><mo>(</mo><mn>${fmt(vectorA.x)}</mn><mo>,</mo><mn>${fmt(vectorA.y)}</mn><mo>,</mo><mn>${fmt(vectorA.z)}</mn><mo>)</mo></math>`;
+    const ob=`<math><mover><mrow><mi class="bm">O</mi><mi class="bm">B</mi></mrow><mo>&#x2192;</mo></mover>`
+      +`<mo>=</mo><mi class="bm">H</mi><mspace width="0.15em"/>`
+      +`<mover><mrow><mi class="bm">O</mi><mi class="bm">A</mi></mrow><mo>&#x2192;</mo></mover>`
+      +`<mo>=</mo>${colVec(fmt(B.x),fmt(B.y),fmt(B.z))}</math>`;
+    let lam;
+    if(lenA<1e-9){
+        lam=`<math><mi>&#x3BB;</mi></math> = —（向量 <math><mi class="bm">A</mi></math> 在原点，无法计算长度比）`;
+    }else{
+        lam=`<math><mi>&#x3BB;</mi><mo>=</mo>`
+          +`<mfrac><mrow><mo>|</mo><mi class="bm">B</mi><mo>|</mo></mrow><mrow><mo>|</mo><mi class="bm">A</mi><mo>|</mo></mrow></mfrac>`
+          +`<mo>=</mo><mfrac><mn>${lenB.toFixed(2)}</mn><mn>${lenA.toFixed(2)}</mn></mfrac>`
+          +`<mo>=</mo><mn>${(lenB/lenA).toFixed(2)}</mn></math>`;
+    }
+    document.getElementById("vectorsInfo").innerHTML=`<div>${oa}</div><div>${ob}</div><div>${lam}</div>`;
+}
+
+function updateMatrix(){
+    const ids=[["matrix11","matrix12","matrix13"],["matrix21","matrix22","matrix23"],["matrix31","matrix32","matrix33"]];
+    const m=[[0,0,0],[0,0,0],[0,0,0]];
+    for(let r=0;r<3;r++)for(let c=0;c<3;c++){
+        const val=parseFloat(document.getElementById(ids[r][c]).value);
+        if(Number.isNaN(val)) return;   // 未填完整，暂不重算
+        m[r][c]=val;
+    }
+    matrix=m; updateDisplay();
+}
+
+function setMatrix(arr){
+    const ids=["matrix11","matrix12","matrix13","matrix21","matrix22","matrix23","matrix31","matrix32","matrix33"];
+    ids.forEach((id,i)=>document.getElementById(id).value=arr[i]);
+    updateMatrix();
+}
+
+function setVectorAFromInputs(){
+    const ax=parseFloat(document.getElementById("inputAx").value);
+    const ay=parseFloat(document.getElementById("inputAy").value);
+    const az=parseFloat(document.getElementById("inputAz").value);
+    if(!Number.isNaN(ax)&&!Number.isNaN(ay)&&!Number.isNaN(az)){ vectorA={x:ax,y:ay,z:az}; updateDisplay(); }
+    else alert("请输入有效的坐标值");
+}
+
+["matrix11","matrix12","matrix13","matrix21","matrix22","matrix23","matrix31","matrix32","matrix33"]
+    .forEach(id=>document.getElementById(id).addEventListener("input",updateMatrix));
+
+function onResize(){
+    let s=Math.min(container.clientWidth, Math.round(window.innerHeight*0.6));
+    s=Math.max(s,320);
+    renderer.setSize(s,s);
+    camera.aspect=1; camera.updateProjectionMatrix();
+}
+window.addEventListener("resize",onResize);
+
+function animate(){ requestAnimationFrame(animate); controls.update(); renderer.render(scene,camera); }
+animate();
+updateDisplay();
+onResize();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-linmap-3d";             // ← 计数键：与编号 L# 解耦的稳定标识，永不改动（改编号/文件名都不影响计数）
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
