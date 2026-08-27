@@ -200,7 +200,7 @@ function makeArrow(tx,ty,tz, colorHex, shaftR){
 }
 // 坐标轴（中性灰细箭头）+ 数学体标签
 const AL=3.5;
-[[AL,0,0,"X",[AL+0.35,0,0]],[0,AL,0,"Y",[0,AL+0.35,0]],[0,0,AL,"Z",[0,0,AL+0.35]]].forEach(a=>{
+[[AL,0,0,"x",[AL+0.35,0,0]],[0,AL,0,"y",[0,AL+0.35,0]],[0,0,AL,"z",[0,0,AL+0.35]]].forEach(a=>{
     scene.add(makeArrow(a[0],a[1],a[2], 0x94a3b8, 0.012));
     const s=makeLabel(a[3], "#475569"); s.position.set(...a[4]); scene.add(s);
 });

@@ -256,9 +256,9 @@ function buildStatic(){
     // 坐标轴：细实体杆 + 锥尖
     const L=9;
     const axes=[
-        {v:[L,0,0], name:"X", pos:[L+0.7,0,0]},
-        {v:[0,L,0], name:"Y", pos:[0,L+0.7,0]},
-        {v:[0,0,L], name:"Z", pos:[0,0,L+0.7]},
+        {v:[L,0,0], name:"x", pos:[L+0.7,0,0]},
+        {v:[0,L,0], name:"y", pos:[0,L+0.7,0]},
+        {v:[0,0,L], name:"z", pos:[0,0,L+0.7]},
     ];
     axes.forEach(a=>{
         const ax=makeArrow(a.v[0],a.v[1],a.v[2], 0x94a3b8, 0.018); dynamicGroup.add(ax);
