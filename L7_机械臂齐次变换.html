@@ -38,23 +38,39 @@
        background:radial-gradient(120% 120% at 50% 8%,#ffffff 0%,#f5f8fc 60%,#eef3f9 100%);}
   canvas{display:block;max-width:100%;height:auto;}
   .endpoint{text-align:center;font-size:1.05em;margin-top:10px;}
+  .hint{font-size:12px;color:var(--sub);text-align:center;margin-top:8px;}
   .row{margin:8px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;}
-  .row .lbl{color:var(--sub);font-size:13px;}
-  input[type=number]{width:70px;font-size:14px;padding:6px 7px;border:1px solid var(--line);
-       border-radius:6px;font-variant-numeric:tabular-nums;text-align:center;}
-  input:focus{outline:none;border-color:var(--blue);}
+  .row .lbl{color:var(--sub);font-size:13px;min-width:58px;}
+  .slider{display:flex;align-items:center;gap:8px;flex:1;min-width:200px;}
+  .slider input[type=range]{flex:1;cursor:pointer;}
+  .slider .num{width:64px;font-size:14px;padding:5px 6px;border:1px solid var(--line);
+       border-radius:6px;font-variant-numeric:tabular-nums;text-align:center;color:var(--ink);}
+  .slider .num:focus{outline:none;border-color:var(--blue);}
+  .slider .unit{color:var(--sub);font-size:13px;width:8px;}
+  /* 两栏：宽屏画布(左)与矩阵面板(右)并排，右侧 sticky + 独立滚动 → 悬停矩阵高亮连杆时两者同屏 */
+  .layout{display:grid;grid-template-columns:minmax(0,536px) minmax(0,1fr);gap:16px;align-items:start;}
+  .col-right .matcard{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto;}
+  @media(max-width:860px){
+    .layout{grid-template-columns:1fr;}
+    .col-right .matcard{position:static;max-height:none;overflow:visible;}
+  }
+  .joint{border:1px solid var(--line);border-left-width:4px;border-radius:8px;padding:8px 12px 4px;margin:10px 0;}
+  .joint .jhead{font-size:13px;color:var(--sub);font-weight:600;margin-bottom:2px;
+       display:flex;align-items:center;gap:6px;}
   button{padding:7px 13px;border:1px solid var(--line);background:#fff;border-radius:8px;
        font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
-  button:hover{border-color:var(--blue);}
+  button:hover:not(:disabled){border-color:var(--blue);}
+  button:disabled{opacity:.45;cursor:not-allowed;}
   button.primary{background:var(--green);color:#fff;border-color:var(--green);}
   button.accent{background:var(--blue);color:#fff;border-color:var(--blue);}
-  ol#commandList{padding-left:22px;margin:6px 0;font-size:14px;color:var(--ink);}
-  ol#commandList li{margin:2px 0;}
-  .empty{color:#a0aec0;font-size:13px;}
-  #matrixDisplay .mstep{margin:6px 0;padding:6px 0;border-bottom:1px dashed var(--line);}
+  #matrixDisplay .mstep{margin:5px 0;padding:6px 8px;border-bottom:1px dashed var(--line);
+       border-radius:6px;transition:background .12s;}
   #matrixDisplay .mstep:last-child{border-bottom:none;}
-  #matrixDisplay .mlbl{font-size:12.5px;color:var(--sub);margin-right:8px;}
-  #matrixDisplay .total{color:var(--blue);font-weight:600;}
+  #matrixDisplay .mstep.hl{background:#eef4fb;}
+  #matrixDisplay .mlbl{font-size:12.5px;color:var(--sub);margin-right:8px;
+       display:inline-flex;align-items:center;gap:5px;vertical-align:middle;}
+  #matrixDisplay .total .mlbl{color:var(--blue);font-weight:600;}
+  #matrixDisplay .sec{font-size:12px;color:#a0aec0;margin:12px 0 2px;letter-spacing:.3px;}
   footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
        font-size:12px;color:#718096;text-align:center;}
 </style>
@@ -62,58 +78,58 @@
 <body>
 <header class="appbar">
   <h1>机械臂齐次变换</h1>
-  <span class="sub">旋转 + 平移 = 一个 <math><mn>3</mn><mo>&#xD7;</mo><mn>3</mn></math> 齐次矩阵 <math><mi class="bm">T</mi></math></span>
+  <span class="sub">多关节正向运动学 <math><msub><mi class="bm">M</mi><mi>n</mi></msub><mo>=</mo><msub><mi class="bm">A</mi><mn>1</mn></msub><msub><mi class="bm">A</mi><mn>2</mn></msub><mo>&#x22EF;</mo><msub><mi class="bm">A</mi><mi>n</mi></msub></math></span>
   <span class="tag">L7 · 线性代数</span>
   <a class="back" href="./index.html">← 工具箱</a>
 </header>
 
 <div class="wrap">
   <div class="desc">
-    平面上的<b>刚体运动</b>（旋转角 <math><mi>&#x3B8;</mi></math> + 平移 <math><mo>(</mo><mi>d</mi><mi>x</mi><mo>,</mo><mi>d</mi><mi>y</mi><mo>)</mo></math>）借助<b>齐次坐标</b> <math><mo>(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo>,</mo><mn>1</mn><msup><mo>)</mo><mi>T</mi></msup></math> 可统一写成一次矩阵乘法：
+    一条<b>串联机械臂</b>由若干关节首尾相接。第 <math><mi>i</mi></math> 个关节先绕自身转过 <math><msub><mi>&#x3B8;</mi><mi>i</mi></msub></math>、再沿臂杆前伸 <math><msub><mi>L</mi><mi>i</mi></msub></math>，这一步在<b>齐次坐标</b>下就是一个 <math><mn>3</mn><mo>&#xD7;</mo><mn>3</mn></math> 矩阵：
     <div class="formula">
       <math display="block">
-        <msup><mi class="bm">p</mi><mo>&#x2032;</mo></msup>
+        <msub><mi class="bm">A</mi><mi>i</mi></msub>
         <mo>=</mo>
-        <mi class="bm">T</mi><mi class="bm">p</mi>
-        <mo>,</mo><mspace width="0.6em"/>
-        <mi class="bm">T</mi><mo>=</mo>
+        <mi>Rot</mi><mo>(</mo><msub><mi>&#x3B8;</mi><mi>i</mi></msub><mo>)</mo>
+        <mspace width="0.15em"/>
+        <mi>Trans</mi><mo>(</mo><msub><mi>L</mi><mi>i</mi></msub><mo>,</mo><mn>0</mn><mo>)</mo>
+        <mo>=</mo>
         <mrow><mo>(</mo><mtable columnspacing="0.9em" rowspacing="0.3em">
-          <mtr><mtd><mi>cos</mi><mi>&#x3B8;</mi></mtd><mtd><mo>&#x2212;</mo><mi>sin</mi><mi>&#x3B8;</mi></mtd><mtd><mi>d</mi><mi>x</mi></mtd></mtr>
-          <mtr><mtd><mi>sin</mi><mi>&#x3B8;</mi></mtd><mtd><mi>cos</mi><mi>&#x3B8;</mi></mtd><mtd><mi>d</mi><mi>y</mi></mtd></mtr>
+          <mtr><mtd><mi>cos</mi><msub><mi>&#x3B8;</mi><mi>i</mi></msub></mtd><mtd><mo>&#x2212;</mo><mi>sin</mi><msub><mi>&#x3B8;</mi><mi>i</mi></msub></mtd><mtd><msub><mi>L</mi><mi>i</mi></msub><mi>cos</mi><msub><mi>&#x3B8;</mi><mi>i</mi></msub></mtd></mtr>
+          <mtr><mtd><mi>sin</mi><msub><mi>&#x3B8;</mi><mi>i</mi></msub></mtd><mtd><mi>cos</mi><msub><mi>&#x3B8;</mi><mi>i</mi></msub></mtd><mtd><msub><mi>L</mi><mi>i</mi></msub><mi>sin</mi><msub><mi>&#x3B8;</mi><mi>i</mi></msub></mtd></mtr>
           <mtr><mtd><mn>0</mn></mtd><mtd><mn>0</mn></mtd><mtd><mn>1</mn></mtd></mtr>
         </mtable><mo>)</mo></mrow>
       </math>
     </div>
-    连续多步运动就是矩阵<b>连乘</b>：<math><msub><mi class="bm">T</mi><mtext>总</mtext></msub><mo>=</mo><msub><mi class="bm">T</mi><mi>n</mi></msub><mo>&#x22EF;</mo><msub><mi class="bm">T</mi><mn>2</mn></msub><msub><mi class="bm">T</mi><mn>1</mn></msub></math>（本工具每条指令相对<b>世界坐标系</b>作用，即左乘）。添加若干指令后点“执行指令”，看机械臂末端（红色轨迹）如何随累计矩阵移动。
+    整条臂的末端位姿是各关节矩阵<b>依次右乘</b>：<math><msub><mi class="bm">M</mi><mi>n</mi></msub><mo>=</mo><msub><mi class="bm">A</mi><mn>1</mn></msub><msub><mi class="bm">A</mi><mn>2</mn></msub><mo>&#x22EF;</mo><msub><mi class="bm">A</mi><mi>n</mi></msub></math>。<b>前 <math><mi>k</mi></math> 个矩阵的乘积</b> <math><msub><mi class="bm">M</mi><mi>k</mi></msub></math> 恰好给出第 <math><mi>k</mi></math> 节末端的位置和朝向（图中每个关节处画出它的<b>局部坐标架</b>，正是一层层嵌套的旋转）。所以<b>多接一节 = 在末端局部系里再右乘一个 <math><msub><mi class="bm">A</mi><mi>i</mi></msub></math></b>；而顺序不能换——<math><msub><mi class="bm">A</mi><mn>1</mn></msub><msub><mi class="bm">A</mi><mn>2</mn></msub><mo>&#x2260;</mo><msub><mi class="bm">A</mi><mn>2</mn></msub><msub><mi class="bm">A</mi><mn>1</mn></msub></math>，这就是矩阵乘法<b>不可交换</b>的几何写照。
   </div>
 
-  <div class="card">
-    <div id="canvasWrap"><canvas id="canvas" width="500" height="500"></canvas></div>
-    <div class="endpoint" id="endPoint"></div>
-  </div>
+  <div class="layout">
+    <div class="col-left">
+      <div class="card">
+        <div id="canvasWrap"><canvas id="canvas" width="500" height="500"></canvas></div>
+        <div class="endpoint" id="endPoint"></div>
+        <div class="hint">拖动滑块（或直接输入）改变各关节角度 <math><msub><mi>&#x3B8;</mi><mi>i</mi></msub></math> 与臂长 <math><msub><mi>L</mi><mi>i</mi></msub></math>；把鼠标悬停到某个矩阵上，画面会高亮它对应的连杆。</div>
+      </div>
 
-  <div class="card">
-    <h2>指令与控制</h2>
-    <div class="row">
-      <button class="accent" onclick="addRotate()">添加旋转</button>
-      <span class="lbl">角度</span><input type="number" id="rotateAngle" value="45"><span class="lbl">°</span>
+      <div class="card">
+        <h2>关节参数（默认 2 关节，可增减到 3）</h2>
+        <div id="joints"></div>
+        <div class="row" style="margin-top:12px;">
+          <button class="accent" id="addJoint">＋ 添加关节</button>
+          <button id="removeJoint">－ 删除关节</button>
+          <button id="swapBtn">交换 θ₁ ↔ θ₂</button>
+          <button class="primary" id="resetBtn">重置</button>
+        </div>
+      </div>
     </div>
-    <div class="row">
-      <button class="accent" onclick="addTranslate()">添加平移</button>
-      <span class="lbl">dx</span><input type="number" id="dx" value="80">
-      <span class="lbl">dy</span><input type="number" id="dy" value="0">
-    </div>
-    <div class="row">
-      <button class="primary" onclick="runCommandsWithSmoothAnimation()">执行指令</button>
-      <button onclick="reset()">重置</button>
-    </div>
-    <div><strong style="font-size:13px;color:var(--sub);">指令列表</strong>
-      <ol id="commandList"></ol></div>
-  </div>
 
-  <div class="card">
-    <h2>变换矩阵（每步 &amp; 累计）</h2>
-    <div id="matrixDisplay"><span class="empty">点击“执行指令”后，这里显示每一步的矩阵与累计矩阵。</span></div>
+    <div class="col-right">
+      <div class="card matcard">
+        <h2>变换矩阵（每节因子 &amp; 累计乘积）</h2>
+        <div id="matrixDisplay"></div>
+      </div>
+    </div>
   </div>
 
   <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
@@ -130,14 +146,19 @@ const CW=500, CH=500;                     // 逻辑尺寸（CSS 像素）
     canvas.style.width=CW+"px"; canvas.style.height=CH+"px";
 })();
 const DPR=Math.min(2, window.devicePixelRatio||1);
-let commands=[];
-let baseMatrix=identity();
-const armLength=120;
-let tracePoints=[];
-let stepHTML="";
+
+// 每节一种颜色，与矩阵因子 Aᵢ 一一对应（最多 3 节）
+const LINK_COLORS=["#2b6cb0","#dd6b20","#2f855a"];
+const MIN_J=2, MAX_J=3;
+const DEFAULTS=[{t:55,L:120},{t:-45,L:95},{t:40,L:70}];
+
+let joints=[];                            // [{t:角度°, L:臂长}]
+let highlight=new Set();                  // 需高亮的连杆序号（1-based）
+
+function loadDefaults(){ joints=DEFAULTS.slice(0,2).map(o=>({t:o.t,L:o.L})); }
 
 // 与正文 MathML 一致的画布数学体：同一字体栈；bold=向量/点名(class="bm")粗斜体，
-// 默认=标量细斜体(fw400)；白描边收细，避免发胖。需在当前变换下调用。
+// 默认=标量细斜体(fw400)；白描边收细，避免发胖。
 const CMFONT='"Cambria Math","STIX Two Math",serif';
 // Cambria Math 无 italic 字面，canvas 的 italic 是空操作 → 映射到 Unicode 数学(粗)斜体码位，
 // 才能与正文 MathML <mi> 拿到完全相同的字形。
@@ -166,16 +187,25 @@ function drawMathLabel(text,x,y,color,px,bold){
     ctx.restore();
 }
 
+// ── 3×3 齐次矩阵运算（平面坐标 y 向上）──
 function identity(){return [[1,0,0],[0,1,0],[0,0,1]];}
 function multiply(a,b){
     const r=[[0,0,0],[0,0,0],[0,0,0]];
     for(let i=0;i<3;i++)for(let j=0;j<3;j++)for(let k=0;k<3;k++) r[i][j]+=a[i][k]*b[k][j];
     return r;
 }
-function rotateMatrix(deg){const t=deg*Math.PI/180;
-    return [[Math.cos(t),-Math.sin(t),0],[Math.sin(t),Math.cos(t),0],[0,0,1]];}
-function translateMatrix(dx,dy){return [[1,0,dx],[0,1,dy],[0,0,1]];}
-function applyMatrix(m,p){return [m[0][0]*p[0]+m[0][1]*p[1]+m[0][2], m[1][0]*p[0]+m[1][1]*p[1]+m[1][2]];}
+function jointMatrix(deg,L){                       // Aᵢ = Rot(θ)·Trans(L,0)
+    const t=deg*Math.PI/180, c=Math.cos(t), s=Math.sin(t);
+    return [[c,-s,L*c],[s,c,L*s],[0,0,1]];
+}
+// 逐节累计：M[0]=I，M[i]=M[i-1]·Aᵢ；关节位置 J[i]=M[i] 的平移列
+function computeChain(){
+    const A=joints.map(j=>jointMatrix(j.t,j.L));
+    const M=[identity()];
+    for(let i=0;i<A.length;i++) M.push(multiply(M[i],A[i]));
+    const J=M.map(m=>[m[0][2],m[1][2]]);
+    return {A,M,J};
+}
 
 // ── 3×3 矩阵 → MathML ──
 function matMathML(m){
@@ -214,105 +244,173 @@ function drawCoordinateSystem(){
     drawMathLabel("O", -16, 15, "#64748b", 16, true);
     ctx.restore();
 }
-function drawTrace(){
-    if(tracePoints.length<2) return;
-    ctx.save(); ctx.translate(CW/2, CH/2);
-    ctx.strokeStyle="#c53030"; ctx.lineWidth=2.2; ctx.lineCap="round"; ctx.lineJoin="round";
-    ctx.setLineDash([]); ctx.beginPath();
-    tracePoints.forEach((p,i)=>{ if(i===0) ctx.moveTo(p[0],-p[1]); else ctx.lineTo(p[0],-p[1]); });
-    ctx.stroke(); ctx.restore();
-}
-function drawArm(matrix){
-    ctx.setTransform(DPR,0,0,DPR,0,0);       // 复位到高清基变换并清屏
-    ctx.clearRect(0,0,CW,CH);
-    drawCoordinateSystem(); drawTrace();
-    ctx.save(); ctx.translate(CW/2, CH/2);
-    ctx.transform(matrix[0][0], -matrix[1][0], matrix[0][1], -matrix[1][1], matrix[0][2], -matrix[1][2]);
-    // 连杆（带柔和描边的圆头粗线）
-    ctx.lineCap="round";
-    ctx.strokeStyle="#cbd9ec"; ctx.lineWidth=8;
-    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(armLength,0); ctx.stroke();
-    ctx.strokeStyle="#2b6cb0"; ctx.lineWidth=4.5;
-    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(armLength,0); ctx.stroke();
-    // 基座关节（白底蓝环）
-    ctx.beginPath(); ctx.arc(0,0,6,0,Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();
-    ctx.lineWidth=2.6; ctx.strokeStyle="#1e3a8a"; ctx.stroke();
-    // 末端执行器（白底红环）
-    ctx.beginPath(); ctx.arc(armLength,0,6,0,Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();
-    ctx.lineWidth=2.6; ctx.strokeStyle="#c53030"; ctx.stroke();
+
+// 关节处的小坐标架：M[i] 旋转部分的两列即该局部系的 x/y 轴方向（嵌套旋转）
+function drawFrameTriad(m,J){
+    const TL=24;
+    const ux=m[0][0], uy=m[1][0];          // 局部 x 轴（世界坐标，单位向量）
+    const vx=m[0][1], vy=m[1][1];          // 局部 y 轴
+    const ox=J[0], oy=-J[1];               // 画布坐标（y 翻转）
+    ctx.save(); ctx.lineWidth=1.6; ctx.lineCap="round";
+    ctx.strokeStyle="rgba(197,48,48,.55)";  // x 轴 淡红
+    ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox+TL*ux, oy-TL*uy); ctx.stroke();
+    ctx.strokeStyle="rgba(47,133,90,.55)";  // y 轴 淡绿
+    ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox+TL*vx, oy-TL*vy); ctx.stroke();
     ctx.restore();
-    const end=applyMatrix(matrix,[armLength,0]);
-    document.getElementById("endPoint").innerHTML=
-      `末端 <math><msup><mi class="bm">p</mi><mo>&#x2032;</mo></msup></math> = `
-      +`<math><mo>(</mo><mn>${end[0].toFixed(1)}</mn><mo>,</mo><mn>${end[1].toFixed(1)}</mn><mo>)</mo></math>`;
-    tracePoints.push(end);
 }
 
-function addRotate(){
-    const a=parseFloat(document.getElementById("rotateAngle").value);
-    if(Number.isNaN(a)){alert("请输入有效角度");return;}
-    commands.push({type:"rotate",value:a}); updateCommandList();
+function render(){
+    ctx.setTransform(DPR,0,0,DPR,0,0);     // 复位到高清基变换并清屏
+    ctx.clearRect(0,0,CW,CH);
+    drawCoordinateSystem();
+
+    const {M,J}=computeChain();
+    const n=joints.length;
+    const hlActive=highlight.size>0;
+
+    ctx.save(); ctx.translate(CW/2, CH/2);
+
+    // 局部坐标架（画在连杆下层）
+    for(let i=1;i<=n;i++) drawFrameTriad(M[i], J[i]);
+
+    // 连杆：第 i 节连接 J[i-1] → J[i]，颜色对应因子 Aᵢ
+    ctx.lineCap="round";
+    for(let i=1;i<=n;i++){
+        const dim = hlActive && !highlight.has(i);
+        const col = LINK_COLORS[(i-1)%LINK_COLORS.length];
+        const emph = highlight.has(i);
+        const p0=J[i-1], p1=J[i];
+        // 柔和外描边
+        ctx.globalAlpha = dim?0.28:1;
+        ctx.strokeStyle="#dbe6f4"; ctx.lineWidth = emph?12:8;
+        ctx.beginPath(); ctx.moveTo(p0[0],-p0[1]); ctx.lineTo(p1[0],-p1[1]); ctx.stroke();
+        // 彩色杆
+        ctx.strokeStyle=col; ctx.lineWidth = emph?6.5:4.5;
+        ctx.beginPath(); ctx.moveTo(p0[0],-p0[1]); ctx.lineTo(p1[0],-p1[1]); ctx.stroke();
+        ctx.globalAlpha=1;
+    }
+
+    // 关节圆点
+    for(let i=0;i<=n;i++){
+        const P=J[i], isEnd=(i===n), isBase=(i===0);
+        ctx.beginPath(); ctx.arc(P[0],-P[1], isEnd||isBase?6:5, 0, Math.PI*2);
+        ctx.fillStyle="#fff"; ctx.fill();
+        ctx.lineWidth=2.6;
+        ctx.strokeStyle = isBase?"#1e3a8a" : isEnd?"#c53030" : "#64748b";
+        ctx.stroke();
+    }
+
+    // 末端标签 p
+    const endP=J[n];
+    drawMathLabel("p", endP[0]+12, -endP[1]+4, "#c53030", 18, true);
+    ctx.restore();
+
+    // 末端坐标读数
+    document.getElementById("endPoint").innerHTML=
+      `末端 <math><mi class="bm">p</mi></math> = `
+      +`<math><msub><mi class="bm">M</mi><mn>${n}</mn></msub></math> · `
+      +`<math><mo>(</mo><mn>0</mn><mo>,</mo><mn>0</mn><mo>,</mo><mn>1</mn><msup><mo>)</mo><mi>T</mi></msup></math> = `
+      +`<math><mo>(</mo><mn>${endP[0].toFixed(1)}</mn><mo>,</mo><mn>${endP[1].toFixed(1)}</mn><mo>)</mo></math>`;
+
+    renderMatrixPanel(M);
 }
-function addTranslate(){
-    const dx=parseFloat(document.getElementById("dx").value);
-    const dy=parseFloat(document.getElementById("dy").value);
-    if(Number.isNaN(dx)||Number.isNaN(dy)){alert("请输入有效的 dx, dy");return;}
-    commands.push({type:"translate",dx:dx,dy:dy}); updateCommandList();
-}
-function updateCommandList(){
-    const list=document.getElementById("commandList"); list.innerHTML="";
-    if(commands.length===0){ list.innerHTML='<span class="empty">（暂无指令，先添加旋转或平移）</span>'; return; }
-    commands.forEach(cmd=>{
-        const li=document.createElement("li");
-        li.innerText = cmd.type==="rotate" ? `旋转 ${cmd.value}°` : `平移 dx=${cmd.dx}, dy=${cmd.dy}`;
-        list.appendChild(li);
+
+// 下标数学符号（供面板标签用）
+function sub(letter,idx,bold){ return `<math><msub><mi class="${bold?'bm':''}">${letter}</mi><mn>${idx}</mn></msub></math>`; }
+
+function renderMatrixPanel(M){
+    const n=joints.length;
+    let html="";
+    // 各节因子 Aᵢ
+    html+=`<div class="sec">每节因子</div>`;
+    for(let i=1;i<=n;i++){
+        const col=LINK_COLORS[(i-1)%LINK_COLORS.length];
+        const lbl=`<span style="width:10px;height:10px;border-radius:2px;background:${col};display:inline-block;"></span>`
+          +`${sub("A",i,true)}<span style="color:#94a3b8">= Rot(${joints[i-1].t}°)·Trans(${joints[i-1].L},0)</span>`;
+        html+=`<div class="mstep" data-hl="${i}"><span class="mlbl">${lbl}</span>${matMathML(jointMatrix(joints[i-1].t,joints[i-1].L))}</div>`;
+    }
+    // 累计乘积 Mₖ = A₁…Aₖ
+    html+=`<div class="sec">累计乘积（前 k 个因子相乘 = 第 k 节末端位姿）</div>`;
+    for(let k=1;k<=n;k++){
+        let prod="";
+        for(let i=1;i<=k;i++) prod+=`<msub><mi class="bm">A</mi><mn>${i}</mn></msub>`;
+        const hlList=Array.from({length:k},(_,i)=>i+1).join(",");
+        const isTot=(k===n);
+        const lbl=`<math><msub><mi class="bm">M</mi><mn>${k}</mn></msub><mo>=</mo>${prod}</math>`;
+        html+=`<div class="mstep${isTot?' total':''}" data-hl="${hlList}"><span class="mlbl">${lbl}</span>${matMathML(M[k])}</div>`;
+    }
+    const disp=document.getElementById("matrixDisplay");
+    disp.innerHTML=html;
+    // 悬停高亮对应连杆
+    disp.querySelectorAll(".mstep[data-hl]").forEach(el=>{
+        const set=el.getAttribute("data-hl").split(",").map(Number);
+        el.addEventListener("mouseenter",()=>{ highlight=new Set(set); el.classList.add("hl"); render(); });
+        el.addEventListener("mouseleave",()=>{ highlight=new Set(); render(); });
     });
 }
-function reset(){
-    commands=[]; tracePoints=[]; updateCommandList();
-    baseMatrix=identity(); drawArm(baseMatrix); tracePoints=[];
-    stepHTML="";
-    document.getElementById("matrixDisplay").innerHTML='<span class="empty">点击“执行指令”后，这里显示每一步的矩阵与累计矩阵。</span>';
-    document.getElementById("endPoint").innerHTML="";
-}
-function renderMatrixPanel(){ document.getElementById("matrixDisplay").innerHTML=stepHTML; }
 
-let running=false;
-function runCommandsWithSmoothAnimation(){
-    if(running) return;
-    if(commands.length===0){ alert("请先添加至少一条指令"); return; }
-    running=true;
-    baseMatrix=identity(); tracePoints=[]; stepHTML=""; renderMatrixPanel();
-    let index=0;
-    function animateStep(cmd,onComplete){
-        const totalFrames=60; let frame=0;
-        let mInc, stepMatrix=identity();
-        if(cmd.type==="rotate") mInc=rotateMatrix(cmd.value/totalFrames);
-        else mInc=translateMatrix(cmd.dx/totalFrames, cmd.dy/totalFrames);
-        function step(){
-            baseMatrix=multiply(mInc,baseMatrix);
-            stepMatrix=multiply(mInc,stepMatrix);
-            drawArm(baseMatrix); frame++;
-            if(frame<totalFrames) requestAnimationFrame(step);
-            else{
-                const lbl = cmd.type==="rotate" ? `第 ${index+1} 步：旋转 ${cmd.value}°` : `第 ${index+1} 步：平移 (${cmd.dx}, ${cmd.dy})`;
-                stepHTML+=`<div class="mstep"><span class="mlbl">${lbl}</span>${matMathML(stepMatrix)}</div>`;
-                renderMatrixPanel(); onComplete();
-            }
-        }
-        step();
-    }
-    function nextCommand(){
-        if(index>=commands.length){
-            stepHTML+=`<div class="mstep total"><span class="mlbl total">累计变换矩阵 T总</span>${matMathML(baseMatrix)}</div>`;
-            renderMatrixPanel(); running=false; return;
-        }
-        animateStep(commands[index], ()=>{ index++; nextCommand(); });
-    }
-    nextCommand();
+// ── 关节控件 ──
+function buildJoints(){
+    const box=document.getElementById("joints");
+    box.innerHTML="";
+    joints.forEach((j,idx)=>{
+        const i=idx+1, col=LINK_COLORS[idx%LINK_COLORS.length];
+        const div=document.createElement("div");
+        div.className="joint"; div.style.borderLeftColor=col;
+        div.innerHTML=
+          `<div class="jhead"><span style="width:10px;height:10px;border-radius:2px;background:${col};display:inline-block;"></span>关节 ${i} · ${sub("A",i,true)}</div>`
+          +`<div class="row"><span class="lbl">角度 ${sub("θ",i)}</span>`
+          +`<div class="slider"><input type="range" min="-170" max="170" step="1" value="${j.t}" data-k="${idx}" data-f="t" style="accent-color:${col}">`
+          +`<input type="number" class="num" min="-170" max="170" step="1" value="${j.t}" data-k="${idx}" data-f="t"><span class="unit">°</span></div></div>`
+          +`<div class="row"><span class="lbl">臂长 ${sub("L",i)}</span>`
+          +`<div class="slider"><input type="range" min="40" max="150" step="1" value="${j.L}" data-k="${idx}" data-f="L" style="accent-color:${col}">`
+          +`<input type="number" class="num" min="40" max="150" step="1" value="${j.L}" data-k="${idx}" data-f="L"><span class="unit"></span></div></div>`;
+        box.appendChild(div);
+    });
+    // 滑块与数字框双向同步；数字框失焦/回车时按范围钳位
+    box.querySelectorAll('input[data-k]').forEach(inp=>{
+        const isNum=inp.classList.contains("num");
+        inp.addEventListener("input",e=>{
+            const k=+e.target.dataset.k, f=e.target.dataset.f;
+            const min=+e.target.min, max=+e.target.max;
+            let v=parseFloat(e.target.value);
+            if(Number.isNaN(v)) return;                 // 数字框正在编辑（空/负号）时暂不重算
+            v=Math.max(min,Math.min(max,v));
+            joints[k][f]=v;
+            // 同步同一 row 内的另一个控件（滑块↔数字框）
+            e.target.closest(".slider").querySelectorAll('input[data-k]').forEach(o=>{ if(o!==e.target) o.value=v; });
+            render();
+        });
+        if(isNum) inp.addEventListener("change",e=>{     // 失焦时把越界/空值归位
+            const k=+e.target.dataset.k, f=e.target.dataset.f;
+            e.target.value=joints[k][f];
+            e.target.closest(".slider").querySelector('input[type=range]').value=joints[k][f];
+        });
+    });
+    document.getElementById("addJoint").disabled = joints.length>=MAX_J;
+    document.getElementById("removeJoint").disabled = joints.length<=MIN_J;
+    document.getElementById("swapBtn").disabled = joints.length<2;
 }
 
-reset();
+document.getElementById("addJoint").addEventListener("click",()=>{
+    if(joints.length>=MAX_J) return;
+    const d=DEFAULTS[joints.length]||{t:30,L:70};
+    joints.push({t:d.t,L:d.L}); buildJoints(); render();
+});
+document.getElementById("removeJoint").addEventListener("click",()=>{
+    if(joints.length<=MIN_J) return;
+    joints.pop(); buildJoints(); render();
+});
+document.getElementById("swapBtn").addEventListener("click",()=>{
+    if(joints.length<2) return;
+    const t=joints[0].t; joints[0].t=joints[1].t; joints[1].t=t;   // 交换前两节角度，看末端如何不同
+    buildJoints(); render();
+});
+document.getElementById("resetBtn").addEventListener("click",()=>{
+    loadDefaults(); buildJoints(); render();
+});
+
+loadDefaults(); buildJoints(); render();
 </script>
 
 <script>
