@@ -184,18 +184,21 @@ function drawAxes(){
         if(k===0) continue;
         ctx.fillText(k, origin+5, origin-k*sf);
     }
-    // 轴名（斜体数学体）
-    drawMathLabel("x", size-16, oc+13, "#64748b", 15);
-    drawMathLabel("y", oc+11, 15, "#64748b", 15);
-    drawMathLabel("O", oc-13, oc+11, "#64748b", 14);
+    // 轴名：坐标轴变量 x/y 细斜体；原点 O 粗斜体（与说明区 bm 一致）
+    drawMathLabel("x", size-16, oc+13, "#64748b", 16);
+    drawMathLabel("y", oc+11, 15, "#64748b", 16);
+    drawMathLabel("O", oc-13, oc+11, "#64748b", 15, true);
 }
 
-// 斜体数学体文字标签（白色描边，画布上清晰）
-function drawMathLabel(text,x,y,color,px){
+// 与正文 MathML 一致的画布数学体：同一字体栈；bold=向量/点名(class="bm")粗斜体，
+// 默认=标量细斜体(fw400)；白描边收细，避免发胖。
+const CMFONT='"Cambria Math","STIX Two Math",serif';
+function drawMathLabel(text,x,y,color,px,bold){
+    px=px||16;
     ctx.save();
-    ctx.font=`italic 700 ${px||17}px "Cambria Math","STIX Two Math","Times New Roman",serif`;
+    ctx.font=`italic ${bold?700:400} ${px}px ${CMFONT}`;
     ctx.textAlign="left"; ctx.textBaseline="middle";
-    ctx.lineJoin="round"; ctx.lineWidth=(px||17)*0.22; ctx.strokeStyle="rgba(255,255,255,.95)";
+    ctx.lineJoin="round"; ctx.lineWidth=px*0.15; ctx.strokeStyle="rgba(255,255,255,.9)";
     ctx.strokeText(text,x,y);
     ctx.fillStyle=color; ctx.fillText(text,x,y);
     ctx.restore();
@@ -225,7 +228,7 @@ function drawVector(d,color,label){
     // 标签（沿方向外移一点，避免压住箭头）
     let lx=p.x+8, ly=p.y-8;
     if(len>2){ const ang=Math.atan2(dy,dx); lx=p.x+10*Math.cos(ang)+ (dx<0?-6:4); ly=p.y+10*Math.sin(ang)-6; }
-    drawMathLabel(label, lx, ly, color, 17);
+    drawMathLabel(label, lx, ly, color, 17, true);   // 向量名 A/B 粗斜体
 }
 
 function transformed(){

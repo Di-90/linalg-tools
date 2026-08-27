@@ -127,30 +127,33 @@ function drawTextWithContrast(text,x,y){
     ctx.fillText(text,x,y);
 }
 
-// 斜体数学体文字标签（白色描边，画布上清晰）
-function drawMathLabel(text,x,y,color,px){
+// 与正文 MathML 一致的画布数学体：同一字体栈；bold=向量/点名(class="bm")粗斜体，
+// 默认=标量细斜体(fw400)；白描边收细，避免发胖。
+const CMFONT='"Cambria Math","STIX Two Math",serif';
+function drawMathLabel(text,x,y,color,px,bold){
+    px=px||16;
     ctx.save();
-    ctx.font=`italic 700 ${px||16}px "Cambria Math","STIX Two Math","Times New Roman",serif`;
+    ctx.font=`italic ${bold?700:400} ${px}px ${CMFONT}`;
     ctx.textAlign="left"; ctx.textBaseline="alphabetic";
-    ctx.lineJoin="round"; ctx.lineWidth=(px||16)*0.22; ctx.strokeStyle="rgba(255,255,255,.95)";
+    ctx.lineJoin="round"; ctx.lineWidth=px*0.15; ctx.strokeStyle="rgba(255,255,255,.9)";
     ctx.strokeText(text,x,y);
     ctx.fillStyle=color; ctx.fillText(text,x,y);
     ctx.restore();
 }
 
-// 带下标的数学体标签：主字母斜体 + 右下角小号下标
+// 向量名 + 下标：主字母粗斜体，下标数字正体（与正文 <msub><mi class="bm">…<mn>… 一致）
 function drawSubLabel(base,sub,x,y,color){
     ctx.save();
     ctx.textAlign="left"; ctx.textBaseline="alphabetic";
-    ctx.lineJoin="round"; ctx.strokeStyle="rgba(255,255,255,.95)";
+    ctx.lineJoin="round"; ctx.strokeStyle="rgba(255,255,255,.9)";
     const fs=16;
-    ctx.font=`italic 700 ${fs}px "Cambria Math","STIX Two Math","Times New Roman",serif`;
-    ctx.lineWidth=fs*0.22;
+    ctx.font=`italic 700 ${fs}px ${CMFONT}`;
+    ctx.lineWidth=fs*0.15;
     ctx.strokeText(base,x,y); ctx.fillStyle=color; ctx.fillText(base,x,y);
-    const bw=ctx.measureText(base).width, sfs=Math.round(fs*0.62);
-    ctx.font=`italic 700 ${sfs}px "Cambria Math","STIX Two Math","Times New Roman",serif`;
-    ctx.lineWidth=sfs*0.22;
-    const sx=x+bw+1, sy=y+fs*0.28;
+    const bw=ctx.measureText(base).width, sfs=Math.round(fs*0.66);
+    ctx.font=`normal 400 ${sfs}px ${CMFONT}`;      // 下标数字正体
+    ctx.lineWidth=sfs*0.15;
+    const sx=x+bw+1.5, sy=y+fs*0.22;
     ctx.strokeText(sub,sx,sy); ctx.fillStyle=color; ctx.fillText(sub,sx,sy);
     ctx.restore();
 }
@@ -191,10 +194,10 @@ function drawDefaultGrid(){
         ctx.beginPath();ctx.moveTo(cx-4,center.y-i*gridSize);ctx.lineTo(cx+4,center.y-i*gridSize);ctx.stroke();
         ctx.fillText(i.toString(),center.x+8,center.y-i*gridSize);
     }
-    // 轴名（斜体数学体）
+    // 轴名：坐标轴变量 x/y 细斜体；原点 O 粗斜体（与说明区 bm 一致）
     drawMathLabel("x", canvas.width-20, cy-9, "#64748b", 17);
     drawMathLabel("y", cx+10, 20, "#64748b", 17);
-    drawMathLabel("O", cx-16, cy+16, "#64748b", 15);
+    drawMathLabel("O", cx-16, cy+16, "#64748b", 16, true);
 }
 drawDefaultGrid();
 
@@ -300,7 +303,7 @@ function redraw(){
 
     // 正在定义中的临时点
     tempPoints.forEach((p,i)=>{ drawPoint(p,"#94a3b8",5);
-        drawMathLabel(["O","X","Y"][i], p.x+8, p.y-6, "#475569", 15); });
+        drawMathLabel(["O","X","Y"][i], p.x+8, p.y-6, "#475569", 15, true); });
 
     output.innerHTML="";
     systems.forEach((s,i)=>{

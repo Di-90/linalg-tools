@@ -136,12 +136,15 @@ const armLength=120;
 let tracePoints=[];
 let stepHTML="";
 
-// 斜体数学体文字标签（白色描边，画布上清晰）— 需在当前变换下调用
-function drawMathLabel(text,x,y,color,px){
+// 与正文 MathML 一致的画布数学体：同一字体栈；bold=向量/点名(class="bm")粗斜体，
+// 默认=标量细斜体(fw400)；白描边收细，避免发胖。需在当前变换下调用。
+const CMFONT='"Cambria Math","STIX Two Math",serif';
+function drawMathLabel(text,x,y,color,px,bold){
+    px=px||16;
     ctx.save();
-    ctx.font=`italic 700 ${px||16}px "Cambria Math","STIX Two Math","Times New Roman",serif`;
+    ctx.font=`italic ${bold?700:400} ${px}px ${CMFONT}`;
     ctx.textAlign="left"; ctx.textBaseline="alphabetic";
-    ctx.lineJoin="round"; ctx.lineWidth=(px||16)*0.22; ctx.strokeStyle="rgba(255,255,255,.95)";
+    ctx.lineJoin="round"; ctx.lineWidth=px*0.15; ctx.strokeStyle="rgba(255,255,255,.9)";
     ctx.strokeText(text,x,y);
     ctx.fillStyle=color; ctx.fillText(text,x,y);
     ctx.restore();
@@ -189,10 +192,10 @@ function drawCoordinateSystem(){
     for(let x=-hx;x<=hx;x+=50){ if(x!==0){ctx.beginPath();ctx.moveTo(x,-4);ctx.lineTo(x,4);ctx.stroke();ctx.fillText(x,x,8);} }
     ctx.textAlign="left"; ctx.textBaseline="middle";
     for(let y=-hy;y<=hy;y+=50){ if(y!==0){ctx.beginPath();ctx.moveTo(-4,y);ctx.lineTo(4,y);ctx.stroke();ctx.fillText(-y,7,y);} }
-    // 轴名（斜体数学体）
+    // 轴名：坐标轴变量 x/y 细斜体；原点 O 粗斜体（与说明区 bm 一致）
     drawMathLabel("x", hx-16, -9, "#64748b", 17);
     drawMathLabel("y", 10, -hy+20, "#64748b", 17);
-    drawMathLabel("O", -16, 15, "#64748b", 15);
+    drawMathLabel("O", -16, 15, "#64748b", 16, true);
     ctx.restore();
 }
 function drawTrace(){

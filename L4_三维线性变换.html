@@ -176,11 +176,12 @@ scene.add(dynamicGroup);
 const C_I=0xb7791f, C_J=0x2f855a, C_K=0x6b46c1;   // î ĵ k̂ → 金 / 绿 / 紫
 
 // ── 数学体标签：斜体衬线 + 白色描边，高清渲染，可选“戴帽” î ────────────
-function makeLabel(text,color,hat){
+function makeLabel(text,color,hat,bold){
     const dpr=Math.min(2, window.devicePixelRatio||1);
     const fs=72, pad=14, hatH=hat?Math.round(fs*0.34):0;
     const meas=document.createElement("canvas").getContext("2d");
-    const font=`italic 600 ${fs}px "Cambria Math","STIX Two Math","Times New Roman",serif`;
+    // 与正文/2D 画布一致：Cambria Math 字体栈；bold=向量/点名粗斜体，默认=坐标轴变量细斜体
+    const font=`italic ${bold?700:400} ${fs}px "Cambria Math","STIX Two Math",serif`;
     meas.font=font;
     const tw=Math.ceil(meas.measureText(text).width);
     const w=tw+pad*2, h=fs+pad*2+hatH;
@@ -247,14 +248,14 @@ function buildStatic(){
         const ax=makeArrow(a.v[0],a.v[1],a.v[2], 0x94a3b8, 0.018); dynamicGroup.add(ax);
         const s=makeLabel(a.name, "#475569"); s.position.set(...a.pos); dynamicGroup.add(s);
     });
-    const o=makeLabel("O", "#475569"); o.position.set(-0.55,-0.55,-0.15); dynamicGroup.add(o);
+    const o=makeLabel("O", "#475569", false, true); o.position.set(-0.55,-0.55,-0.15); dynamicGroup.add(o);
 }
 
 function addVector(vec, colorHex, label, shaftR, hat){
     const v=new THREE.Vector3(vec.x*scaleFactor, vec.y*scaleFactor, vec.z*scaleFactor);
     const len=v.length();
     if(len>1e-6) dynamicGroup.add(makeArrow(v.x,v.y,v.z, colorHex, shaftR));
-    const s=makeLabel(label, hex(colorHex), hat);
+    const s=makeLabel(label, hex(colorHex), hat, true);   // 向量名/基向量粗斜体
     const off=v.length()>1e-6 ? v.clone().normalize().multiplyScalar(0.75) : new THREE.Vector3(0.6,0.6,0.6);
     s.position.set(v.x+off.x, v.y+off.y+0.15, v.z+off.z);
     dynamicGroup.add(s);
@@ -294,7 +295,7 @@ function addUnitCubeImage(){
         const v=new THREE.Vector3(col[0]*s,col[1]*s,col[2]*s);
         if(v.length()>1e-6){
             dynamicGroup.add(makeArrow(v.x,v.y,v.z, meta[i].c, 0.036));
-            const lab=makeLabel(meta[i].l, hex(meta[i].c), true);
+            const lab=makeLabel(meta[i].l, hex(meta[i].c), true, true);
             const off=v.clone().normalize().multiplyScalar(0.7);
             lab.position.set(v.x+off.x, v.y+off.y+0.1, v.z+off.z);
             dynamicGroup.add(lab);
