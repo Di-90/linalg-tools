@@ -50,6 +50,38 @@
        border-radius:8px;padding:10px 14px;margin-top:12px;min-height:22px;}
   .readout .sysline{display:flex;align-items:center;gap:8px;}
   .readout .dot{width:12px;height:12px;border-radius:50%;display:inline-block;}
+  /* ── 练习模式（与 L1/L2/L3/L4/L6/L8 同款）── */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0 0 16px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 20px;font-size:14px;background:#fff;color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button:not(.on):hover{background:#eef4fb;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .quizhead h2{margin:0;}
+  .stats{font-size:12.5px;color:var(--sub);}
+  .stats b{color:var(--ink);}
+  .reset-link{font-size:12px;color:#a0aec0;background:none;border:none;cursor:pointer;text-decoration:underline;padding:2px 4px;}
+  .reset-link:hover{color:#c53030;border-color:transparent;}
+  .qbody{font-size:15px;line-height:2;}
+  .qbody math{font-size:1.12em;}
+  .qbody .ans{margin-top:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .qbody .ans .cell{display:inline-flex;align-items:center;gap:6px;}
+  .qbody input.qin{width:64px;font-size:16px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;
+       text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+  .opts label{display:flex;align-items:center;gap:9px;padding:9px 13px;border:1px solid var(--line);border-radius:8px;
+       cursor:pointer;transition:.12s;font-size:14.5px;}
+  .opts label:hover{border-color:var(--blue);background:#f7fafc;}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .feedback{margin-top:12px;font-size:14px;min-height:22px;line-height:1.9;}
+  .feedback.ok{color:var(--green);}
+  .feedback.no,.feedback .no{color:#c53030;}
+  .sol{margin-top:8px;padding:10px 12px;background:#f8fafc;border:1px solid var(--line);border-radius:8px;
+       font-size:13.5px;line-height:1.95;color:var(--sub);}
+  .sol b{color:var(--ink);}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+  .qbtns button.primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .qbtns button.primary:hover{opacity:.92;}
   footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
        font-size:12px;color:#718096;text-align:center;}
 </style>
@@ -85,15 +117,36 @@
     可先<b>上传一张图片</b>作底图（例如地图），再在图上取点、定坐标系；不上传则用默认网格。同一个点在不同基下坐标不同——这正是<b>坐标依赖于基</b>的含义。
   </div>
 
-  <div class="card">
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div class="card" id="toolCard">
     <div id="status"></div>
-    <div class="toolbar">
+    <div class="toolbar" id="toolBar">
       <label class="filebtn">上传底图<input type="file" id="upload" accept="image/*" hidden></label>
       <button id="undo">撤销上一步</button>
       <button class="primary" id="reset">全部重置</button>
     </div>
     <div id="canvasWrap"><canvas id="canvas" width="600" height="600"></canvas></div>
     <div class="readout" id="output"></div>
+  </div>
+
+  <div class="card" id="quizCard" style="display:none;">
+    <div class="quizhead">
+      <h2>练习 · 坐标与基变换</h2>
+      <span class="stats" id="quizStats"></span>
+      <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+    </div>
+    <div class="qbody" id="qBody"></div>
+    <div class="feedback" id="qFeedback"></div>
+    <div class="qbtns">
+      <button class="primary" id="qSubmit">提交</button>
+      <button id="qHint">提示</button>
+      <button id="qReveal">看解析</button>
+      <button id="qNext">下一题 ▸</button>
+    </div>
   </div>
 
   <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
@@ -244,6 +297,7 @@ function snap(p){
 function distance(x1,y1,x2,y2){return Math.sqrt((x1-x2)**2+(y1-y2)**2);}
 
 function onDown(e){
+    if(typeof qmode!=="undefined" && qmode==="practice") return;   // 练习模式下画布只作示意图，禁用取点
     e.preventDefault();
     let p=snap(getPos(e));
     if(targetPoint && distance(p.x,p.y,targetPoint.x,targetPoint.y)<12){ dragging=true; return; }
@@ -259,6 +313,7 @@ function onDown(e){
     redraw();
 }
 function onMove(e){
+    if(typeof qmode!=="undefined" && qmode==="practice") return;
     if(!dragging||!targetPoint) return;
     e.preventDefault();
     targetPoint=snap(getPos(e));
@@ -366,6 +421,322 @@ resetBtn.addEventListener("click",()=>{
 });
 
 updateStatus();
+
+/* ══════════════════════════════════════════════════════════════════
+   练习模式（与 L1/L2/L3/L4/L6/L8 同款外壳）
+   四类题：
+   ① coord        给基 e₁,e₂ 与位置向量 OP，求该基下坐标 (a,b)（填空）
+   ② vector       给基 e₁,e₂ 与坐标 (a,b)，求位置向量 OP=a·e₁+b·e₂（填空）
+   ③ changebasis  同一点在基 B₁ 下坐标 (a,b)，求在基 B₂ 下坐标 (c,d)（填空，B₂ 用 det=±1 整数阵保证整数答案）
+   ④ basis        给两向量，判断能否作 R² 的一组基（选择：能/不能，考行列式≠0）
+   本地进度存 localStorage，仅本机可见
+   ══════════════════════════════════════════════════════════════════ */
+const QUIZKEY="la-l5-quiz";
+let qmode="explore", quiz=null, streak=0;
+let qstats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:qstats.attempted,correct:qstats.correct,streak:streak})); }catch(e){} }
+function resetStats(){
+  if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return;
+  qstats={attempted:0,correct:0}; streak=0; saveStats(); renderStats();
+}
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function nz(a,b){ let v=0; while(v===0) v=ri(a,b); return v; }
+function shuffle(a){ for(let k=a.length-1;k>0;k--){ const t=Math.floor(Math.random()*(k+1)); [a[k],a[t]]=[a[t],a[k]]; } return a; }
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+// ── MathML 小工具 ──
+function mml(inner){ return `<math>${inner}</math>`; }
+function snum(x){ return x<0?`<mo>&#x2212;</mo><mn>${-x}</mn>`:`<mn>${x}</mn>`; }
+function pnum(x){ return x<0?`<mrow><mo>(</mo><mo>&#x2212;</mo><mn>${-x}</mn><mo>)</mo></mrow>`:`<mn>${x}</mn>`; }
+function colVec(x,y){ return `<mrow><mo>(</mo><mtable rowspacing="0.2em"><mtr><mtd>${snum(x)}</mtd></mtr><mtr><mtd>${snum(y)}</mtd></mtr></mtable><mo>)</mo></mrow>`; }
+function eSub(i){ return `<msub><mi class="bm">e</mi><mn>${i}</mn></msub>`; }
+function fSub(i){ return `<msub><mi class="bm">f</mi><mn>${i}</mn></msub>`; }
+function vSub(i){ return `<msub><mi class="bm">v</mi><mn>${i}</mn></msub>`; }
+const OPML=`<mover><mrow><mi class="bm">O</mi><mi class="bm">P</mi></mrow><mo>&#x2192;</mo></mover>`;
+const pairML=(l,r)=>`<mo>(</mo><mi>${l}</mi><mo>,</mo><mi>${r}</mi><mo>)</mo>`;
+const pairVal=(x,y)=>`<mo>(</mo>${snum(x)}<mo>,</mo>${snum(y)}<mo>)</mo>`;
+// 线性组合 c₁·base₁ + c₂·base₂（真符号、省略系数 ±1、跳过 0 项）
+function comboML(coefs, baseSub){
+  const terms=[];
+  coefs.forEach((c,idx)=>{ if(c===0) return; terms.push({c, ml:(Math.abs(c)!==1?`<mn>${Math.abs(c)}</mn>`:"")+baseSub(idx+1)}); });
+  if(!terms.length) return `<mn>0</mn>`;
+  let s="";
+  terms.forEach((t,i)=>{ if(i===0){ if(t.c<0) s+=`<mo>&#x2212;</mo>`; } else s+= t.c<0?`<mo>&#x2212;</mo>`:`<mo>+</mo>`; s+=t.ml; });
+  return s;
+}
+
+// ── 求向量 w 在基 {b1,b2} 下的坐标（列向量）──
+function coordsIn(w,b1,b2){
+  const det=b1[0]*b2[1]-b1[1]*b2[0];
+  const c=(w[0]*b2[1]-w[1]*b2[0])/det;
+  const d=(b1[0]*w[1]-b1[1]*w[0])/det;
+  return [c,d,det];
+}
+// ── 随机整数基（det≠0，分量∈[-lim,lim]）──
+function randBasis(lim){
+  let e1,e2,det;
+  do{ e1=[ri(-lim,lim),ri(-lim,lim)]; e2=[ri(-lim,lim),ri(-lim,lim)]; det=e1[0]*e2[1]-e1[1]*e2[0]; }while(det===0);
+  return {e1,e2,det};
+}
+// ── det=±1 的整数矩阵（列 f1,f2；逆阵也为整数 → 换基坐标必为整数）──
+function unimodular(){
+  const mul=(A,B)=>[[A[0][0]*B[0][0]+A[0][1]*B[1][0], A[0][0]*B[0][1]+A[0][1]*B[1][1]],
+                    [A[1][0]*B[0][0]+A[1][1]*B[1][0], A[1][0]*B[0][1]+A[1][1]*B[1][1]]];
+  while(true){
+    let m=[[1,0],[0,1]];
+    const n=ri(2,3);
+    for(let i=0;i<n;i++){ const k=nz(-1,2); m = Math.random()<0.5? mul(m,[[1,k],[0,1]]) : mul(m,[[1,0],[k,1]]); }
+    if(Math.random()<0.5) m=mul(m,[[0,1],[1,0]]);   // 交换列 → det 变号，仍 ±1
+    const f1=[m[0][0],m[1][0]], f2=[m[0][1],m[1][1]];
+    const det=f1[0]*f2[1]-f1[1]*f2[0];
+    if(Math.abs(det)===1 && Math.max(Math.abs(f1[0]),Math.abs(f1[1]),Math.abs(f2[0]),Math.abs(f2[1]))<=4
+       && !(f1[0]===1&&f1[1]===0&&f2[0]===0&&f2[1]===1)) return {f1,f2,det};
+  }
+}
+
+// ── 出题 ──
+function genCoord(){
+  while(true){
+    const {e1,e2}=randBasis(2);
+    const a=ri(-2,2), b=ri(-2,2);
+    if(a===0&&b===0) continue;
+    const OP=[a*e1[0]+b*e2[0], a*e1[1]+b*e2[1]];
+    if(Math.max(Math.abs(OP[0]),Math.abs(OP[1]))>5) continue;
+    return {kind:"coord", e1,e2,OP, ans:[a,b], done:false,correct:false};
+  }
+}
+function genVector(){
+  while(true){
+    const {e1,e2}=randBasis(2);
+    const a=ri(-2,2), b=ri(-2,2);
+    if(a===0&&b===0) continue;
+    const OP=[a*e1[0]+b*e2[0], a*e1[1]+b*e2[1]];
+    if(Math.max(Math.abs(OP[0]),Math.abs(OP[1]))>5) continue;
+    return {kind:"vector", e1,e2, ab:[a,b], ans:OP, showP:false, done:false,correct:false};
+  }
+}
+function genChangeBasis(){
+  while(true){
+    const {e1,e2}=randBasis(2);
+    const {f1,f2}=unimodular();
+    const a=ri(-3,3), b=ri(-3,3);
+    if(a===0&&b===0) continue;
+    const OP=[a*e1[0]+b*e2[0], a*e1[1]+b*e2[1]];
+    const [c,d]=coordsIn(OP,f1,f2);
+    const cr=Math.round(c), dr=Math.round(d);
+    if(Math.abs(c-cr)>1e-9||Math.abs(d-dr)>1e-9) continue;       // det=±1 应保证整数，保险验证
+    if(Math.max(Math.abs(cr),Math.abs(dr))>9) continue;
+    return {kind:"changebasis", e1,e2,f1,f2, ab:[a,b], OP, ans:[cr,dr], done:false,correct:false};
+  }
+}
+function genBasisJudge(){
+  const canBe = Math.random()<0.5;
+  let v1,v2,det;
+  if(canBe){
+    do{ v1=[ri(-4,4),ri(-4,4)]; v2=[ri(-4,4),ri(-4,4)]; det=v1[0]*v2[1]-v1[1]*v2[0]; }while(det===0);
+  }else{
+    do{ v1=[ri(-2,2),ri(-2,2)]; }while(v1[0]===0&&v1[1]===0);
+    const k=pick([-2,-1,1,2]);
+    v2=[k*v1[0], k*v1[1]];
+    if(Math.max(Math.abs(v2[0]),Math.abs(v2[1]))>5) return genBasisJudge();
+    det=0;
+  }
+  const opts=["能（线性无关，可作 R² 的一组基）","不能（线性相关 / 两向量共线）"];
+  return {kind:"basis", v1,v2, det, canBe, opts, ansIdx: canBe?0:1, selected:-1, done:false,correct:false};
+}
+function genProblem(){
+  const r=Math.random();
+  if(r<0.3) return genCoord();
+  if(r<0.6) return genVector();
+  if(r<0.8) return genChangeBasis();
+  return genBasisJudge();
+}
+
+// ── 渲染题目 ──
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody");
+  const fb=document.getElementById("qFeedback"); fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  if(q.kind==="coord"){
+    body.innerHTML=`已知一组基 ${mml(eSub(1)+`<mo>=</mo>`+colVec(...q.e1))}、${mml(eSub(2)+`<mo>=</mo>`+colVec(...q.e2))}，`
+      +`点 ${mml(`<mi>P</mi>`)} 的位置向量 ${mml(OPML+`<mo>=</mo>`+colVec(...q.OP))}。`
+      +`求 ${mml(`<mi>P</mi>`)} 在这组基下的坐标 ${mml(pairML("a","b"))}：`
+      +`<div class="ans">`+cellInp("a",mml(`<mi>a</mi><mo>=</mo>`))+cellInp("b",mml(`<mi>b</mi><mo>=</mo>`))+`</div>`;
+    wireEnter(["a","b"]);
+  }else if(q.kind==="vector"){
+    body.innerHTML=`已知一组基 ${mml(eSub(1)+`<mo>=</mo>`+colVec(...q.e1))}、${mml(eSub(2)+`<mo>=</mo>`+colVec(...q.e2))}，`
+      +`点 ${mml(`<mi>P</mi>`)} 在这组基下的坐标为 ${mml(pairML("a","b")+`<mo>=</mo>`+pairVal(...q.ab))}。`
+      +`求 ${mml(`<mi>P</mi>`)} 的位置向量 ${mml(OPML)}（标准直角坐标系下的分量）：`
+      +`<div class="ans">`+cellInp("px",mml(`<mi>x</mi><mo>=</mo>`))+cellInp("py",mml(`<mi>y</mi><mo>=</mo>`))+`</div>`;
+    wireEnter(["px","py"]);
+  }else if(q.kind==="changebasis"){
+    body.innerHTML=`已知点 ${mml(`<mi>P</mi>`)} 在基 ${mml(`<msub><mi>B</mi><mn>1</mn></msub>`)} `
+      +`（${mml(eSub(1)+`<mo>=</mo>`+colVec(...q.e1))}、${mml(eSub(2)+`<mo>=</mo>`+colVec(...q.e2))}）下的坐标为 ${mml(pairVal(...q.ab))}。`
+      +`另有一组基 ${mml(`<msub><mi>B</mi><mn>2</mn></msub>`)}（${mml(fSub(1)+`<mo>=</mo>`+colVec(...q.f1))}、${mml(fSub(2)+`<mo>=</mo>`+colVec(...q.f2))}）。`
+      +`求 ${mml(`<mi>P</mi>`)} 在 ${mml(`<msub><mi>B</mi><mn>2</mn></msub>`)} 下的坐标 ${mml(pairML("c","d"))}：`
+      +`<div class="ans">`+cellInp("c",mml(`<mi>c</mi><mo>=</mo>`))+cellInp("d",mml(`<mi>d</mi><mo>=</mo>`))+`</div>`;
+    wireEnter(["c","d"]);
+  }else{ // basis judge
+    body.innerHTML=`向量 ${mml(vSub(1)+`<mo>=</mo>`+colVec(...q.v1))} 与 ${mml(vSub(2)+`<mo>=</mo>`+colVec(...q.v2))} `
+      +`能否作为平面 ${mml(`<msup><mi mathvariant="double-struck">R</mi><mn>2</mn></msup>`)} 的一组基？`
+      +optsHTML(q.opts);
+    wireOpts(q);
+  }
+  renderStats();
+}
+function cellInp(id,labelML){ return `<span class="cell">${labelML} <input class="qin" id="q_${id}" type="text" inputmode="numeric" autocomplete="off"></span>`; }
+function wireEnter(ids){ ids.forEach(id=>document.getElementById("q_"+id).addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); })); }
+function optsHTML(opts){
+  let h=`<div class="opts" id="qOpts">`;
+  opts.forEach((o,idx)=>{ h+=`<label data-i="${idx}"><input type="radio" name="qopt" value="${idx}"><span>${o}</span></label>`; });
+  return h+`</div>`;
+}
+function wireOpts(q){
+  document.querySelectorAll('#qOpts label').forEach(l=>l.addEventListener("click",()=>{
+    document.querySelectorAll('#qOpts label').forEach(x=>x.classList.remove("sel"));
+    l.classList.add("sel"); const r=l.querySelector('input'); if(r) r.checked=true;
+    q.selected=+l.dataset.i;
+  }));
+}
+function renderStats(){
+  const acc = qstats.attempted ? Math.round(qstats.correct/qstats.attempted*100) : 0;
+  document.getElementById("quizStats").innerHTML=
+    `已答 <b>${qstats.attempted}</b> · 答对 <b>${qstats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`;
+}
+
+// ── 判分 ──
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return;
+  const fb=document.getElementById("qFeedback");
+  if(q.kind==="basis"){
+    if(q.selected==null||q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个选项"; return; }
+    if(q.selected===q.ansIdx) markCorrect();
+    else{ fb.className="feedback no"; fb.textContent="还不对，再想想～（也可以点“看解析”）"; }
+  }else{
+    const ids = q.kind==="coord"?["a","b"] : q.kind==="vector"?["px","py"] : ["c","d"];
+    const raw=ids.map(id=>document.getElementById("q_"+id).value.trim());
+    if(!raw.every(s=>/^-?\d+$/.test(s))){ fb.className="feedback no"; fb.textContent="请在每个框都填入整数"; return; }
+    const g=raw.map(Number);
+    if(g.every((v,i)=>v===q.ans[i])) markCorrect();
+    else{ fb.className="feedback no"; fb.textContent="还不对，检查一下线性组合的计算～（也可以点“看解析”）"; }
+  }
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+function markCorrect(){
+  const q=quiz; q.done=true; q.correct=true;
+  qstats.attempted++; qstats.correct++; streak++; saveStats();
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML();
+  lockQ(); renderStats();
+  if(q.kind==="vector"){ q.showP=true; showQuizFigure(q); }
+}
+function onReveal(){
+  const q=quiz; if(!q||q.done) return;
+  q.done=true; qstats.attempted++; streak=0; saveStats();
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML();
+  lockQ(); renderStats();
+  if(q.kind==="vector"){ q.showP=true; showQuizFigure(q); }
+}
+
+// ── 解析 ──
+function solHTML(){
+  const q=quiz;
+  if(q.kind==="coord"){
+    return `<div class="sol"><b>${mml(pairML("a","b")+`<mo>=</mo>`+pairVal(...q.ans))}</b>。`
+      +`坐标 ${mml(pairML("a","b"))} 满足 ${mml(OPML+`<mo>=</mo><mi>a</mi>`+eSub(1)+`<mo>+</mo><mi>b</mi>`+eSub(2))}`
+      +`（即 ${mml(`<msup><mi>B</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup>`+OPML)}，${mml(`<mi>B</mi><mo>=</mo><mo>(</mo>`+eSub(1)+`<mspace width="0.3em"/>`+eSub(2)+`<mo>)</mo>`)}）。`
+      +`验证：${mml(comboML(q.ans,eSub)+`<mo>=</mo>`+colVec(...q.OP))}。</div>`;
+  }
+  if(q.kind==="vector"){
+    return `<div class="sol"><b>${mml(OPML+`<mo>=</mo>`+colVec(...q.ans))}</b>。`
+      +`位置向量是基向量的线性组合 ${mml(OPML+`<mo>=</mo><mi>a</mi>`+eSub(1)+`<mo>+</mo><mi>b</mi>`+eSub(2))}：`
+      +`${mml(comboML(q.ab,eSub)+`<mo>=</mo>`+colVec(...q.ans))}。</div>`;
+  }
+  if(q.kind==="changebasis"){
+    return `<div class="sol"><b>${mml(pairML("c","d")+`<mo>=</mo>`+pairVal(...q.ans))}</b>。`
+      +`第一步，由 ${mml(`<msub><mi>B</mi><mn>1</mn></msub>`)} 坐标还原位置向量：${mml(comboML(q.ab,eSub)+`<mo>=</mo>`+colVec(...q.OP))}。`
+      +`第二步，把它在 ${mml(`<msub><mi>B</mi><mn>2</mn></msub>`)} 下分解 ${mml(OPML+`<mo>=</mo><mi>c</mi>`+fSub(1)+`<mo>+</mo><mi>d</mi>`+fSub(2))}，`
+      +`解得上面结果。验证：${mml(comboML(q.ans,fSub)+`<mo>=</mo>`+colVec(...q.OP))}。</div>`;
+  }
+  // basis judge
+  const det=q.v1[0]*q.v2[1]-q.v1[1]*q.v2[0];
+  const dexpr=pnum(q.v1[0])+`<mo>&#xD7;</mo>`+pnum(q.v2[1])+`<mo>&#x2212;</mo>`+pnum(q.v1[1])+`<mo>&#xD7;</mo>`+pnum(q.v2[0]);
+  return `<div class="sol"><b>${q.canBe?"能":"不能"}</b>。判据：两向量构成 ${mml(`<msup><mi mathvariant="double-struck">R</mi><mn>2</mn></msup>`)} 的一组基 ⟺ 线性无关 ⟺ 行列式不为零。`
+    +`这里 ${mml(`<mo>det</mo><mo>(</mo>`+vSub(1)+`<mo>,</mo>`+vSub(2)+`<mo>)</mo><mo>=</mo>`+dexpr+`<mo>=</mo>`+snum(det))}，`
+    +`${det!==0?"不为零，故两向量线性无关，<b>可</b>作一组基。":"等于零，两向量共线（线性相关），<b>不能</b>作基。"}</div>`;
+}
+
+// ── 提示 ──
+function onHint(){
+  const q=quiz; if(!q) return;
+  const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="coord")
+    fb.innerHTML=`提示：坐标 ${mml(pairML("a","b"))} 满足 ${mml(OPML+`<mo>=</mo><mi>a</mi>`+eSub(1)+`<mo>+</mo><mi>b</mi>`+eSub(2))}；`
+      +`等价于 ${mml(`<msup><mi>B</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup>`+OPML)}（${mml(`<mi>B</mi><mo>=</mo><mo>(</mo>`+eSub(1)+`<mspace width="0.3em"/>`+eSub(2)+`<mo>)</mo>`)}）。解这个 2×2 线性方程组即可。`;
+  else if(q.kind==="vector")
+    fb.innerHTML=`提示：位置向量就是基向量的线性组合 ${mml(OPML+`<mo>=</mo><mi>a</mi>`+eSub(1)+`<mo>+</mo><mi>b</mi>`+eSub(2))}，把坐标 ${mml(pairML("a","b"))} 代进去按分量相加即可。`;
+  else if(q.kind==="changebasis")
+    fb.innerHTML=`提示：分两步——先用 ${mml(`<msub><mi>B</mi><mn>1</mn></msub>`)} 坐标还原位置向量 ${mml(OPML+`<mo>=</mo><mi>a</mi>`+eSub(1)+`<mo>+</mo><mi>b</mi>`+eSub(2))}；`
+      +`再把 ${mml(OPML)} 在 ${mml(`<msub><mi>B</mi><mn>2</mn></msub>`)} 下分解 ${mml(OPML+`<mo>=</mo><mi>c</mi>`+fSub(1)+`<mo>+</mo><mi>d</mi>`+fSub(2))} 解出 ${mml(pairML("c","d"))}。`;
+  else
+    fb.innerHTML=`提示：两向量能作平面的一组基 ⟺ 线性无关 ⟺ 行列式 ${mml(`<mo>det</mo><mo>(</mo>`+vSub(1)+`<mo>,</mo>`+vSub(2)+`<mo>)</mo><mo>&#x2260;</mo><mn>0</mn>`)}（即两向量不共线）。`;
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); showQuizFigure(quiz); }
+
+// ── 练习示意图（复用画布与绘图助手；练习时忽略上传底图，只用默认网格）──
+const toolCard=document.getElementById("toolCard");
+const toolBar=document.getElementById("toolBar");
+const quizCard=document.getElementById("quizCard");
+const CE1="#2b6cb0", CE2="#2f855a", CV1="#2b6cb0", CV2="#dd6b20";
+function w2p(x,y){ return {x:center.x + x*gridSize, y:center.y - y*gridSize}; }
+function drawQuizFigure(q){
+  drawDefaultGrid();
+  const O=w2p(0,0);
+  if(q.kind==="coord"||q.kind==="vector"){
+    const p1=w2p(q.e1[0],q.e1[1]), p2=w2p(q.e2[0],q.e2[1]);
+    drawVector(O,p1,CE1); drawVector(O,p2,CE2);
+    drawSubLabel("e","1",p1.x+7,p1.y-4,CE1); drawSubLabel("e","2",p2.x+7,p2.y-4,CE2);
+    const showP = q.kind==="coord" || q.showP;
+    if(showP){
+      const OP = q.kind==="coord"?q.OP:q.ans, P=w2p(OP[0],OP[1]);
+      drawVector(O,P,"#111"); drawPoint(P,"#111",6);
+      drawMathLabel("P",P.x+10,P.y+18,"#111",16);
+    }
+  }else if(q.kind==="basis"){
+    const p1=w2p(q.v1[0],q.v1[1]), p2=w2p(q.v2[0],q.v2[1]);
+    drawVector(O,p1,CV1); drawVector(O,p2,CV2);
+    drawSubLabel("v","1",p1.x+7,p1.y-4,CV1); drawSubLabel("v","2",p2.x+7,p2.y-4,CV2);
+  }
+}
+function showQuizFigure(q){
+  if(q.kind==="changebasis"){ toolCard.style.display="none"; return; }   // 换基题不配图（两组基易混）
+  toolCard.style.display=""; statusEl.style.display="none"; toolBar.style.display="none"; output.style.display="none";
+  drawQuizFigure(q);
+}
+
+// ── 模式切换 ──
+function setMode(m){
+  qmode=m;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  quizCard.style.display = m==="practice"?"":"none";
+  if(m==="practice"){
+    quiz=genProblem(); renderProblem(); showQuizFigure(quiz);
+  }else{
+    quiz=null;
+    toolCard.style.display=""; statusEl.style.display=""; toolBar.style.display=""; output.style.display="";
+    redraw();   // 恢复探索态（含上传底图与已放置的点/坐标系）
+  }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
 </script>
 
 <script>
