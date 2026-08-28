@@ -65,6 +65,38 @@
   .legend i{width:14px;height:14px;border:1px solid #cbd5e1;border-radius:3px;display:inline-block;}
   #info{text-align:center;margin-top:14px;font-size:15px;min-height:22px;}
   #info.err{color:#c53030;font-weight:600;}
+  /* ── 练习模式 ── */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;
+       flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;
+       text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody .ans{display:inline-flex;align-items:center;gap:6px;margin-top:8px;}
+  .qbody input.qin{width:84px;font-size:15px;padding:6px 7px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);
+       border-radius:8px;cursor:pointer;font-size:14px;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .opts input{accent-color:var(--blue);}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:13.5px;margin-top:6px;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .qbtns button:disabled{opacity:.45;cursor:not-allowed;}
   footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
        font-size:12px;color:#718096;text-align:center;}
 </style>
@@ -95,7 +127,28 @@
     下面高亮当前参与计算的行（绿）与列（红），一步步填出 <math><mi class="bm">C</mi></math> 的每个黄色格子。
   </div>
 
-  <div class="card">
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div class="card" id="quizCard" style="display:none;">
+    <div class="quizhead">
+      <h2>练习 · 矩阵乘法</h2>
+      <span class="stats" id="quizStats"></span>
+      <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+    </div>
+    <div class="qbody" id="qBody"></div>
+    <div class="feedback" id="qFeedback"></div>
+    <div class="qbtns">
+      <button class="primary" id="qSubmit">提交</button>
+      <button id="qHint">提示</button>
+      <button id="qReveal">看解析</button>
+      <button id="qNext">下一题 ▸</button>
+    </div>
+  </div>
+
+  <div class="card" id="exploreCard">
     <h2>输入矩阵（每行用逗号分隔元素，换行分隔各行）</h2>
     <div class="inputs">
       <div class="fld">
@@ -258,6 +311,199 @@
   }
 
   window.onload = initMatrices;
+</script>
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   练习模式（数值填空 / 选择题）
+   - 纯客户端出题 + 判分，只作自测/形成性练习，不上报、不记成绩
+   - 复用同一组 A/B/C 表格：算元素题隐藏 C 直到提交/看解析；维度题以占位格显示形状
+   - 本地进度（已答/答对/连对）存 localStorage，仅本机可见
+   ══════════════════════════════════════════════════════════════════ */
+const QUIZKEY="la-l1-quiz";
+let mode="explore";            // "explore" | "practice"
+let quiz=null;                 // 当前题目
+let streak=0;
+let stats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){
+  if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return;
+  stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats();
+}
+
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function shuffle(a){ for(let k=a.length-1;k>0;k--){ const t=Math.floor(Math.random()*(k+1)); [a[k],a[t]]=[a[t],a[k]]; } return a; }
+function randMat(r,c){ return Array.from({length:r},()=>Array.from({length:c},()=>ri(-3,3))); }
+function blankMat(r,c,fill){ return Array.from({length:r},()=>Array(c).fill(fill)); }
+
+// ── 出题 ──
+function genProblem(){
+  const kind = Math.random()<0.62 ? "cell" : "dim";
+  if(kind==="cell"){
+    const mA=ri(2,3), nA=ri(2,3), pB=ri(2,3);   // A: mA×nA, B: nA×pB
+    let A,B,ans,i,j;
+    do{
+      A=randMat(mA,nA); B=randMat(nA,pB);
+      i=ri(0,mA-1); j=ri(0,pB-1);
+      ans=0; for(let k=0;k<nA;k++) ans+=A[i][k]*B[k][j];
+    }while(Math.abs(ans)>60);                    // 避免答案过大
+    return {kind, A, B, i, j, ans, done:false, correct:false, revealed:false};
+  }else{
+    const mA=ri(2,4), nA=ri(2,4), qB=ri(2,4);
+    let rB;
+    if(Math.random()<0.5){ rB=nA; }              // 可乘
+    else{ do{ rB=ri(2,4); }while(rB===nA); }     // 不可乘
+    const ok = (nA===rB);
+    const sz=(r,c)=>`${r} × ${c}`;
+    const correct = ok ? sz(mA,qB) : "无法相乘";
+    // 似是而非的尺寸干扰项（取行/列的各种错配），并补足到足够多的互异尺寸
+    const cand=new Set([sz(nA,qB), sz(mA,rB), sz(qB,mA), sz(nA,rB), sz(rB,qB), sz(mA,nA)]);
+    let g=2; while(cand.size<6){ cand.add(sz(g,g+1)); g++; }
+    const opts=[];
+    const push=s=>{ if(opts.length<4 && !opts.includes(s)) opts.push(s); };
+    push(correct);
+    push("无法相乘");                       // 始终提供“无法相乘”这一项
+    for(const s of shuffle([...cand])) push(s);
+    let h=1; while(opts.length<4){ push(sz(h,h+2)); h++; }
+    shuffle(opts);
+    return {kind, mA, nA, rB, qB, ok, opts, ansIdx:opts.indexOf(correct),
+            selected:-1, done:false, correct:false};
+  }
+}
+
+// ── 渲染题目 ──
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody");
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  document.getElementById("info").textContent="";
+  if(q.kind==="cell"){
+    body.innerHTML=
+      `求乘积 <math><mi class="bm">C</mi><mo>=</mo><mi class="bm">A</mi><mi class="bm">B</mi></math> 中第 <b>${q.i+1}</b> 行第 <b>${q.j+1}</b> 列的元素 `
+      +`<math><msub><mi>c</mi><mrow><mn>${q.i+1}</mn><mn>${q.j+1}</mn></mrow></msub></math>：`
+      +`<div class="ans"><math><msub><mi>c</mi><mrow><mn>${q.i+1}</mn><mn>${q.j+1}</mn></mrow></msub><mo>=</mo></math>`
+      +`<input class="qin" id="qCell" type="number" step="1" placeholder="?"></div>`
+      +`<div style="margin-top:6px;font-size:12.5px;color:#a0aec0;">下方高亮了 A 的第 ${q.i+1} 行（绿）与 B 的第 ${q.j+1} 列（红），提交或看解析后会填出该黄格。</div>`;
+    document.getElementById("qCell").addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); });
+    // 表格：A、B 显示真实数值并高亮；C 全空、目标格高亮
+    renderMatrix("matrixA", q.A, {row:q.i});
+    renderMatrix("matrixB", q.B, {col:q.j});
+    q.Cdisp=blankMat(q.A.length, q.B[0].length, "");
+    renderMatrix("matrixC", q.Cdisp, {cell:[q.i,q.j]});
+  }else{
+    let html=`矩阵 <math><mi class="bm">A</mi></math> 是 <b>${q.mA} × ${q.nA}</b>，矩阵 <math><mi class="bm">B</mi></math> 是 <b>${q.rB} × ${q.qB}</b>。`
+      +`乘积 <math><mi class="bm">A</mi><mi class="bm">B</mi></math> 的结果是？<div class="opts" id="qOpts">`;
+    q.opts.forEach((o,idx)=>{ html+=`<label data-i="${idx}"><input type="radio" name="qopt" value="${idx}"><span>${o}</span></label>`; });
+    html+=`</div>`;
+    body.innerHTML=html;
+    body.querySelectorAll('#qOpts label').forEach(l=>l.addEventListener("click",()=>{
+      body.querySelectorAll('#qOpts label').forEach(x=>x.classList.remove("sel"));
+      l.classList.add("sel");
+      const r=l.querySelector('input'); if(r) r.checked=true;
+      q.selected=+l.dataset.i;
+    }));
+    // 表格：用占位格“·”展示两个矩阵的形状，帮助对齐“A 列数 vs B 行数”
+    renderMatrix("matrixA", blankMat(q.mA,q.nA,"·"));
+    renderMatrix("matrixB", blankMat(q.rB,q.qB,"·"));
+    document.getElementById("matrixC").innerHTML="";
+  }
+  renderStats();
+}
+
+function renderStats(){
+  const acc = stats.attempted ? Math.round(stats.correct/stats.attempted*100) : 0;
+  document.getElementById("quizStats").innerHTML=
+    `已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`;
+}
+
+// ── 判分 ──
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return;
+  const fb=document.getElementById("qFeedback");
+  if(q.kind==="cell"){
+    const v=parseFloat(document.getElementById("qCell").value);
+    if(Number.isNaN(v)){ fb.className="feedback no"; fb.textContent="请先填入一个数值"; return; }
+    if(Math.abs(v-q.ans)<1e-6) markCorrect();
+    else { fb.className="feedback no"; fb.textContent="还不对，按“行 · 列 对应相乘再求和”再算算～（也可以点“看解析”）"; }
+  }else{
+    if(q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个选项"; return; }
+    if(q.selected===q.ansIdx) markCorrect();
+    else { fb.className="feedback no"; fb.textContent="不对哦，先看 A 的列数与 B 的行数是否相等～（也可以点“看解析”）"; }
+  }
+}
+
+function revealCell(){
+  const q=quiz; if(q.kind!=="cell") return;
+  q.Cdisp[q.i][q.j]=q.ans;
+  renderMatrix("matrixC", q.Cdisp, {cell:[q.i,q.j]});
+}
+function solHTML(){
+  const q=quiz;
+  if(q.kind==="cell"){
+    const n=q.A[0].length;
+    let terms=[];
+    for(let k=0;k<n;k++){ terms.push(`(${q.A[q.i][k]})·(${q.B[k][q.j]})`); }
+    return `<div class="sol">c<sub>${q.i+1}${q.j+1}</sub> = A 第 ${q.i+1} 行 · B 第 ${q.j+1} 列 = `
+      +`${terms.join(" + ")} = <b>${q.ans}</b></div>`;
+  }
+  if(q.ok) return `<div class="sol">A 的列数 ${q.nA} = B 的行数 ${q.rB}，可以相乘；结果尺寸 = A 行数 × B 列数 = <b>${q.mA} × ${q.qB}</b>。</div>`;
+  return `<div class="sol">A 的列数 ${q.nA} ≠ B 的行数 ${q.rB}，<b>无法相乘</b>。</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+
+function markCorrect(){
+  const q=quiz; q.done=true; q.correct=true;
+  stats.attempted++; stats.correct++; streak++; saveStats();
+  if(q.kind==="cell") revealCell();
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML();
+  lockQ(); renderStats();
+}
+function onReveal(){
+  const q=quiz; if(!q||q.done) return;
+  q.done=true; stats.attempted++; streak=0; saveStats();
+  if(q.kind==="cell") revealCell();
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML();
+  lockQ(); renderStats();
+}
+function onHint(){
+  const q=quiz; if(!q) return;
+  const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="cell"){
+    const n=q.A[0].length;
+    let terms=[];
+    for(let k=0;k<n;k++){ terms.push(`a<sub>${q.i+1}${k+1}</sub>·b<sub>${k+1}${q.j+1}</sub>`); }
+    fb.innerHTML=`提示：把 A 的第 ${q.i+1} 行与 B 的第 ${q.j+1} 列<b>对应相乘再相加</b> —— `+terms.join(" + ");
+  }else{
+    fb.innerHTML=`提示：能否相乘只看 <b>A 的列数</b> 是否等于 <b>B 的行数</b>；若能，结果尺寸是 <b>A 的行数 × B 的列数</b>。`;
+  }
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+
+// ── 模式切换 ──
+function setMode(m){
+  mode=m;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("exploreCard").style.display = m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display   = m==="practice"?"":"none";
+  if(m==="practice"){
+    stopDemo();
+    quiz=genProblem(); renderProblem();
+  }else{
+    quiz=null;
+    initMatrices();               // 用输入框内容还原探索视图
+  }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
 </script>
 <script>
 // ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
