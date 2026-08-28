@@ -56,6 +56,38 @@
   .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:10px;}
   .legend span{display:inline-flex;align-items:center;gap:6px;}
   .legend i{width:14px;height:6px;border-radius:2px;display:inline-block;}
+  /* ── 练习模式 ── */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;
+       flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;
+       text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody .ans{display:inline-flex;align-items:center;gap:6px;margin-top:8px;}
+  .qbody input.qin{width:96px;font-size:15px;padding:6px 7px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);
+       border-radius:8px;cursor:pointer;font-size:14px;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .opts input{accent-color:var(--blue);}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:13.5px;margin-top:6px;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .qbtns button:disabled{opacity:.45;cursor:not-allowed;}
   footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
        font-size:12px;color:#718096;text-align:center;}
 </style>
@@ -84,6 +116,11 @@
     的<b>绝对值</b>就等于两向量张成的平行四边形<b>面积</b>；<b>符号</b>表示定向（正 = 从 <math><msub><mi class="bm">v</mi><mn>1</mn></msub></math> 到 <math><msub><mi class="bm">v</mi><mn>2</mn></msub></math> 逆时针，负 = 顺时针）；<math><mi>det</mi><mo>&#x2009;</mo><mi class="bm">A</mi><mo>=</mo><mn>0</mn></math> 表示两向量共线（<b>线性相关</b>，面积为 0）。拖动蓝、橙两个端点，或直接输入坐标试试。
   </div>
 
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
   <div class="card">
     <div id="canvasContainer"><canvas id="canvas"></canvas></div>
     <div class="legend">
@@ -94,7 +131,23 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="quizCard" style="display:none;">
+    <div class="quizhead">
+      <h2>练习 · 行列式的几何意义</h2>
+      <span class="stats" id="quizStats"></span>
+      <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+    </div>
+    <div class="qbody" id="qBody"></div>
+    <div class="feedback" id="qFeedback"></div>
+    <div class="qbtns">
+      <button class="primary" id="qSubmit">提交</button>
+      <button id="qHint">提示</button>
+      <button id="qReveal">看解析</button>
+      <button id="qNext">下一题 ▸</button>
+    </div>
+  </div>
+
+  <div class="card" id="exploreCard">
     <h2>向量坐标</h2>
     <div class="row">
       当前编辑：
@@ -266,7 +319,8 @@ function drawParallelogram(){
     const det=v1.x*v2.y-v1.y*v2.x;
 
     let fill,edge;
-    if(det>0){ fill="rgba(47,133,90,0.22)"; edge="rgba(47,133,90,0.5)"; }
+    if(window.quizNeutral){ fill="rgba(150,150,150,0.26)"; edge="rgba(120,120,120,0.5)"; }  // 练习未揭示：不按符号着色，避免泄露定向
+    else if(det>0){ fill="rgba(47,133,90,0.22)"; edge="rgba(47,133,90,0.5)"; }
     else if(det<0){ fill="rgba(197,48,48,0.22)"; edge="rgba(197,48,48,0.5)"; }
     else{ fill="rgba(150,150,150,0.26)"; edge="rgba(120,120,120,0.5)"; }
 
@@ -364,6 +418,7 @@ function getPos(e){
 }
 
 function startDrag(e){
+    if(window.mode==="practice") return;        // 练习模式向量由题目决定，禁止拖动/改动
     const pos=getPos(e);
     if(dist(pos,toCanvas(v1))<16) dragging="v1";
     else if(dist(pos,toCanvas(v2))<16) dragging="v2";
@@ -375,6 +430,7 @@ function startDrag(e){
 }
 
 function moveDrag(e){
+    if(window.mode==="practice") return;
     if(!dragging) return;
     e.preventDefault();
     const pos=getPos(e);
@@ -399,6 +455,175 @@ document.querySelectorAll("input").forEach(input=>{
 
 resize();
 selectVector("v1");
+</script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   练习模式（数值填空 / 选择题）
+   - 纯客户端出题 + 判分，只作自测/形成性练习，不上报、不记成绩
+   - 复用同一画布：题目向量画在图上，未揭示时平行四边形画中性灰（不泄露定向）
+   - 本地进度（已答/答对/连对）存 localStorage，仅本机可见
+   ══════════════════════════════════════════════════════════════════ */
+const QUIZKEY="la-l2-quiz";
+window.mode="explore";          // "explore" | "practice"
+window.quizNeutral=false;       // 练习未揭示时平行四边形画灰
+let quiz=null, streak=0;
+let stats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){
+  if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return;
+  stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats();
+}
+
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function shuffle(a){ for(let k=a.length-1;k>0;k--){ const t=Math.floor(Math.random()*(k+1)); [a[k],a[t]]=[a[t],a[k]]; } return a; }
+function randVec(){ let v; do{ v={x:ri(-3,3),y:ri(-3,3)}; }while(v.x===0&&v.y===0); return v; }
+function detOf(a,b){ return a.x*b.y-a.y*b.x; }
+
+const CLS_POS="线性无关，定向为正（v₁→v₂ 逆时针）";
+const CLS_NEG="线性无关，定向为负（v₁→v₂ 顺时针）";
+const CLS_DEP="线性相关（两向量共线，面积为 0）";
+
+// ── 出题 ──
+function genProblem(){
+  const kind = Math.random()<0.55 ? "det" : "class";
+  if(kind==="det"){
+    const a=randVec(), b=randVec();
+    return {kind, a, b, ans:detOf(a,b), done:false, correct:false, revealed:false};
+  }else{
+    let a,b,d;
+    if(Math.random()<1/3){                        // 共线：b = k·a
+      a=randVec(); const k=[-2,-1,2,3][ri(0,3)]; b={x:a.x*k, y:a.y*k}; d=0;
+    }else{
+      do{ a=randVec(); b=randVec(); d=detOf(a,b); }while(d===0);
+    }
+    const correct = d>0?CLS_POS : d<0?CLS_NEG : CLS_DEP;
+    const opts=shuffle([CLS_POS,CLS_NEG,CLS_DEP]);
+    return {kind, a, b, d, opts, ansIdx:opts.indexOf(correct),
+            selected:-1, done:false, correct:false, revealed:false};
+  }
+}
+
+// ── 渲染题目 ──
+function vec(v){ return `(${v.x}, ${v.y})`; }
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody");
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  // 把题目向量画到画布上，未揭示先画灰
+  v1={x:q.a.x,y:q.a.y}; v2={x:q.b.x,y:q.b.y};
+  window.quizNeutral=true; q.revealed=false;
+  draw();
+  if(q.kind==="det"){
+    body.innerHTML=
+      `已知 <math><msub><mi class="bm">v</mi><mn>1</mn></msub></math> = ${vec(q.a)}，`
+      +`<math><msub><mi class="bm">v</mi><mn>2</mn></msub></math> = ${vec(q.b)}（分别作矩阵 <math><mi class="bm">A</mi></math> 的两列）。`
+      +`<br>求行列式 <math><mi>det</mi><mo>&#x2009;</mo><mi class="bm">A</mi><mo>=</mo><msub><mi>x</mi><mn>1</mn></msub><msub><mi>y</mi><mn>2</mn></msub><mo>&#x2212;</mo><msub><mi>x</mi><mn>2</mn></msub><msub><mi>y</mi><mn>1</mn></msub></math>：`
+      +`<div class="ans"><math><mi>det</mi><mo>&#x2009;</mo><mi class="bm">A</mi><mo>=</mo></math>`
+      +`<input class="qin" id="qDet" type="number" step="1" placeholder="?"></div>`
+      +`<div style="margin-top:6px;font-size:12.5px;color:#a0aec0;">上图先以灰色画出两向量张成的平行四边形；提交或看解析后会按符号染成绿(正)/红(负)。</div>`;
+    document.getElementById("qDet").addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); });
+  }else{
+    let html=`观察上图中蓝色 <math><msub><mi class="bm">v</mi><mn>1</mn></msub></math> = ${vec(q.a)} 与橙色 <math><msub><mi class="bm">v</mi><mn>2</mn></msub></math> = ${vec(q.b)}。`
+      +`它们的关系与定向是？<div class="opts" id="qOpts">`;
+    q.opts.forEach((o,idx)=>{ html+=`<label data-i="${idx}"><input type="radio" name="qopt" value="${idx}"><span>${o}</span></label>`; });
+    html+=`</div>`;
+    body.innerHTML=html;
+    body.querySelectorAll('#qOpts label').forEach(l=>l.addEventListener("click",()=>{
+      body.querySelectorAll('#qOpts label').forEach(x=>x.classList.remove("sel"));
+      l.classList.add("sel");
+      const r=l.querySelector('input'); if(r) r.checked=true;
+      q.selected=+l.dataset.i;
+    }));
+  }
+  renderStats();
+}
+
+function renderStats(){
+  const acc = stats.attempted ? Math.round(stats.correct/stats.attempted*100) : 0;
+  document.getElementById("quizStats").innerHTML=
+    `已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`;
+}
+
+// ── 判分 ──
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return;
+  const fb=document.getElementById("qFeedback");
+  if(q.kind==="det"){
+    const v=parseFloat(document.getElementById("qDet").value);
+    if(Number.isNaN(v)){ fb.className="feedback no"; fb.textContent="请先填入一个数值"; return; }
+    if(Math.abs(v-q.ans)<1e-6) markCorrect();
+    else { fb.className="feedback no"; fb.textContent="还不对，det = x₁y₂ − x₂y₁，注意符号～（也可以点“看解析”）"; }
+  }else{
+    if(q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个选项"; return; }
+    if(q.selected===q.ansIdx) markCorrect();
+    else { fb.className="feedback no"; fb.textContent="不对哦，先算 det 看正负 / 是否为 0～（也可以点“看解析”）"; }
+  }
+}
+
+function revealCanvas(){ window.quizNeutral=false; quiz.revealed=true; draw(); }
+function solHTML(){
+  const q=quiz;
+  const d = q.kind==="det" ? q.ans : q.d;
+  const expand = `(${q.a.x})·(${q.b.y}) − (${q.b.x})·(${q.a.y}) = <b>${d}</b>`;
+  let tail;
+  if(d>0) tail="det &gt; 0 → 线性无关，v₁→v₂ 逆时针（定向为正），|det| 即平行四边形面积。";
+  else if(d<0) tail="det &lt; 0 → 线性无关，v₁→v₂ 顺时针（定向为负），面积 = |det|。";
+  else tail="det = 0 → 两向量共线（线性相关），面积为 0。";
+  return `<div class="sol">det A = x₁y₂ − x₂y₁ = ${expand}；${tail}</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+
+function markCorrect(){
+  const q=quiz; q.done=true; q.correct=true;
+  stats.attempted++; stats.correct++; streak++; saveStats();
+  revealCanvas();
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML();
+  lockQ(); renderStats();
+}
+function onReveal(){
+  const q=quiz; if(!q||q.done) return;
+  q.done=true; stats.attempted++; streak=0; saveStats();
+  revealCanvas();
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML();
+  lockQ(); renderStats();
+}
+function onHint(){
+  const q=quiz; if(!q) return;
+  const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="det"){
+    fb.innerHTML=`提示：det = x₁·y₂ − x₂·y₁ = (${q.a.x})·(${q.b.y}) − (${q.b.x})·(${q.a.y})，逐项算好再相减。`;
+  }else{
+    fb.innerHTML=`提示：先算 det = x₁y₂ − x₂y₁；<b>正</b>=逆时针无关、<b>负</b>=顺时针无关、<b>0</b>=共线相关。`;
+  }
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+
+// ── 模式切换 ──
+function setMode(m){
+  window.mode=m;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("exploreCard").style.display = m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display   = m==="practice"?"":"none";
+  if(m==="practice"){
+    quiz=genProblem(); renderProblem();
+  }else{
+    quiz=null; window.quizNeutral=false;
+    resetVectors();               // 还原探索视图（默认 v1=(1,0), v2=(0,1)）
+  }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
 </script>
 
 <script>
