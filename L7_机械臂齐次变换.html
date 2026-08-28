@@ -71,6 +71,40 @@
        display:inline-flex;align-items:center;gap:5px;vertical-align:middle;}
   #matrixDisplay .total .mlbl{color:var(--blue);font-weight:600;}
   #matrixDisplay .sec{font-size:12px;color:#a0aec0;margin:12px 0 2px;letter-spacing:.3px;}
+  /* ── 练习模式（与 L1/L2/L3/L4/L5/L6/L8 同款）── */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0 0 16px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 20px;font-size:14px;background:#fff;color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button:not(.on):hover{background:#eef4fb;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .quizhead h2{margin:0;}
+  .stats{font-size:12.5px;color:var(--sub);}
+  .stats b{color:var(--ink);}
+  .reset-link{font-size:12px;color:#a0aec0;background:none;border:none;cursor:pointer;text-decoration:underline;padding:2px 4px;}
+  .reset-link:hover{color:#c53030;border-color:transparent;}
+  .qbody{font-size:15px;line-height:2;}
+  .qbody math{font-size:1.1em;}
+  .qbody .givens{margin:8px 0;line-height:2.2;color:var(--sub);}
+  .qbody .givens b{color:var(--ink);}
+  .qbody .ans{margin-top:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .qbody .ans .cell{display:inline-flex;align-items:center;gap:6px;}
+  .qbody input.qin{width:80px;font-size:16px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;
+       text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+  .opts label{display:flex;align-items:center;gap:9px;padding:9px 13px;border:1px solid var(--line);border-radius:8px;
+       cursor:pointer;transition:.12s;font-size:14.5px;}
+  .opts label:hover{border-color:var(--blue);background:#f7fafc;}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .feedback{margin-top:12px;font-size:14px;min-height:22px;line-height:1.9;}
+  .feedback.ok{color:var(--green);}
+  .feedback.no,.feedback .no{color:#c53030;}
+  .sol{margin-top:8px;padding:10px 12px;background:#f8fafc;border:1px solid var(--line);border-radius:8px;
+       font-size:13.5px;line-height:1.95;color:var(--sub);}
+  .sol b{color:var(--ink);}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+  .qbtns button.primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .qbtns button.primary:hover{opacity:.92;}
   footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
        font-size:12px;color:#718096;text-align:center;}
 </style>
@@ -104,6 +138,12 @@
     整条臂的末端位姿是各关节矩阵<b>依次右乘</b>：<math><msub><mi class="bm">M</mi><mi>n</mi></msub><mo>=</mo><msub><mi class="bm">A</mi><mn>1</mn></msub><msub><mi class="bm">A</mi><mn>2</mn></msub><mo>&#x22EF;</mo><msub><mi class="bm">A</mi><mi>n</mi></msub></math>。<b>前 <math><mi>k</mi></math> 个矩阵的乘积</b> <math><msub><mi class="bm">M</mi><mi>k</mi></msub></math> 恰好给出第 <math><mi>k</mi></math> 节末端的位置和朝向（图中每个关节处画出它的<b>局部坐标架</b>，正是一层层嵌套的旋转）。所以<b>多接一节 = 在末端局部系里再右乘一个 <math><msub><mi class="bm">A</mi><mi>i</mi></msub></math></b>；而顺序不能换——<math><msub><mi class="bm">A</mi><mn>1</mn></msub><msub><mi class="bm">A</mi><mn>2</mn></msub><mo>&#x2260;</mo><msub><mi class="bm">A</mi><mn>2</mn></msub><msub><mi class="bm">A</mi><mn>1</mn></msub></math>，这就是矩阵乘法<b>不可交换</b>的几何写照。
   </div>
 
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div id="exploreArea">
   <div class="layout">
     <div class="col-left">
       <div class="card">
@@ -129,6 +169,30 @@
         <h2>变换矩阵（每节因子 &amp; 累计乘积）</h2>
         <div id="matrixDisplay"></div>
       </div>
+    </div>
+  </div>
+  </div><!-- /exploreArea -->
+
+  <div class="card" id="quizCard" style="display:none;">
+    <div class="quizhead">
+      <h2>练习 · 机械臂齐次变换</h2>
+      <span class="stats" id="quizStats"></span>
+      <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+    </div>
+    <div class="qbody" id="qBody"></div>
+    <div id="qFig" style="display:none;text-align:center;margin-top:6px;">
+      <div id="qFigCap" style="font-size:12px;color:var(--sub);margin-bottom:2px;"></div>
+      <div style="display:inline-block;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+           background:radial-gradient(120% 120% at 50% 8%,#fff 0%,#f5f8fc 60%,#eef3f9 100%);">
+        <canvas id="qCanvas" width="380" height="300" style="display:block;"></canvas>
+      </div>
+    </div>
+    <div class="feedback" id="qFeedback"></div>
+    <div class="qbtns">
+      <button class="primary" id="qSubmit">提交</button>
+      <button id="qHint">提示</button>
+      <button id="qReveal">看解析</button>
+      <button id="qNext">下一题 ▸</button>
     </div>
   </div>
 
@@ -411,6 +475,376 @@ document.getElementById("resetBtn").addEventListener("click",()=>{
 });
 
 loadDefaults(); buildJoints(); render();
+</script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   练习模式（与 L1/L2/L3/L4/L5/L6/L8 同款外壳）
+   三类题：
+   ① end       给两连杆的朝向余弦/正弦(2 位小数)与整数臂长，求末端 (x,y)
+               = ΣLᵢ(cosφᵢ, sinφᵢ) = 复合矩阵 M=A₁A₂ 的平移列（填空，精确两位小数）
+   ② compound  给 A₁、A₂，从 4 个 3×3 矩阵中选出复合矩阵 M=A₁A₂
+               （干扰项：A₂A₁ 顺序颠倒 / A₁+A₂ 误当相加 / 平移列漏乘旋转）
+   ③ commute   给两关节，判断交换先后顺序末端是否回到同一点（会/不会，考不可交换）
+   所有答案由给定的两位小数值精确算得——只要算对，答案唯一，无需判分容忍。
+   本地进度存 localStorage，仅本机可见。
+   （复用第一段脚本的 identity / multiply / jointMatrix / matMathML）
+   ══════════════════════════════════════════════════════════════════ */
+const QUIZKEY="la-l7-quiz";
+let qmode="explore", quiz=null, streak=0;
+let qstats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:qstats.attempted,correct:qstats.correct,streak:streak})); }catch(e){} }
+function resetStats(){
+  if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return;
+  qstats={attempted:0,correct:0}; streak=0; saveStats(); renderStats();
+}
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function nz(a,b){ let v=0; while(v===0) v=ri(a,b); return v; }
+function shuffle(a){ for(let k=a.length-1;k>0;k--){ const t=Math.floor(Math.random()*(k+1)); [a[k],a[t]]=[a[t],a[k]]; } return a; }
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function r2(x){ const v=Math.round(x*100)/100; return v===0?0:v; }   // 两位小数，消除浮点噪声（-0→0）
+
+// ── MathML 小工具 ──
+function mml(inner){ return `<math>${inner}</math>`; }
+// 两位小数常量（真负号）；整数则不带小数点
+function num2(x){ const v=r2(x); const s=Number.isInteger(v)?String(Math.abs(v)):Math.abs(v).toFixed(2); return v<0?`<mo>&#x2212;</mo><mn>${s}</mn>`:`<mn>${s}</mn>`; }
+function intn(x){ return x<0?`<mo>&#x2212;</mo><mn>${-x}</mn>`:`<mn>${x}</mn>`; }
+function pint(x){ return x<0?`<mrow><mo>(</mo><mo>&#x2212;</mo><mn>${-x}</mn><mo>)</mo></mrow>`:`<mn>${x}</mn>`; }
+function p2(x){ const v=r2(x); const s=Number.isInteger(v)?String(Math.abs(v)):Math.abs(v).toFixed(2); return v<0?`<mrow><mo>(</mo><mo>&#x2212;</mo><mn>${s}</mn><mo>)</mo></mrow>`:`<mn>${s}</mn>`; }
+function pairV2(x,y){ return `<mo>(</mo>${num2(x)}<mo>,</mo>${num2(y)}<mo>)</mo>`; }
+const bmA=(i)=>`<msub><mi class="bm">A</mi><mn>${i}</mn></msub>`;
+const bmM =`<mi class="bm">M</mi>`;
+const bmp =`<mi class="bm">p</mi>`;
+const cosPhi=(i)=>`<mi>cos</mi><mo>&#x2009;</mo><msub><mi>&#x3C6;</mi><mn>${i}</mn></msub>`;
+const sinPhi=(i)=>`<mi>sin</mi><mo>&#x2009;</mo><msub><mi>&#x3C6;</mi><mn>${i}</mn></msub>`;
+const Lsub=(i)=>`<msub><mi>L</mi><mn>${i}</mn></msub>`;
+
+// ── 矩阵小工具（复用全局 multiply/identity/jointMatrix/matMathML）──
+function addM(a,b){ const r=[[0,0,0],[0,0,0],[0,0,0]]; for(let i=0;i<3;i++)for(let j=0;j<3;j++) r[i][j]=r2(a[i][j]+b[i][j]); return r; }
+function round2m(m){ return m.map(row=>row.map(r2)); }                 // 展示前统一两位小数
+function matClose(a,b,eps){ eps=eps||0.005; for(let i=0;i<3;i++)for(let j=0;j<3;j++) if(Math.abs(a[i][j]-b[i][j])>eps) return false; return true; }
+function colClose(a,b,eps){ return Math.abs(a[0][2]-b[0][2])<=eps && Math.abs(a[1][2]-b[1][2])<=eps; }
+// 由“朝向余弦/正弦(2 位小数)+ 整数臂长”严格算出的关节矩阵（各项精确两位小数）
+function jm2(c,s,L){ return [[c,-s,r2(L*c)],[s,c,r2(L*s)],[0,0,1]]; }
+function endOf(js){ let M=identity(); for(const j of js) M=multiply(M,jointMatrix(j.t,j.L)); return [M[0][2],M[1][2]]; }
+function goodAng(){ let a; do{ a=ri(-160,160); }while(Math.abs(a)<20); return a; }
+
+// ── 出题 ──
+// ① 末端位置：给世界朝向的余弦/正弦(2 位小数)与整数臂长，末端为连杆向量首尾相接之和
+function genEnd(){
+  while(true){
+    const ph1=goodAng(), ph2=ph1+goodAng();      // 两连杆的世界朝向角（仅用于生成数值，不展示角度）
+    const L1=ri(2,6), L2=ri(2,6);
+    const c1=r2(Math.cos(ph1*Math.PI/180)), s1=r2(Math.sin(ph1*Math.PI/180));
+    const c2=r2(Math.cos(ph2*Math.PI/180)), s2=r2(Math.sin(ph2*Math.PI/180));
+    if(Math.abs(c1)<0.15||Math.abs(s1)<0.15||Math.abs(c2)<0.15||Math.abs(s2)<0.15) continue; // 数值别太接近 0，计算更有意义
+    const x=r2(L1*c1+L2*c2), y=r2(L1*s1+L2*s2);
+    if(Math.abs(x)<0.3&&Math.abs(y)<0.3) continue;
+    const norm=a=>{ let v=((a+180)%360+360)%360-180; return Math.round(v); };   // 归一化到 (-180,180] 显示
+    return {kind:"end", L1,L2,c1,s1,c2,s2, ph1,ph2, d1:norm(ph1), d2:norm(ph2), ans:[x,y], done:false,correct:false};
+  }
+}
+// ② 复合矩阵：从 4 个候选中选出 M=A₁A₂
+function genCompound(){
+  while(true){
+    const t1=goodAng(), t2=goodAng(), L1=ri(2,6), L2=ri(2,6);
+    const c1=r2(Math.cos(t1*Math.PI/180)), s1=r2(Math.sin(t1*Math.PI/180));
+    const c2=r2(Math.cos(t2*Math.PI/180)), s2=r2(Math.sin(t2*Math.PI/180));
+    const A1=jm2(c1,s1,L1), A2=jm2(c2,s2,L2);
+    const C =round2m(multiply(A1,A2));            // 正确：M=A₁A₂
+    const D1=round2m(multiply(A2,A1));            // 干扰：顺序颠倒 A₂A₁（旋转块相同，只差平移列）
+    const D2=addM(A1,A2);                         // 干扰：误当作相加 A₁+A₂（末行成 0 0 2）
+    const D3=C.map(r=>r.slice()); D3[0][2]=r2(A1[0][2]+A2[0][2]); D3[1][2]=r2(A1[1][2]+A2[1][2]); // 干扰：平移列漏乘旋转（t₁+t₂）
+    // 要求四者两两可分（尤其 C 与 D1、D3 的平移列须明显不同，避免两角过近时几乎重合）
+    if(colClose(C,D1,0.35)||colClose(C,D3,0.35)||colClose(D1,D3,0.35)) continue;
+    if(matClose(C,D2)||matClose(D1,D2)||matClose(D3,D2)) continue;
+    const opts=[{m:C,ok:true},{m:D1},{m:D2},{m:D3}];
+    shuffle(opts);
+    return {kind:"compound", t1,t2,L1,L2,A1,A2,C, opts, ansIdx:opts.findIndex(o=>o.ok), selected:-1, done:false,correct:false};
+  }
+}
+// ③ 不可交换：交换两关节先后顺序，末端是否回同一点
+function genCommute(){
+  const same=Math.random()<0.32;
+  let j1,j2,tag;
+  if(same){
+    if(Math.random()<0.5){ const t=goodAng(), L=ri(2,6); j1={t,L}; j2={t,L}; tag="identical"; }   // 两关节完全相同
+    else{ j1={t:0,L:ri(2,6)}; j2={t:0,L:ri(2,6)}; tag="translation"; }                              // 都是纯平移
+  }else{
+    let e1,e2;
+    do{ j1={t:goodAng(),L:ri(2,6)}; j2={t:goodAng(),L:ri(2,6)}; e1=endOf([j1,j2]); e2=endOf([j2,j1]);
+    }while(Math.hypot(e1[0]-e2[0],e1[1]-e2[1])<0.5);   // 确保两种顺序末端明显不同
+    tag="generic";
+  }
+  const eAB=endOf([j1,j2]).map(r2), eBA=endOf([j2,j1]).map(r2);
+  const opts=["会（回到同一点）","不会（末端不同）"];
+  return {kind:"commute", j1,j2, eAB,eBA, same,tag, opts, ansIdx: same?0:1, selected:-1, done:false,correct:false};
+}
+function genProblem(){
+  const r=Math.random();
+  if(r<0.4) return genEnd();
+  if(r<0.72) return genCompound();
+  return genCommute();
+}
+
+// ── 渲染题目 ──
+function jmLabel(i,t,L){    // Aᵢ = Rot(θ)·Trans(L,0) = 矩阵
+  return `${mml(bmA(i)+`<mo>=</mo><mi>Rot</mi><mo>(</mo>${intn(t)}<mo>&#xB0;</mo><mo>)</mo><mi>Trans</mi><mo>(</mo><mn>${L}</mn><mo>,</mo><mn>0</mn><mo>)</mo><mo>=</mo>`)}`
+    + matMathML(round2m(jointMatrix(t,L)));
+}
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody");
+  const fb=document.getElementById("qFeedback"); fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  if(q.kind==="end"){
+    const pForm=`${bmp}<mo>=</mo><mo>(</mo>`
+      +`${Lsub(1)}${cosPhi(1)}<mo>+</mo>${Lsub(2)}${cosPhi(2)}<mo>,</mo>`
+      +`${Lsub(1)}${sinPhi(1)}<mo>+</mo>${Lsub(2)}${sinPhi(2)}<mo>)</mo>`;
+    const phiRow=(i,d,c,s)=>`· 连杆 ${i}：<b>${mml(Lsub(i)+`<mo>=</mo><mn>${i===1?q.L1:q.L2}</mn>`)}</b>，`
+      +`世界朝向 ${mml(`<msub><mi>&#x3C6;</mi><mn>${i}</mn></msub><mo>=</mo>${intn(d)}<mo>&#xB0;</mo>`)} `
+      +`（${mml(cosPhi(i)+`<mo>&#x2248;</mo>`+num2(c))}，${mml(sinPhi(i)+`<mo>&#x2248;</mo>`+num2(s))}）`;
+    body.innerHTML=`一条两连杆机械臂，两段连杆在世界系中的<b>朝向角</b>与<b>长度</b>如下：`
+      +`<div class="givens">${phiRow(1,q.d1,q.c1,q.s1)}<br>${phiRow(2,q.d2,q.c2,q.s2)}</div>`
+      +`末端位置 = 两段连杆向量首尾相接之和 ${mml(pForm)}`
+      +`（这正是复合矩阵 ${mml(bmM+`<mo>=</mo>`+bmA(1)+bmA(2))} 的平移列）。`
+      +`请<b>直接使用括号内给出的两位小数值</b>算出末端坐标 ${mml(`<mo>(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo>)</mo>`)}：`
+      +`<div class="ans">`+cellInp("x",mml(`<mi>x</mi><mo>=</mo>`))+cellInp("y",mml(`<mi>y</mi><mo>=</mo>`))+`</div>`;
+    wireEnter(["x","y"]);
+  }else if(q.kind==="compound"){
+    body.innerHTML=`已知机械臂两关节矩阵`
+      +`<div class="givens">${jmLabel(1,q.t1,q.L1)}<br>${jmLabel(2,q.t2,q.L2)}</div>`
+      +`各关节矩阵<b>依次右乘</b>得整臂变换。下列哪一个是复合矩阵 ${mml(bmM+`<mo>=</mo>`+bmA(1)+bmA(2))}？`
+      +optsHTML(q.opts.map(o=>matMathML(o.m)));
+    wireOpts(q);
+  }else{ // commute
+    body.innerHTML=`机械臂的两个关节为`
+      +`<div class="givens">${jmLabel(1,q.j1.t,q.j1.L)}<br>${jmLabel(2,q.j2.t,q.j2.L)}</div>`
+      +`若<b>交换这两个关节的先后顺序</b>（即比较 ${mml(bmA(1)+bmA(2))} 与 ${mml(bmA(2)+bmA(1))} 对应的末端），`
+      +`机械臂末端会回到<b>同一点</b>吗？`
+      +optsHTML(q.opts);
+    wireOpts(q);
+  }
+  renderStats();
+  updateFig(false);
+}
+function cellInp(id,labelML){ return `<span class="cell">${labelML} <input class="qin" id="q_${id}" type="text" inputmode="decimal" autocomplete="off"></span>`; }
+function wireEnter(ids){ ids.forEach(id=>document.getElementById("q_"+id).addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); })); }
+function optsHTML(opts){
+  let h=`<div class="opts" id="qOpts">`;
+  opts.forEach((o,idx)=>{ h+=`<label data-i="${idx}"><input type="radio" name="qopt" value="${idx}"><span>${o}</span></label>`; });
+  return h+`</div>`;
+}
+function wireOpts(q){
+  document.querySelectorAll('#qOpts label').forEach(l=>l.addEventListener("click",()=>{
+    document.querySelectorAll('#qOpts label').forEach(x=>x.classList.remove("sel"));
+    l.classList.add("sel"); const r=l.querySelector('input'); if(r) r.checked=true;
+    q.selected=+l.dataset.i;
+  }));
+}
+function renderStats(){
+  const acc = qstats.attempted ? Math.round(qstats.correct/qstats.attempted*100) : 0;
+  document.getElementById("quizStats").innerHTML=
+    `已答 <b>${qstats.attempted}</b> · 答对 <b>${qstats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`;
+}
+
+// ── 判分 ──
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return;
+  const fb=document.getElementById("qFeedback");
+  if(q.kind==="end"){
+    const raw=["x","y"].map(id=>document.getElementById("q_"+id).value.trim());
+    if(!raw.every(s=>/^-?\d+(\.\d+)?$/.test(s))){ fb.className="feedback no"; fb.textContent="请在每个框都填入数字（可含小数）"; return; }
+    const g=raw.map(Number);
+    if(g.every((v,i)=>Math.abs(v-q.ans[i])<0.005)) markCorrect();
+    else{ fb.className="feedback no"; fb.textContent="还不对，检查一下 ΣLᵢ·(cosφᵢ, sinφᵢ) 的计算～（也可以点“看解析”）"; }
+  }else{
+    if(q.selected==null||q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个选项"; return; }
+    if(q.selected===q.ansIdx) markCorrect();
+    else{ fb.className="feedback no"; fb.textContent="还不对，再想想～（也可以点“看解析”）"; }
+  }
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+function markCorrect(){
+  const q=quiz; q.done=true; q.correct=true;
+  qstats.attempted++; qstats.correct++; streak++; saveStats();
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML();
+  lockQ(); renderStats(); updateFig(true);
+}
+function onReveal(){
+  const q=quiz; if(!q||q.done) return;
+  q.done=true; qstats.attempted++; streak=0; saveStats();
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML();
+  lockQ(); renderStats(); updateFig(true);
+}
+
+// ── 解析 ──
+function solHTML(){
+  const q=quiz;
+  if(q.kind==="end"){
+    const xline=`<mi>x</mi><mo>=</mo>${Lsub(1)}${cosPhi(1)}<mo>+</mo>${Lsub(2)}${cosPhi(2)}<mo>=</mo>`
+      +`<mn>${q.L1}</mn><mo>&#xD7;</mo>${p2(q.c1)}<mo>+</mo><mn>${q.L2}</mn><mo>&#xD7;</mo>${p2(q.c2)}<mo>=</mo>${num2(q.ans[0])}`;
+    const yline=`<mi>y</mi><mo>=</mo>${Lsub(1)}${sinPhi(1)}<mo>+</mo>${Lsub(2)}${sinPhi(2)}<mo>=</mo>`
+      +`<mn>${q.L1}</mn><mo>&#xD7;</mo>${p2(q.s1)}<mo>+</mo><mn>${q.L2}</mn><mo>&#xD7;</mo>${p2(q.s2)}<mo>=</mo>${num2(q.ans[1])}`;
+    return `<div class="sol"><b>${mml(bmp+`<mo>=</mo>`+pairV2(...q.ans))}</b>。`
+      +`末端就是两段连杆向量首尾相接：${mml(xline)}；${mml(yline)}。`
+      +`因整数臂长乘两位小数值，结果为精确的两位小数。它正是 ${mml(bmM+`<mo>=</mo>`+bmA(1)+bmA(2))} 平移列（最后一列）。</div>`;
+  }
+  if(q.kind==="compound"){
+    return `<div class="sol"><b>正确的是 ${mml(bmM+`<mo>=</mo>`+bmA(1)+bmA(2))}：</b>${matMathML(q.C)}。`
+      +`复合是矩阵<b>相乘</b>而非相加；其旋转块为 ${mml(`<mi>R</mi><mo>(</mo><msub><mi>&#x3B8;</mi><mn>1</mn></msub><mo>+</mo><msub><mi>&#x3B8;</mi><mn>2</mn></msub><mo>)</mo>`)}，`
+      +`平移列为 ${mml(`<msub><mi>R</mi><mn>1</mn></msub><msub><mi class="bm">t</mi><mn>2</mn></msub><mo>+</mo><msub><mi class="bm">t</mi><mn>1</mn></msub>`)}`
+      +`——第一段旋转会作用到第二段的平移上。`
+      +`常见错误：${mml(bmA(2)+bmA(1))} 是把顺序颠倒（不可交换），${mml(bmA(1)+`<mo>+</mo>`+bmA(2))} 把复合误当相加，还有把平移列直接写成 ${mml(`<msub><mi class="bm">t</mi><mn>1</mn></msub><mo>+</mo><msub><mi class="bm">t</mi><mn>2</mn></msub>`)}（漏掉旋转）。</div>`;
+  }
+  // commute
+  const detail = q.tag==="identical" ? `两关节<b>完全相同</b>，故 ${mml(bmA(1)+bmA(2)+`<mo>=</mo>`+bmA(2)+bmA(1))}，末端自然相同——但这只是特例。`
+    : q.tag==="translation" ? `两关节都是<b>纯平移</b>（角度为 0），平移彼此可交换，故末端相同——这也是特例。`
+    : `两关节不同，矩阵乘法<b>一般不可交换</b>，末端因此改变。`;
+  return `<div class="sol"><b>${q.same?"会":"不会"}</b>。`
+    +`按 ${mml(bmA(1)+bmA(2))} 的末端为 ${mml(pairV2(...q.eAB))}，`
+    +`按 ${mml(bmA(2)+bmA(1))} 的末端为 ${mml(pairV2(...q.eBA))}。`
+    +detail
+    +`一般地 ${mml(bmA(1)+bmA(2)+`<mo>&#x2260;</mo>`+bmA(2)+bmA(1))}，这正是矩阵乘法不可交换的几何写照。</div>`;
+}
+
+// ── 提示 ──
+function onHint(){
+  const q=quiz; if(!q) return;
+  const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="end")
+    fb.innerHTML=`提示：末端 = 两段连杆向量相加。${mml(`<mi>x</mi>`)} 方向 ${mml(`<mo>=</mo>`+Lsub(1)+cosPhi(1)+`<mo>+</mo>`+Lsub(2)+cosPhi(2))}，`
+      +`${mml(`<mi>y</mi>`)} 方向 ${mml(`<mo>=</mo>`+Lsub(1)+sinPhi(1)+`<mo>+</mo>`+Lsub(2)+sinPhi(2))}，直接代入给定的两位小数值即可。`;
+  else if(q.kind==="compound")
+    fb.innerHTML=`提示：复合是矩阵<b>相乘</b>不是相加，且顺序为 ${mml(bmA(1)+bmA(2))}（不可交换）。`
+      +`留意平移列——第一段旋转 ${mml(`<msub><mi>R</mi><mn>1</mn></msub>`)} 会作用在第二段的平移上，不能简单把两段平移相加。`;
+  else
+    fb.innerHTML=`提示：矩阵乘法一般<b>不可交换</b> ${mml(bmA(1)+bmA(2)+`<mo>&#x2260;</mo>`+bmA(2)+bmA(1))}；`
+      +`只有当两关节<b>完全相同</b>、或都是<b>纯平移</b>（角度为 0）时，交换顺序才恰好回到同一点。`;
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+
+// ── 练习配图（独立小画布，自适应缩放；不画数字刻度，避免直接读出坐标）──
+const qCanvas=document.getElementById("qCanvas");
+let qctx=null, QW=380, QH=300, QDPR=1;
+function initQCanvas(){
+  qctx=qCanvas.getContext("2d");
+  QDPR=Math.min(2,window.devicePixelRatio||1);
+  qCanvas.width=Math.round(QW*QDPR); qCanvas.height=Math.round(QH*QDPR);
+  qCanvas.style.width=QW+"px"; qCanvas.style.height=QH+"px";
+}
+function qLabel(text,x,y,color,px,bold,align){
+  px=px||15; qctx.save();
+  qctx.font=`${px}px ${CMFONT}`; qctx.textAlign=align||"left"; qctx.textBaseline="alphabetic";
+  qctx.lineJoin="round"; qctx.lineWidth=px*0.16; qctx.strokeStyle="rgba(255,255,255,.92)";
+  const s=toMath(text,bold); qctx.strokeText(s,x,y); qctx.fillStyle=color; qctx.fillText(s,x,y); qctx.restore();
+}
+// arms: [{segs:[{ang(°),len,color}], dash:bool, endColor, endLabel}]
+function drawArms(arms){
+  qctx.setTransform(QDPR,0,0,QDPR,0,0);
+  qctx.clearRect(0,0,QW,QH);
+  // 所有关节点（世界单位），含原点，用于自适应缩放
+  const pts=[[0,0]];
+  arms.forEach(a=>{ let x=0,y=0; a.segs.forEach(s=>{ x+=s.len*Math.cos(s.ang*Math.PI/180); y+=s.len*Math.sin(s.ang*Math.PI/180); pts.push([x,y]); }); });
+  const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]);
+  const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  const spanX=Math.max(maxX-minX,1), spanY=Math.max(maxY-minY,1);
+  const mg=46, scale=Math.min((QW-2*mg)/spanX,(QH-2*mg)/spanY);
+  const ox=mg+(0-minX)*scale+((QW-2*mg)-spanX*scale)/2;
+  const oy=QH-mg-(0-minY)*scale-((QH-2*mg)-spanY*scale)/2;
+  const P=(x,y)=>({x:ox+x*scale, y:oy-y*scale});
+  // 淡坐标轴（仅方向，无刻度数字）
+  qctx.save(); qctx.strokeStyle="#c3cfe0"; qctx.fillStyle="#c3cfe0"; qctx.lineWidth=1.2; qctx.lineCap="round";
+  qctx.beginPath(); qctx.moveTo(8,oy); qctx.lineTo(QW-8,oy); qctx.moveTo(ox,QH-8); qctx.lineTo(ox,8); qctx.stroke();
+  const ah=6;
+  qctx.beginPath(); qctx.moveTo(QW-8,oy); qctx.lineTo(QW-8-ah,oy-ah*0.6); qctx.lineTo(QW-8-ah,oy+ah*0.6); qctx.closePath(); qctx.fill();
+  qctx.beginPath(); qctx.moveTo(ox,8); qctx.lineTo(ox-ah*0.6,8+ah); qctx.lineTo(ox+ah*0.6,8+ah); qctx.closePath(); qctx.fill();
+  qctx.restore();
+  qLabel("x",QW-16,oy-8,"#94a3b8",14); qLabel("y",ox+8,18,"#94a3b8",14);
+  // 各机械臂
+  arms.forEach(a=>{
+    let x=0,y=0; const joints=[P(0,0)];
+    a.segs.forEach(s=>{ x+=s.len*Math.cos(s.ang*Math.PI/180); y+=s.len*Math.sin(s.ang*Math.PI/180); joints.push(P(x,y)); });
+    for(let i=0;i<a.segs.length;i++){
+      qctx.save();
+      if(a.dash) qctx.setLineDash([6,5]);
+      qctx.lineCap="round"; qctx.strokeStyle="#dbe6f4"; qctx.lineWidth=a.dash?6:8;
+      if(!a.dash){ qctx.beginPath(); qctx.moveTo(joints[i].x,joints[i].y); qctx.lineTo(joints[i+1].x,joints[i+1].y); qctx.stroke(); }
+      qctx.strokeStyle=a.segs[i].color; qctx.lineWidth=a.dash?3:4.5;
+      qctx.beginPath(); qctx.moveTo(joints[i].x,joints[i].y); qctx.lineTo(joints[i+1].x,joints[i+1].y); qctx.stroke();
+      qctx.restore();
+      // 在杆上标注角度与长度（沿法向偏移到杆一侧，两行居中）
+      const s=a.segs[i];
+      if(s.angLabel||s.lenLabel){
+        const j0=joints[i], j1=joints[i+1];
+        const mx=(j0.x+j1.x)/2, my=(j0.y+j1.y)/2;
+        let dx=j1.x-j0.x, dy=j1.y-j0.y; const len=Math.hypot(dx,dy)||1; dx/=len; dy/=len;
+        let nx=-dy, ny=dx; if(ny>0){ nx=-nx; ny=-ny; }   // 法向统一朝上，减少与坐标轴/文字重叠
+        const off=17, cx=mx+nx*off, cy=my+ny*off, col=s.color;
+        if(s.angLabel) qLabel(s.angLabel, cx, cy-6, col, 13, false, "center");
+        if(s.lenLabel) qLabel(s.lenLabel, cx, cy+9, col, 13, false, "center");
+      }
+    }
+    joints.forEach((j,i)=>{ qctx.beginPath(); qctx.arc(j.x,j.y,i===0?5:4,0,Math.PI*2);
+      qctx.fillStyle="#fff"; qctx.fill(); qctx.lineWidth=2.2;
+      qctx.strokeStyle=i===0?"#1e3a8a":(i===joints.length-1?(a.endColor||"#c53030"):"#64748b"); qctx.stroke(); });
+    if(a.endLabel){ const e=joints[joints.length-1]; qLabel(a.endLabel,e.x+9,e.y+4,a.endColor||"#c53030",16,true); }
+  });
+}
+function updateFig(revealed){
+  const q=quiz, wrap=document.getElementById("qFig"), cap=document.getElementById("qFigCap");
+  if(!q){ wrap.style.display="none"; return; }
+  const B=LINK_COLORS[0], O=LINK_COLORS[1];
+  let arms=null, caption="";
+  const AL=(sym,i,deg)=>`${sym}${i==1?"₁":"₂"}=${deg<0?"−"+(-deg):deg}°`;   // 角度标签，如 φ₁=52°（真负号）
+  const LL=(i,v)=>`L${i==1?"₁":"₂"}=${v}`;                  // 长度标签，如 L₁=5
+  if(q.kind==="end"){
+    arms=[{segs:[
+      {ang:q.ph1,len:q.L1,color:B, angLabel:AL("φ",1,q.d1), lenLabel:LL(1,q.L1)},
+      {ang:q.ph2,len:q.L2,color:O, angLabel:AL("φ",2,q.d2), lenLabel:LL(2,q.L2)}
+    ], endLabel:"p", endColor:"#c53030"}];
+    caption="两段连杆首尾相接，末端为 p（示意图，不含刻度）";
+  }else if(q.kind==="compound"){
+    arms=[{segs:[
+      {ang:q.t1,len:q.L1,color:B, angLabel:AL("θ",1,q.t1), lenLabel:LL(1,q.L1)},
+      {ang:q.t1+q.t2,len:q.L2,color:O, angLabel:AL("θ",2,q.t2), lenLabel:LL(2,q.L2)}
+    ], endLabel:"p", endColor:"#c53030"}];
+    caption="关节 1（蓝）→ 关节 2（橙）串联构型";
+  }else{ // commute：仅在看解析后叠画两种顺序
+    if(!revealed){ wrap.style.display="none"; return; }
+    arms=[
+      {segs:[{ang:q.j1.t,len:q.j1.L,color:B, angLabel:AL("θ",1,q.j1.t), lenLabel:LL(1,q.j1.L)},
+             {ang:q.j1.t+q.j2.t,len:q.j2.L,color:O, angLabel:AL("θ",2,q.j2.t), lenLabel:LL(2,q.j2.L)}],
+       dash:false, endLabel:"p", endColor:"#c53030"},
+      {segs:[{ang:q.j2.t,len:q.j2.L,color:O},{ang:q.j2.t+q.j1.t,len:q.j1.L,color:B}], dash:true, endLabel:q.same?"":"p′", endColor:"#6b46c1"}
+    ];
+    caption=q.same?"实线 A₁A₂、虚线 A₂A₁ 末端重合于 p":"实线 A₁A₂ 末端 p，虚线 A₂A₁ 末端 p′（不同点）";
+  }
+  wrap.style.display=""; cap.textContent=caption; if(!qctx) initQCanvas(); drawArms(arms);
+}
+
+// ── 模式切换 ──
+const exploreArea=document.getElementById("exploreArea");
+const quizCard=document.getElementById("quizCard");
+function setMode(m){
+  qmode=m;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  quizCard.style.display = m==="practice"?"":"none";
+  exploreArea.style.display = m==="practice"?"none":"";
+  if(m==="practice"){ quiz=genProblem(); renderProblem(); }
+  else{ quiz=null; render(); }   // 回到探索态重绘画布
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
+renderStats();
 </script>
 
 <script>
