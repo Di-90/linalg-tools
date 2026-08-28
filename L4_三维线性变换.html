@@ -63,6 +63,37 @@
   .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:10px;justify-content:center;}
   .legend span{display:inline-flex;align-items:center;gap:6px;}
   .legend i{width:14px;height:6px;border-radius:2px;display:inline-block;}
+  /* ── 练习模式 ── */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0 0 16px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 20px;font-size:14px;background:#fff;color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button:hover{border-color:var(--line);}
+  .modebar button:not(.on):hover{background:#eef4fb;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .quizhead h2{margin:0;}
+  .stats{font-size:12.5px;color:var(--sub);}
+  .stats b{color:var(--ink);}
+  .reset-link{font-size:12px;color:#a0aec0;background:none;border:none;cursor:pointer;text-decoration:underline;padding:2px 4px;}
+  .reset-link:hover{color:var(--vecB);border-color:transparent;}
+  .qbody{font-size:15px;line-height:2;}
+  .qbody .ans{margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .qbody input.qin{width:72px;font-size:16px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;
+       text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+  .opts label{display:flex;align-items:center;gap:9px;padding:9px 13px;border:1px solid var(--line);border-radius:8px;
+       cursor:pointer;transition:.12s;font-size:14.5px;}
+  .opts label:hover{border-color:var(--blue);background:#f7fafc;}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .feedback{margin-top:12px;font-size:14px;min-height:22px;line-height:1.9;}
+  .feedback.ok{color:var(--green);}
+  .feedback.no,.feedback .no{color:var(--vecB);}
+  .sol{margin-top:8px;padding:10px 12px;background:#f8fafc;border:1px solid var(--line);border-radius:8px;
+       font-size:13.5px;line-height:1.95;color:var(--sub);}
+  .sol b{color:var(--ink);}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+  .qbtns button.primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .qbtns button.primary:hover{opacity:.92;}
   footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
        font-size:12px;color:#718096;text-align:center;}
 </style>
@@ -93,19 +124,42 @@
     修改向量 <math><mi class="bm">A</mi></math> 的坐标或矩阵 <math><mi class="bm">H</mi></math> 的元素，观察蓝色 <math><mi class="bm">A</mi></math> 与红色像 <math><mi class="bm">B</mi></math>；用鼠标<b>拖动可旋转</b>三维视角、<b>滚轮缩放</b>。<math><mi>&#x3BB;</mi><mo>=</mo><mfrac><mrow><mo>|</mo><mi class="bm">B</mi><mo>|</mo></mrow><mrow><mo>|</mo><mi class="bm">A</mi><mo>|</mo></mrow></mfrac></math> 为该方向上的长度伸缩比。
   </div>
 
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <!-- 三维画布：自由探索与练习共用同一场景 -->
   <div class="card">
     <div id="canvas-container"></div>
     <div class="legend">
-      <span><i style="background:var(--vecA)"></i>原向量 <math><mi class="bm">A</mi></math></span>
-      <span><i style="background:var(--vecB)"></i>变换后 <math><mi class="bm">B</mi><mo>=</mo><mi class="bm">H</mi><mi class="bm">A</mi></math></span>
+      <span class="legA"><i style="background:var(--vecA)"></i>原向量 <math><mi class="bm">A</mi></math></span>
+      <span class="legB"><i style="background:var(--vecB)"></i>变换后 <math><mi class="bm">B</mi><mo>=</mo><mi class="bm">H</mi><mi class="bm">A</mi></math></span>
       <span class="basisleg"><i class="dot" style="background:var(--gold)"></i><i class="dot" style="background:var(--green)"></i><i class="dot" style="background:var(--purple)"></i>基向量 <math><mrow><mover><mi>i</mi><mo>^</mo></mover><mo>,</mo><mover><mi>j</mi><mo>^</mo></mover><mo>,</mo><mover><mi>k</mi><mo>^</mo></mover></mrow></math> 与单位立方体的像</span>
     </div>
-    <div style="text-align:center;margin-top:10px;">
+    <div id="basisToggleRow" style="text-align:center;margin-top:10px;">
       <label class="toggle"><input type="checkbox" id="showBasis" checked>显示基向量 <math><mrow><mover><mi>i</mi><mo>^</mo></mover><mo>,</mo><mover><mi>j</mi><mo>^</mo></mover><mo>,</mo><mover><mi>k</mi><mo>^</mo></mover></mrow></math> 与单位立方体的像</label>
     </div>
-    <div class="hint">拖动旋转视角 · 滚轮缩放 · 右键平移</div>
+    <div class="hint" id="canvasHint">拖动旋转视角 · 滚轮缩放 · 右键平移</div>
   </div>
 
+  <div class="card" id="quizCard" style="display:none;">
+    <div class="quizhead">
+      <h2>练习 · 三维线性变换</h2>
+      <span class="stats" id="quizStats"></span>
+      <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+    </div>
+    <div class="qbody" id="qBody"></div>
+    <div class="feedback" id="qFeedback"></div>
+    <div class="qbtns">
+      <button class="primary" id="qSubmit">提交</button>
+      <button id="qHint">提示</button>
+      <button id="qReveal">看解析</button>
+      <button id="qNext">下一题 ▸</button>
+    </div>
+  </div>
+
+  <div id="exploreArea">
   <div class="card">
     <h2>向量 A 与变换矩阵 H</h2>
     <div class="row">
@@ -136,6 +190,7 @@
     </div>
     <div class="readout" id="vectorsInfo"></div>
   </div>
+  </div><!--/exploreArea-->
 
   <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
 </div>
@@ -348,11 +403,12 @@ function updateDisplay(){
     // 重建动态内容（释放上一帧的几何/贴图，避免显存泄漏）
     while(dynamicGroup.children.length){ const c=dynamicGroup.children[0]; disposeNode(c); dynamicGroup.remove(c); }
     buildStatic();
-    const showBasis=document.getElementById("showBasis").checked;
+    const PR = window.PRAC || {active:false};   // 练习模式绘图开关（在第二段脚本中定义）
+    const showBasis = PR.active ? true : document.getElementById("showBasis").checked;
     if(showBasis) addUnitCubeImage();
-    addVector(vectorA, 0x2b6cb0, "A", 0.045);
+    if(!(PR.active&&PR.hideA)) addVector(vectorA, 0x2b6cb0, "A", 0.045);
     const B=transformed();
-    addVector(B, 0xc53030, "B", 0.045);
+    if(!(PR.active&&PR.hideB)) addVector(B, 0xc53030, "B", 0.045);
 
     const lenA=Math.hypot(vectorA.x,vectorA.y,vectorA.z);
     const lenB=Math.hypot(B.x,B.y,B.z);
@@ -421,6 +477,269 @@ function animate(){ requestAnimationFrame(animate); controls.update(); renderer.
 animate();
 updateDisplay();
 onResize();
+</script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   练习模式（与 L1/L2/L3/L8 同款）
+   - apply：给 3×3 整数矩阵 H 与整数向量 A，求像 B = H·A（填 3 个整数）
+   - identify：给出一个 3×3 矩阵，判断它表示哪种几何变换（选择题）
+   - 本地进度（已答/答对/连对）存 localStorage，仅本机可见
+   ══════════════════════════════════════════════════════════════════ */
+const QUIZKEY="la-l4-quiz";
+let qmode="explore";           // "explore" | "practice"
+let quiz=null, streak=0;
+let qstats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:qstats.attempted,correct:qstats.correct,streak:streak})); }catch(e){} }
+function resetStats(){
+  if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return;
+  qstats={attempted:0,correct:0}; streak=0; saveStats(); renderStats();
+}
+
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function shuffle(a){ for(let k=a.length-1;k>0;k--){ const t=Math.floor(Math.random()*(k+1)); [a[k],a[t]]=[a[t],a[k]]; } return a; }
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+// ── 练习模式的三维图示（复用探索用的 Three.js 场景）──
+window.PRAC = {active:false, hideA:false, hideB:false};   // updateDisplay 读取的绘图开关
+let savedMatrix=null, savedVecA=null;                     // 进入练习前的探索场景，退出时还原
+function setLegend(showA, showB){
+  const a=document.querySelector('.legend .legA'), b=document.querySelector('.legend .legB');
+  if(a) a.style.display = showA?"":"none";
+  if(b) b.style.display = showB?"":"none";
+}
+const DEFAULT_CAM_DIST = Math.hypot(8.5,6.5,10);   // 探索初始相机到原点的距离（≈14.65）
+let savedCam = null;                               // 进入练习前的相机位置
+// 根据当前题目要画的内容自动调整视距：内容大就把相机拉远，内容小则保持默认（不会拉近）
+function fitView(){
+  const s=scaleFactor, PR=window.PRAC||{}; let r=0;
+  const consider=(x,y,z)=>{ const m=Math.hypot(x,y,z); if(m>r) r=m; };
+  for(let cx=0;cx<2;cx++)for(let cy=0;cy<2;cy++)for(let cz=0;cz<2;cz++){   // 单位立方体各顶点的像
+    consider((matrix[0][0]*cx+matrix[0][1]*cy+matrix[0][2]*cz)*s,
+             (matrix[1][0]*cx+matrix[1][1]*cy+matrix[1][2]*cz)*s,
+             (matrix[2][0]*cx+matrix[2][1]*cy+matrix[2][2]*cz)*s);
+  }
+  if(!PR.hideA) consider(vectorA.x*s, vectorA.y*s, vectorA.z*s);
+  if(!PR.hideB){ const B=transformed(); consider(B.x*s, B.y*s, B.z*s); }
+  const halfFov=(camera.fov*Math.PI/180)/2;
+  const fitDist=(r*1.18)/Math.sin(halfFov);          // 让半径 r 的球恰好入镜，留 18% 余量
+  const dist=Math.max(DEFAULT_CAM_DIST, fitDist);    // 只在需要时拉远，绝不比默认更近
+  const dir = camera.position.length()>1e-6 ? camera.position.clone().normalize()
+                                            : new THREE.Vector3(8.5,6.5,10).normalize();
+  if(dist+5>controls.maxDistance) controls.maxDistance=dist+5;   // 先放宽上限，否则 update 会把位置夹回去
+  camera.position.copy(dir.multiplyScalar(dist));
+  controls.update();
+}
+function showProblemFigure(q){
+  matrix = q.M.map(r=>r.slice());                         // 覆盖全局 matrix，让场景画出本题的变换
+  if(q.kind==="apply"){
+    vectorA = {x:q.A[0], y:q.A[1], z:q.A[2]};
+    window.PRAC = {active:true, hideA:false, hideB:!q.revealB};   // 未揭晓前不画像 B，避免泄露答案
+    setLegend(true, !!q.revealB);
+    document.getElementById("canvasHint").textContent = q.revealB
+      ? "红色即像向量 B = HA；灰色为原单位立方体，蓝色为它在 H 下的像 · 可拖动旋转"
+      : "蓝色为向量 A；立方体的像展示 H 的作用。先算出像 B，提交后在图中显示 · 可拖动旋转";
+  }else{
+    vectorA = {x:0,y:0,z:0};
+    window.PRAC = {active:true, hideA:true, hideB:true};
+    setLegend(false, false);
+    document.getElementById("canvasHint").textContent =
+      "图中是 H 作用在单位立方体与基向量 î, ĵ, k̂ 上的效果，据此判断变换类型 · 可拖动旋转";
+  }
+  updateDisplay();
+  fitView();          // 根据本题内容自动调整视距，保证向量/立方体都在画面内
+}
+
+// 数字 → MathML（负数用真正的减号 −）
+function numML(n){ return n<0?`<mo>−</mo><mn>${-n}</mn>`:`<mn>${n}</mn>`; }
+function mat3ML(M){
+  let rows="";
+  for(let i=0;i<3;i++){ let c=""; for(let j=0;j<3;j++) c+=`<mtd>${numML(M[i][j])}</mtd>`; rows+=`<mtr>${c}</mtr>`; }
+  return `<math><mrow><mo>(</mo><mtable columnspacing="0.7em" rowspacing="0.25em">${rows}</mtable><mo>)</mo></mrow></math>`;
+}
+function vec3ML(v){
+  return `<math><mrow><mo>(</mo><mtable rowspacing="0.2em">`
+    +`<mtr><mtd>${numML(v[0])}</mtd></mtr><mtr><mtd>${numML(v[1])}</mtd></mtr><mtr><mtd>${numML(v[2])}</mtd></mtr>`
+    +`</mtable><mo>)</mo></mrow></math>`;
+}
+function fnum(x){ return x<0?`(${x})`:`${x}`; }   // 解析里负数加括号
+
+// ── 出题 ──
+function randMat(){ return [[ri(-2,2),ri(-2,2),ri(-2,2)],[ri(-2,2),ri(-2,2),ri(-2,2)],[ri(-2,2),ri(-2,2),ri(-2,2)]]; }
+function mul3(M,v){ return [0,1,2].map(i=>M[i][0]*v[0]+M[i][1]*v[1]+M[i][2]*v[2]); }
+function diag(a,b,c){ return [[a,0,0],[0,b,0],[0,0,c]]; }
+function rotMat(ax,deg){
+  const t=deg*Math.PI/180, c=Math.round(Math.cos(t)), s=Math.round(Math.sin(t));
+  if(ax===0) return [[1,0,0],[0,c,-s],[0,s,c]];   // 绕 x
+  if(ax===1) return [[c,0,s],[0,1,0],[-s,0,c]];   // 绕 y
+  return [[c,-s,0],[s,c,0],[0,0,1]];              // 绕 z
+}
+const CATS={ROT:"旋转",SCALE:"缩放（伸缩）",REFLECT:"反射",PROJECT:"投影",SHEAR:"切变"};
+const AXES=["x","y","z"];
+const PLANE_OF_AXIS=["yz","xz","xy"];             // 垂直于该轴的坐标平面
+
+function genIdentify(){
+  const cat=pick(["ROT","SCALE","REFLECT","PROJECT","SHEAR"]);
+  let M, desc;
+  if(cat==="ROT"){
+    const ax=ri(0,2), deg=pick([90,180,270]);
+    M=rotMat(ax,deg); desc=`绕 ${AXES[ax]} 轴旋转 ${deg}°（正交、行列式为 1）`;
+  }else if(cat==="SCALE"){
+    if(Math.random()<0.5){ const k=ri(2,3); M=diag(k,k,k); desc=`把空间沿各方向<b>均匀放大 ${k} 倍</b>`; }
+    else{ const ax=ri(0,2), k=ri(2,3), d=[1,1,1]; d[ax]=k; M=diag(d[0],d[1],d[2]); desc=`只沿 ${AXES[ax]} 方向拉伸为原来的 ${k} 倍`; }
+  }else if(cat==="REFLECT"){
+    const ax=ri(0,2), d=[1,1,1]; d[ax]=-1; M=diag(d[0],d[1],d[2]);
+    desc=`关于 ${PLANE_OF_AXIS[ax]} 坐标平面作<b>镜面反射</b>（行列式为 −1）`;
+  }else if(cat==="PROJECT"){
+    const ax=ri(0,2), d=[1,1,1]; d[ax]=0; M=diag(d[0],d[1],d[2]);
+    desc=`把空间正投影到 ${PLANE_OF_AXIS[ax]} 坐标平面（行列式为 0，不可逆）`;
+  }else{ // SHEAR
+    const pairs=[[0,1],[0,2],[1,0],[1,2],[2,0],[2,1]];
+    const [r,c]=pick(pairs), k=ri(1,2);
+    M=[[1,0,0],[0,1,0],[0,0,1]]; M[r][c]=k;
+    desc=`切变：把第 ${c+1} 个坐标的 ${k} 倍加到第 ${r+1} 个坐标上（其余不变）`;
+  }
+  const correct=CATS[cat];
+  const others=shuffle(Object.values(CATS).filter(o=>o!==correct)).slice(0,3);
+  const opts=shuffle([correct,...others]);
+  return {kind:"identify", M, cat, desc, opts, ansIdx:opts.indexOf(correct), selected:-1, done:false, correct:false};
+}
+function genProblem(){
+  if(Math.random()<0.6){
+    let M,A,B,guard=0;
+    do{ M=randMat(); A=[ri(-3,3),ri(-3,3),ri(-3,3)]; B=mul3(M,A); }
+    while(((A[0]===0&&A[1]===0&&A[2]===0)||Math.max(Math.abs(B[0]),Math.abs(B[1]),Math.abs(B[2]))>18) && ++guard<60);
+    return {kind:"apply", M, A, B, done:false, correct:false};
+  }
+  return genIdentify();
+}
+
+// ── 渲染题目 ──
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody");
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  if(q.kind==="apply"){
+    body.innerHTML=
+      `已知变换矩阵 <math><mi class="bm">H</mi><mo>=</mo></math> ${mat3ML(q.M)}，向量 <math><mi class="bm">A</mi><mo>=</mo></math> ${vec3ML(q.A)}。`
+      +`<br>求像向量 <math><mi class="bm">B</mi><mo>=</mo><mi class="bm">H</mi><mi class="bm">A</mi></math> 的三个分量（填整数）：`
+      +`<div class="ans"><math><mi class="bm">B</mi><mo>=</mo></math> `
+      +`<input class="qin" id="qx" type="text" inputmode="numeric" autocomplete="off" placeholder="x"> `
+      +`<input class="qin" id="qy" type="text" inputmode="numeric" autocomplete="off" placeholder="y"> `
+      +`<input class="qin" id="qz" type="text" inputmode="numeric" autocomplete="off" placeholder="z"></div>`;
+    ["qx","qy","qz"].forEach(id=>document.getElementById(id).addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); }));
+  }else{
+    let html=`下面的 3×3 矩阵表示哪一种几何变换？<div style="text-align:center;margin:12px 0;">${mat3ML(q.M)}</div>`
+      +`<div class="opts" id="qOpts">`;
+    q.opts.forEach((o,idx)=>{ html+=`<label data-i="${idx}"><input type="radio" name="qopt" value="${idx}"><span>${o}</span></label>`; });
+    html+=`</div>`;
+    body.innerHTML=html;
+    body.querySelectorAll('#qOpts label').forEach(l=>l.addEventListener("click",()=>{
+      body.querySelectorAll('#qOpts label').forEach(x=>x.classList.remove("sel"));
+      l.classList.add("sel");
+      const r=l.querySelector('input'); if(r) r.checked=true;
+      q.selected=+l.dataset.i;
+    }));
+  }
+  renderStats();
+}
+
+function renderStats(){
+  const acc = qstats.attempted ? Math.round(qstats.correct/qstats.attempted*100) : 0;
+  document.getElementById("quizStats").innerHTML=
+    `已答 <b>${qstats.attempted}</b> · 答对 <b>${qstats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`;
+}
+
+// ── 判分 ──
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return;
+  const fb=document.getElementById("qFeedback");
+  if(q.kind==="apply"){
+    const raw=["qx","qy","qz"].map(id=>document.getElementById(id).value.trim());
+    if(!raw.every(s=>/^-?\d+$/.test(s))){ fb.className="feedback no"; fb.textContent="请在三个框都填入整数"; return; }
+    const g=raw.map(Number);
+    if(g[0]===q.B[0]&&g[1]===q.B[1]&&g[2]===q.B[2]) markCorrect();
+    else { fb.className="feedback no"; fb.textContent="还不对：B 的每个分量 = H 对应行与 A 的点积，逐行算～（也可以点“看解析”）"; }
+  }else{
+    if(q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个选项"; return; }
+    if(q.selected===q.ansIdx) markCorrect();
+    else { fb.className="feedback no"; fb.textContent="不对哦，看矩阵的列（基向量的像）与行列式～（也可以点“看解析”）"; }
+  }
+}
+
+function solHTML(){
+  const q=quiz;
+  if(q.kind==="apply"){
+    let s=`<div class="sol">`;
+    const nm=["B₁","B₂","B₃"];
+    for(let i=0;i<3;i++){
+      s+=`${nm[i]} = ${q.M[i][0]}·${fnum(q.A[0])} + ${q.M[i][1]}·${fnum(q.A[1])} + ${q.M[i][2]}·${fnum(q.A[2])} = <b>${q.B[i]}</b><br>`;
+    }
+    s+=`所以 <b>B = (${q.B.join(", ")})</b></div>`;
+    return s;
+  }
+  return `<div class="sol">这是<b>${CATS[q.cat]}</b>：${q.desc}。</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+
+function markCorrect(){
+  const q=quiz; q.done=true; q.correct=true;
+  qstats.attempted++; qstats.correct++; streak++; saveStats();
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML();
+  lockQ(); renderStats();
+  if(q.kind==="apply"){ q.revealB=true; showProblemFigure(q); }   // 答对后在图中显示像 B
+}
+function onReveal(){
+  const q=quiz; if(!q||q.done) return;
+  q.done=true; qstats.attempted++; streak=0; saveStats();
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML();
+  lockQ(); renderStats();
+  if(q.kind==="apply"){ q.revealB=true; showProblemFigure(q); }   // 看解析后也显示像 B
+}
+function onHint(){
+  const q=quiz; if(!q) return;
+  const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="apply"){
+    fb.innerHTML=`提示：B 的第 i 个分量 = H 的第 i 行与 A 的点积，即 h<sub>i1</sub>·A<sub>x</sub> + h<sub>i2</sub>·A<sub>y</sub> + h<sub>i3</sub>·A<sub>z</sub>，三行分别算。`;
+  }else{
+    fb.innerHTML=`提示：矩阵的三列就是基向量 <math><mrow><mover><mi>i</mi><mo>^</mo></mover><mo>,</mo><mover><mi>j</mi><mo>^</mo></mover><mo>,</mo><mover><mi>k</mi><mo>^</mo></mover></mrow></math> 的像。对角且元素为正→缩放/拉伸；含一个 −1→反射；含一个 0（不可逆）→投影；单位阵加一个非对角元→切变；正交且行列式为 1→旋转。`;
+  }
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); showProblemFigure(quiz); }
+
+// ── 模式切换 ──
+function setMode(m){
+  qmode=m;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("exploreArea").style.display    = m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display       = m==="practice"?"":"none";
+  document.getElementById("basisToggleRow").style.display = m==="practice"?"none":"";
+  if(m==="practice"){
+    savedMatrix=matrix; savedVecA=vectorA;              // 备份探索场景
+    if(!savedCam) savedCam=camera.position.clone();     // 备份探索相机（首次进入练习时）
+    quiz=genProblem(); renderProblem(); showProblemFigure(quiz);
+  }else{
+    quiz=null;
+    window.PRAC={active:false,hideA:false,hideB:false};
+    setLegend(true,true);
+    document.getElementById("canvasHint").textContent="拖动旋转视角 · 滚轮缩放 · 右键平移";
+    if(savedMatrix){ matrix=savedMatrix; vectorA=savedVecA; }   // 还原探索场景
+    if(savedCam){ camera.position.copy(savedCam); controls.update(); savedCam=null; }  // 还原探索相机
+    updateDisplay();
+  }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
 </script>
 
 <script>
