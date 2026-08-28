@@ -59,6 +59,47 @@
   .infobox.bad{background:#fef2f2;border:1px solid #fecaca;padding:10px 14px;color:#991b1b;}
   .infobox .mats{display:flex;gap:22px;flex-wrap:wrap;align-items:center;margin-top:8px;}
   .infobox .mats .mlbl{font-size:12.5px;color:var(--sub);margin-right:6px;}
+  /* ── 练习模式 ── */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .orderbar{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;}
+  .orderbar button{border:none;border-radius:0;padding:5px 14px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;border-left:1px solid var(--line);}
+  .orderbar button:first-child{border-left:none;}
+  .orderbar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;
+       flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;
+       text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody .ans{display:inline-flex;align-items:center;gap:6px;margin-top:8px;}
+  .qbody input.qin{width:110px;font-size:16px;padding:6px 8px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;letter-spacing:2px;text-transform:uppercase;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);
+       border-radius:8px;cursor:pointer;font-size:14px;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .opts input{accent-color:var(--blue);}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:13.5px;margin-top:6px;line-height:1.9;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .qbtns button{padding:8px 16px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  .qbtns button:hover{border-color:var(--blue);}
+  .qbtns button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  .qbtns button:disabled{opacity:.45;cursor:not-allowed;}
   footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
        font-size:12px;color:#718096;text-align:center;}
 </style>
@@ -84,6 +125,36 @@
     密钥矩阵 <math><mi class="bm">K</mi></math> 可逆的充要条件是 <math><mi>det</mi><mo>&#x2009;</mo><mi class="bm">K</mi></math> 与 26 <b>互质</b>（即 <math><mi>gcd</mi><mo>(</mo><mi>det</mi><mo>&#x2009;</mo><mi class="bm">K</mi><mo>,</mo><mn>26</mn><mo>)</mo><mo>=</mo><mn>1</mn></math>），此时模逆存在，才能解密。点“检查矩阵”查看行列式与逆矩阵。
   </div>
 
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div class="card" id="quizCard" style="display:none;">
+    <div class="quizhead">
+      <h2>练习 · 希尔密码</h2>
+      <span class="stats" id="quizStats"></span>
+      <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+    </div>
+    <div class="row" style="margin:0 0 12px;">
+      <span class="lbl">密钥阶数 <math><mi>n</mi></math>：</span>
+      <div class="orderbar" id="orderBar">
+        <button data-n="2" class="on">2 阶</button>
+        <button data-n="3">3 阶</button>
+        <button data-n="4">4 阶</button>
+      </div>
+    </div>
+    <div class="qbody" id="qBody"></div>
+    <div class="feedback" id="qFeedback"></div>
+    <div class="qbtns">
+      <button class="primary" id="qSubmit">提交</button>
+      <button id="qHint">提示</button>
+      <button id="qReveal">看解析</button>
+      <button id="qNext">下一题 ▸</button>
+    </div>
+  </div>
+
+  <div id="exploreArea">
   <div class="card">
     <h2>明文 / 密文</h2>
     <label class="field">请输入明文或密文（仅英文字母，其余字符自动忽略）：</label>
@@ -110,6 +181,7 @@
     <textarea id="output-text" rows="3" readonly></textarea>
     <div id="info" class="infobox"></div>
   </div>
+  </div><!--/exploreArea-->
 
   <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
 </div>
@@ -270,6 +342,224 @@ function init(){
     document.getElementById("example-btn").addEventListener("click",()=>{ setExampleMatrix(); clearInfo(); });
 }
 init();
+</script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   练习模式（加密填空 / 可逆判定）
+   - 纯客户端出题 + 判分，只作自测/形成性练习，不上报、不记成绩
+   - 复用现成的 mod/gcd/行列式/矩阵乘法等工具函数
+   - 本地进度（已答/答对/连对）存 localStorage，仅本机可见
+   ══════════════════════════════════════════════════════════════════ */
+const QUIZKEY="la-l8-quiz";
+let mode="explore";            // "explore" | "practice"
+let quiz=null, streak=0;
+let quizN=2;                   // 当前练习的密钥阶数（2 / 3 / 4）
+let stats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){
+  if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return;
+  stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats();
+}
+
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function shuffle(a){ for(let k=a.length-1;k>0;k--){ const t=Math.floor(Math.random()*(k+1)); [a[k],a[t]]=[a[t],a[k]]; } return a; }
+function randN(n){ return Array.from({length:n},()=>Array.from({length:n},()=>ri(0,25))); }
+function numToLet(n){ return String.fromCharCode(65+mod(n,26)); }
+function letToNum(ch){ return ch.toUpperCase().charCodeAt(0)-65; }
+const SUBS="₁₂₃₄₅";
+function subN(k){ return SUBS.charAt(k-1)||("_"+k); }
+// 明文/密文数字向量 → 字母串（大写）
+function vecToLetters(v){ return v.map(numToLet).join(""); }
+// 逐行展示 M·v (mod 26) 的计算过程，symOut 为输出分量记号（"c" 或 "p"）
+function mulLines(M,v,res,symOut){
+  let s="";
+  for(let i=0;i<M.length;i++){
+    const terms=M[i].map((mij,j)=>`${mij}·${v[j]}`).join(" + ");
+    const raw=M[i].reduce((acc,mij,j)=>acc+mij*v[j],0);
+    s+=`${symOut}${subN(i+1)} = (${terms}) mod 26 = ${raw} mod 26 = <b>${res[i]}</b> → <b>${numToLet(res[i])}</b><br>`;
+  }
+  return s;
+}
+// n 个字母的答案输入框
+function ansInput(n){
+  return `<div class="ans">= <input class="qin" id="qAns" type="text" maxlength="${n}" autocomplete="off" placeholder="${"?".repeat(n)}"></div>`
+    +`<div style="margin-top:6px;font-size:12.5px;color:#a0aec0;">填 ${n} 个字母（大小写不限）；提交或看解析后给出逐步计算。</div>`;
+}
+
+const INV_YES="能解密（密钥矩阵可逆）";
+const INV_NO ="不能解密（密钥矩阵不可逆）";
+
+// ── 出题 ──
+// enc=已知 K 与明文求密文；dec=已知 K⁻¹ 与密文求明文；inv=判定 K 是否可逆（仅 n≤3，4 阶手算行列式不现实）
+function genProblem(){
+  const n=quizN;
+  const roll=Math.random();
+  let kind;
+  if(n>=4) kind = roll<0.5 ? "enc" : "dec";        // 4 阶只出加/解密
+  else     kind = roll<0.4 ? "enc" : (roll<0.8 ? "dec" : "inv");
+  if(kind==="enc"){
+    let K; do{ K=randN(n); }while(!isMatrixInvertible(K));
+    const p=Array.from({length:n},()=>ri(0,25));
+    const c=matrixMultiply(K,p,26);
+    return {kind, n, K, p, c, ans:vecToLetters(c), done:false, correct:false};
+  }
+  if(kind==="dec"){
+    let K; do{ K=randN(n); }while(!isMatrixInvertible(K));
+    const Kinv=inverseMatrix(K);
+    const det=mod(determinant(K),26), detInv=modInverse(det);
+    const p=Array.from({length:n},()=>ri(0,25));
+    const c=matrixMultiply(K,p,26);
+    return {kind, n, K, Kinv, det, detInv, p, c, ans:vecToLetters(p), done:false, correct:false};
+  }
+  // inv 判定
+  let K, inv;
+  if(Math.random()<0.5){ do{ K=randN(n); }while(!isMatrixInvertible(K)); inv=true; }
+  else{ do{ K=randN(n); }while(isMatrixInvertible(K)); inv=false; }
+  const det=mod(determinant(K),26), g=gcd(det,26);
+  const correct = inv?INV_YES:INV_NO;
+  const opts=shuffle([INV_YES,INV_NO]);
+  return {kind, n, K, det, g, inv, opts, ansIdx:opts.indexOf(correct), selected:-1, done:false, correct:false};
+}
+
+// ── 渲染题目 ──
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody");
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  if(q.kind==="enc"){
+    const letters=q.p.map(x=>String.fromCharCode(97+x)).join("");
+    body.innerHTML=
+      `密钥矩阵 <math><mi class="bm">K</mi><mo>=</mo></math> ${matMathML(q.K)}，`
+      +`明文 <b>${letters}</b>（即向量 <math><mi class="bm">p</mi><mo>=</mo><mo>(</mo>${q.p.join("<mo>,</mo>")}<mo>)</mo></math>，a=0…z=25）。`
+      +`<br>求密文 <math><mi class="bm">c</mi><mo>=</mo><mi class="bm">K</mi><mi class="bm">p</mi><mspace width="0.25em"/><mo>(</mo><mi>mod</mi><mspace width="0.2em"/><mn>26</mn><mo>)</mo></math> 的 ${q.n} 个字母：`
+      +ansInput(q.n);
+    document.getElementById("qAns").addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); });
+  }else if(q.kind==="dec"){
+    const letters=vecToLetters(q.c);
+    body.innerHTML=
+      `密钥矩阵 <math><mi class="bm">K</mi><mo>=</mo></math> ${matMathML(q.K)}，`
+      +`密文 <b>${letters}</b>（即向量 <math><mi class="bm">c</mi><mo>=</mo><mo>(</mo>${q.c.join("<mo>,</mo>")}<mo>)</mo></math>，A=0…Z=25）。`
+      +`<br>请先求 <math><msup><mi class="bm">K</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></math> (mod 26)，再求明文 <math><mi class="bm">p</mi><mo>=</mo><msup><mi class="bm">K</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mi class="bm">c</mi><mspace width="0.25em"/><mo>(</mo><mi>mod</mi><mspace width="0.2em"/><mn>26</mn><mo>)</mo></math> 的 ${q.n} 个字母：`
+      +ansInput(q.n);
+    document.getElementById("qAns").addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); });
+  }else{
+    let html=`密钥矩阵 <math><mi class="bm">K</mi><mo>=</mo></math> ${matMathML(q.K)}。`
+      +`它能否作为希尔密码的密钥（可逆、可解密）？<div class="opts" id="qOpts">`;
+    q.opts.forEach((o,idx)=>{ html+=`<label data-i="${idx}"><input type="radio" name="qopt" value="${idx}"><span>${o}</span></label>`; });
+    html+=`</div>`;
+    body.innerHTML=html;
+    body.querySelectorAll('#qOpts label').forEach(l=>l.addEventListener("click",()=>{
+      body.querySelectorAll('#qOpts label').forEach(x=>x.classList.remove("sel"));
+      l.classList.add("sel");
+      const r=l.querySelector('input'); if(r) r.checked=true;
+      q.selected=+l.dataset.i;
+    }));
+  }
+  renderStats();
+}
+
+function renderStats(){
+  const acc = stats.attempted ? Math.round(stats.correct/stats.attempted*100) : 0;
+  document.getElementById("quizStats").innerHTML=
+    `已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`;
+}
+
+// ── 判分 ──
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return;
+  const fb=document.getElementById("qFeedback");
+  if(q.kind==="enc"||q.kind==="dec"){
+    const raw=(document.getElementById("qAns").value||"").replace(/[^a-zA-Z]/g,"").toUpperCase();
+    if(raw.length!==q.n){ fb.className="feedback no"; fb.textContent=`请填入 ${q.n} 个字母`; return; }
+    if(raw===q.ans) markCorrect();
+    else if(q.kind==="enc"){ fb.className="feedback no"; fb.textContent="还不对，按 c = K·p (mod 26) 逐行算，再把数字换回字母～（也可以点“看解析”）"; }
+    else { fb.className="feedback no"; fb.textContent="还不对，用给出的 K⁻¹ 按 p = K⁻¹·c (mod 26) 逐行算，再把数字换回字母～（也可以点“看解析”）"; }
+  }else{
+    if(q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个选项"; return; }
+    if(q.selected===q.ansIdx) markCorrect();
+    else { fb.className="feedback no"; fb.textContent="不对哦，算 det K (mod 26) 再看它与 26 是否互质～（也可以点“看解析”）"; }
+  }
+}
+
+function solHTML(){
+  const q=quiz;
+  if(q.kind==="enc"){
+    return `<div class="sol">`+mulLines(q.K,q.p,q.c,"c")+`密文 = <b>${q.ans}</b></div>`;
+  }
+  if(q.kind==="dec"){
+    let s=`<div class="sol">① 求 <b>K⁻¹</b>：det K (mod 26) = <b>${q.det}</b>，其模逆 (det K)⁻¹ (mod 26) = <b>${q.detInv}</b>`;
+    if(q.n===2){
+      const [[a,b],[c,d]]=q.K;
+      s+=`；2×2 伴随矩阵 adj K = ${matMathML([[mod(d,26),mod(-b,26)],[mod(-c,26),mod(a,26)]])}`;
+    }
+    s+=`。<br>于是 K⁻¹ = (det K)⁻¹ · adj K (mod 26) = ${matMathML(q.Kinv)}。<br>`
+      +`② 求明文 p = K⁻¹·c (mod 26)：<br>`
+      +mulLines(q.Kinv,q.c,q.p,"p")
+      +`明文 = <b>${q.ans}</b></div>`;
+    return s;
+  }
+  let head;
+  if(q.n===2){ const [[a,b],[c,d]]=q.K; head=`det K = (${a}·${d} − ${b}·${c}) mod 26 = ${a*d-b*c} mod 26 = <b>${q.det}</b>；`; }
+  else head=`det K (mod 26) = <b>${q.det}</b>；`;
+  return `<div class="sol">`+head
+    +`gcd(${q.det}, 26) = <b>${q.g}</b> ${q.g===1?"= 1 → 可逆，可解密。":"≠ 1 → 不可逆，不能解密。"}</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+
+function markCorrect(){
+  const q=quiz; q.done=true; q.correct=true;
+  stats.attempted++; stats.correct++; streak++; saveStats();
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML();
+  lockQ(); renderStats();
+}
+function onReveal(){
+  const q=quiz; if(!q||q.done) return;
+  q.done=true; stats.attempted++; streak=0; saveStats();
+  const fb=document.getElementById("qFeedback");
+  fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML();
+  lockQ(); renderStats();
+}
+function onHint(){
+  const q=quiz; if(!q) return;
+  const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="enc"){
+    fb.innerHTML=`提示：先把明文换成数字 (${q.p.join(", ")})，再按行做 c = K·p，每个分量对 26 取模，最后把数字换回字母（0=A…25=Z）。`;
+  }else if(q.kind==="dec"){
+    fb.innerHTML=`提示：先求密钥的模逆 <b>K⁻¹</b>——算 det K 并对 26 取模、求它的模逆 (det K)⁻¹，再乘伴随矩阵得 K⁻¹ (mod 26)；然后按行做 p = K⁻¹·c（密文向量 (${q.c.join(", ")})），每个分量对 26 取模，再把数字换回字母（0=A…25=Z）。`;
+  }else if(q.n===2){
+    fb.innerHTML=`提示：2×2 的 det K = ad − bc，先对 26 取模；再看它与 26 是否<b>互质</b>（gcd = 1 才可逆）。`;
+  }else{
+    fb.innerHTML=`提示：先算 ${q.n}×${q.n} 的 det K 并对 26 取模；再看它与 26 是否<b>互质</b>（gcd = 1 才可逆，才能解密）。`;
+  }
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+
+// ── 模式切换 ──
+function setMode(m){
+  mode=m;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("exploreArea").style.display = m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display    = m==="practice"?"":"none";
+  if(m==="practice"){ quiz=genProblem(); renderProblem(); }
+  else{ quiz=null; }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
+document.querySelectorAll("#orderBar button").forEach(b=>b.addEventListener("click",()=>{
+  quizN=+b.dataset.n;
+  document.querySelectorAll("#orderBar button").forEach(x=>x.classList.toggle("on",x===b));
+  if(mode==="practice"){ quiz=genProblem(); renderProblem(); }
+}));
 </script>
 
 <script>
