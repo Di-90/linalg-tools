@@ -472,7 +472,7 @@ function renderProblem(){
   document.getElementById("qReveal").disabled=false;
   if(q.kind==="compute"){
     body.innerHTML=
-      `已知向量 ${bmML("A")} = ${coordML(q.A.x,q.A.y)}，变换矩阵 ${bmML("H")} = ${matML(q.H)}。<br>`
+      `已知向量 ${bmML("A")} = ${coordML(q.A.x,q.A.y)}，<span style="white-space:nowrap">变换矩阵 ${bmML("H")} = ${matML(q.H)}。</span><br>`
       +`求像 <math><mi class="bm">B</mi><mo>=</mo><mi class="bm">H</mi><mi class="bm">A</mi></math> 的坐标：`
       +`<div class="ans"><math><mi class="bm">B</mi><mo>=</mo><mo>(</mo></math>`
       +`<input class="qin" id="qBx" type="number" step="1" placeholder="x">`
