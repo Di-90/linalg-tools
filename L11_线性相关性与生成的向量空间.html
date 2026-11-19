@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>线性相关性与生成的向量空间 · L11 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --v1:#2b6cb0; --v2:#c53030; --v3:#2f855a; --tgt:#6b46c1;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.2em;}
+  var{font-style:italic;font-family:"Cambria Math","STIX Two Math",serif;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:920px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  #canvasContainer{width:100%;border:1px solid var(--line);
+       border-radius:10px;overflow:hidden;display:flex;justify-content:center;
+       background:radial-gradient(120% 120% at 50% 8%,#ffffff 0%,#f5f8fc 60%,#eef3f9 100%);}
+  canvas{touch-action:none;display:block;cursor:crosshair;max-width:100%;}
+  .row{margin:8px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:15px;}
+  .row .lbl{color:var(--sub);font-size:13px;}
+  input[type=number]{width:66px;font-size:15px;padding:5px 6px;
+       border:1px solid var(--line);border-radius:6px;font-variant-numeric:tabular-nums;text-align:center;}
+  input:focus{outline:none;border-color:var(--blue);}
+  button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .seg button{border:none;border-radius:0;padding:6px 14px;background:#fff;color:var(--sub);}
+  .seg button.on{background:var(--blue);color:#fff;}
+  .dot{width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:2px;vertical-align:middle;}
+  .readout{font-size:14.5px;line-height:1.9;background:#f8fafc;border:1px solid var(--line);
+       border-radius:8px;padding:10px 14px;margin-top:12px;}
+  .readout .concl{font-weight:600;}
+  .readout .dep{color:#c53030;} .readout .ind{color:var(--green);}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:10px;justify-content:center;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:14px;height:6px;border-radius:2px;display:inline-block;}
+  /* ── 练习模式 ── */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;
+       flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;
+       text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;border-color:transparent;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody .ans{display:inline-flex;align-items:center;gap:6px;margin-top:8px;}
+  .qbody input.qin{width:74px;font-size:15px;padding:6px 7px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);
+       border-radius:8px;cursor:pointer;font-size:14px;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .opts input{accent-color:var(--blue);}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:13.5px;margin-top:6px;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .qbtns button:disabled{opacity:.45;cursor:not-allowed;}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,360px);gap:16px;align-items:start;}
+  .layout .card{margin-bottom:16px;}
+  @media(max-width:820px){ .layout{grid-template-columns:1fr;} }
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
+       font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>线性相关性与生成的向量空间</h1>
+  <span class="sub">拖动向量，看它们是否线性相关、生成怎样的向量空间</span>
+  <span class="tag">L11 · 线性代数</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    给一组向量 <math><msub><mi class="bm">v</mi><mn>1</mn></msub><mo>,</mo><msub><mi class="bm">v</mi><mn>2</mn></msub><mo>,</mo><mo>&#x22EF;</mo><mo>,</mo><msub><mi class="bm">v</mi><mi>m</mi></msub></math>，它们所有<b>线性组合</b> <math><msub><mi>k</mi><mn>1</mn></msub><msub><mi class="bm">v</mi><mn>1</mn></msub><mo>+</mo><msub><mi>k</mi><mn>2</mn></msub><msub><mi class="bm">v</mi><mn>2</mn></msub><mo>+</mo><mo>&#x22EF;</mo><mo>+</mo><msub><mi>k</mi><mi>m</mi></msub><msub><mi class="bm">v</mi><mi>m</mi></msub></math> 构成的集合，称为由这组向量<b>生成的向量空间</b>，记作 <math><mi>span</mi><mo>(</mo><msub><mi class="bm">v</mi><mn>1</mn></msub><mo>,</mo><msub><mi class="bm">v</mi><mn>2</mn></msub><mo>,</mo><mo>&#x22EF;</mo><mo>,</mo><msub><mi class="bm">v</mi><mi>m</mi></msub><mo>)</mo></math>。
+    判断这组向量是否线性相关，要看齐次方程
+    <div class="formula">
+      <math display="block">
+        <mrow><msub><mi>k</mi><mn>1</mn></msub><msub><mi class="bm">v</mi><mn>1</mn></msub>
+        <mo>+</mo><msub><mi>k</mi><mn>2</mn></msub><msub><mi class="bm">v</mi><mn>2</mn></msub>
+        <mo>+</mo><mo>&#x22EF;</mo><mo>+</mo><msub><mi>k</mi><mi>m</mi></msub><msub><mi class="bm">v</mi><mi>m</mi></msub>
+        <mo>=</mo><mi class="bm">0</mi></mrow>
+      </math>
+    </div>
+    若上式只有 <b>全为零</b> 的解，则向量组 <b>线性无关</b>；若存在<b>不全为零</b>的解，则 <b>线性相关</b>。向量组生成的向量空间是整个平面 <math><msup><mi>&#x211D;</mi><mn>2</mn></msup></math>，当且仅当它的<b>秩</b> <math><mi>r</mi><mo>=</mo><mn>2</mn></math>。
+  </div>
+
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div class="layout">
+  <div class="col-left">
+  <div class="card">
+    <div id="canvasContainer"><canvas id="canvas"></canvas></div>
+    <div class="legend" id="legend"></div>
+  </div>
+  </div><!--/col-left-->
+
+  <div class="col-right">
+  <div class="card" id="quizCard" style="display:none;">
+    <div class="quizhead">
+      <h2>练习 · 线性相关性与生成的向量空间</h2>
+      <span class="stats" id="quizStats"></span>
+      <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+    </div>
+    <div class="qbody" id="qBody"></div>
+    <div class="feedback" id="qFeedback"></div>
+    <div class="qbtns">
+      <button class="primary" id="qSubmit">提交</button>
+      <button id="qHint">提示</button>
+      <button id="qReveal">看解析</button>
+      <button id="qNext">下一题 ▸</button>
+    </div>
+  </div>
+
+  <div class="card" id="exploreCard">
+    <h2>向量组</h2>
+    <div class="row">
+      <span class="lbl">向量个数：</span>
+      <span class="seg">
+        <button id="btnN2" class="on" onclick="setN(2)">2 个</button>
+        <button id="btnN3" onclick="setN(3)">3 个</button>
+      </span>
+    </div>
+    <div id="vecInputs"></div>
+    <div class="row" style="margin-top:4px;">
+      <span class="lbl">示例：</span>
+      <button onclick="preset('ind')">无关</button>
+      <button onclick="preset('par')">共线</button>
+      <button onclick="preset('three')">3 向量</button>
+    </div>
+    <div class="readout" id="readout"></div>
+  </div>
+  </div><!--/col-right-->
+  </div><!--/layout-->
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+const container=document.getElementById("canvasContainer");
+
+let n=2;
+let vecs=[{x:2,y:1},{x:-1,y:2},{x:1,y:3}];   // 最多 3 个，前 n 个生效
+let mode="explore";
+let quiz=null;
+let dragIndex=-1;
+let size, origin, sf;
+let RANGE=6;                 // 视野半径，随向量大小自动调整；拖动中不变，松手后再调整
+const NICE=[6,8,10,12,15,20,25,30,40,50,60,80,100];
+function tickStep(){ return RANGE<=8?1: RANGE<=15?2: RANGE<=30?5: RANGE<=60?10:20; }
+function fitRange(){
+    const pts=vecs.slice(0,n).slice();
+    if(mode==="practice"&&quiz&&quiz.b) pts.push(quiz.b);
+    let need=1; pts.forEach(v=>{ need=Math.max(need,Math.abs(v.x),Math.abs(v.y)); });
+    need=need*1.12+0.3;
+    for(const k of NICE){ if(k>=need) return k; }
+    return NICE[NICE.length-1];
+}
+const VC=["--v1","--v2","--v3"];
+
+function resize(){
+    size=Math.min(container.clientWidth, Math.round(window.innerHeight*0.6), 420);
+    size=Math.max(size,300);
+    const dpr=Math.min(2, window.devicePixelRatio||1);
+    canvas.width=Math.round(size*dpr); canvas.height=Math.round(size*dpr);
+    canvas.style.width=size+"px"; canvas.style.height=size+"px";
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    origin=size/2;
+    updateDisplay();
+}
+window.addEventListener("resize",resize);
+
+function toPixel(d){return {x:origin+d.x*sf, y:origin-d.y*sf};}
+function fromPixel(p){return {x:(p.x-origin)/sf, y:(origin-p.y)/sf};}
+function getCol(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim()||"#000";}
+function fmt(v){let n=Math.round(v*100)/100; if(Object.is(n,-0))n=0; return n.toString();}
+
+/* ── 画布数学体（与 L3 一致）── */
+const CMFONT='"Cambria Math","STIX Two Math",serif';
+function toMath(str,bold){
+    let out="";
+    for(const ch of str){
+        const cp=ch.codePointAt(0);
+        if(cp>=0x41&&cp<=0x5A) out+=String.fromCodePoint((bold?0x1D468:0x1D434)+(cp-0x41));
+        else if(cp>=0x61&&cp<=0x7A) out+=String.fromCodePoint((bold?0x1D482:0x1D44E)+(cp-0x61));
+        else out+=ch;
+    }
+    return out;
+}
+function drawMathLabel(text,x,y,color,px,bold){
+    px=px||16;
+    ctx.save();
+    ctx.font=`${px}px ${CMFONT}`;
+    ctx.textAlign="left"; ctx.textBaseline="middle";
+    ctx.lineJoin="round"; ctx.lineWidth=px*0.15; ctx.strokeStyle="rgba(255,255,255,.9)";
+    const s=toMath(text,bold);
+    ctx.strokeText(s,x,y);
+    ctx.fillStyle=color; ctx.fillText(s,x,y);
+    ctx.restore();
+}
+function drawPlain(text,x,y,color,px){
+    px=px||13;
+    ctx.save();
+    ctx.font=`${px}px "Segoe UI","Microsoft YaHei",system-ui`;
+    ctx.textAlign="left"; ctx.textBaseline="middle";
+    ctx.lineJoin="round"; ctx.lineWidth=px*0.28; ctx.strokeStyle="rgba(255,255,255,.92)";
+    ctx.strokeText(text,x,y);
+    ctx.fillStyle=color; ctx.fillText(text,x,y);
+    ctx.restore();
+}
+
+function drawAxes(){
+    ctx.clearRect(0,0,size,size);
+    ctx.strokeStyle="#eaeff6"; ctx.lineWidth=1;
+    const st=tickStep();
+    for(let k=-Math.floor(RANGE/st)*st;k<=RANGE;k+=st){
+        const px=Math.round(origin+k*sf)+0.5, py=Math.round(origin+k*sf)+0.5;
+        ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,size);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(size,py);ctx.stroke();
+    }
+    const oc=Math.round(origin)+0.5;
+    ctx.strokeStyle="#94a3b8"; ctx.fillStyle="#94a3b8"; ctx.lineWidth=1.5; ctx.lineCap="round";
+    ctx.beginPath();
+    ctx.moveTo(6,oc);ctx.lineTo(size-6,oc);
+    ctx.moveTo(oc,size-6);ctx.lineTo(oc,6);
+    ctx.stroke();
+    const ah=7;
+    ctx.beginPath();
+    ctx.moveTo(size-6,oc); ctx.lineTo(size-6-ah,oc-ah*0.55); ctx.lineTo(size-6-ah,oc+ah*0.55); ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(oc,6); ctx.lineTo(oc-ah*0.55,6+ah); ctx.lineTo(oc+ah*0.55,6+ah); ctx.closePath(); ctx.fill();
+    ctx.fillStyle="#a0aec0"; ctx.font='11px "Segoe UI",system-ui'; ctx.textAlign="center"; ctx.textBaseline="top";
+    for(let k=-Math.floor(RANGE/st)*st;k<=RANGE;k+=st){ if(k===0||Math.abs(k)>RANGE-0.5*st) continue; ctx.fillText(k, origin+k*sf, origin+5); }
+    ctx.textAlign="left"; ctx.textBaseline="middle";
+    for(let k=-Math.floor(RANGE/st)*st;k<=RANGE;k+=st){ if(k===0||Math.abs(k)>RANGE-0.5*st) continue; ctx.fillText(k, origin+5, origin-k*sf); }
+    drawMathLabel("x", size-16, oc+13, "#64748b", 16);
+    drawMathLabel("y", oc+11, 15, "#64748b", 16);
+    drawMathLabel("O", oc-13, oc+11, "#64748b", 15, true);
+}
+
+function drawVector(d,color,labelSub){
+    const p=toPixel(d);
+    const dx=p.x-origin, dy=p.y-origin, len=Math.hypot(dx,dy);
+    ctx.save();
+    ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=3; ctx.lineCap="round"; ctx.lineJoin="round";
+    if(len>2){
+        const ang=Math.atan2(dy,dx);
+        const head=Math.min(15, Math.max(9, len*0.2)), hw=head*0.42;
+        const bx=origin+Math.cos(ang)*(len-head*0.85), by=origin+Math.sin(ang)*(len-head*0.85);
+        ctx.beginPath(); ctx.moveTo(origin,origin); ctx.lineTo(bx,by); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(p.x,p.y);
+        ctx.lineTo(p.x-head*Math.cos(ang)+hw*Math.sin(ang), p.y-head*Math.sin(ang)-hw*Math.cos(ang));
+        ctx.lineTo(p.x-head*Math.cos(ang)-hw*Math.sin(ang), p.y-head*Math.sin(ang)+hw*Math.cos(ang));
+        ctx.closePath(); ctx.fill();
+    }
+    ctx.beginPath(); ctx.arc(origin,origin,2.6,0,2*Math.PI); ctx.fillStyle="#64748b"; ctx.fill();
+    ctx.restore();
+    let lx=p.x+8, ly=p.y-8;
+    if(len>2){ const ang=Math.atan2(dy,dx); lx=p.x+10*Math.cos(ang)+ (dx<0?-6:4); ly=p.y+10*Math.sin(ang)-6; }
+    // 向量名 v + 下标数字
+    drawMathLabel("v", lx, ly, color, 17, true);
+    ctx.save();
+    ctx.font=`12px ${CMFONT}`; ctx.fillStyle=color; ctx.textAlign="left"; ctx.textBaseline="middle";
+    ctx.lineJoin="round"; ctx.lineWidth=1.8; ctx.strokeStyle="rgba(255,255,255,.9)";
+    ctx.strokeText(labelSub, lx+11, ly+5); ctx.fillText(labelSub, lx+11, ly+5);
+    ctx.restore();
+}
+
+/* ── 线性代数核心 ── */
+function nz(v){ return Math.hypot(v.x,v.y)>1e-9; }
+function active(){ return vecs.slice(0,n); }
+function rankOf(vs){
+    const set=vs.filter(nz);
+    if(set.length===0) return 0;
+    const b=set[0];
+    for(const v of set){ if(Math.abs(b.x*v.y-b.y*v.x)>1e-7) return 2; }
+    return 1;
+}
+function isIndep(vs){ return rankOf(vs)===vs.filter(nz).length && rankOf(vs)===vs.length && vs.every(nz); }
+function pairIndep(a,b){ return nz(a)&&nz(b)&&Math.abs(a.x*b.y-a.y*b.x)>1e-7; }
+// 用独立基 (b1,b2) 把 t 表示为 a·b1 + b·b2
+function comb(b1,b2,t){
+    const det=b1.x*b2.y-b1.y*b2.x;
+    const a=(t.x*b2.y-t.y*b2.x)/det;
+    const b=(b1.x*t.y-b1.y*t.x)/det;
+    return {a,b};
+}
+
+function drawSpan(vs,color){
+    const r=rankOf(vs);
+    const nm="span("+["v₁","v₂","v₃"].slice(0,vs.length).join(", ")+")";
+    if(r===2){
+        ctx.save(); ctx.fillStyle="rgba(43,108,176,.10)"; ctx.fillRect(0,0,size,size); ctx.restore();
+        drawPlain(nm+" = ℝ²（整个平面）", 10, 16, "#2b6cb0", 13);
+    }else if(r===1){
+        const d=vs.filter(nz)[0];
+        const L=RANGE*2;
+        const p1=toPixel({x:d.x/Math.hypot(d.x,d.y)*L, y:d.y/Math.hypot(d.x,d.y)*L});
+        const p2=toPixel({x:-d.x/Math.hypot(d.x,d.y)*L, y:-d.y/Math.hypot(d.x,d.y)*L});
+        ctx.save();
+        ctx.strokeStyle="rgba(43,108,176,.55)"; ctx.lineWidth=8; ctx.lineCap="round";
+        ctx.globalAlpha=.35;
+        ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+        ctx.restore();
+        drawPlain(nm+" 是一条过原点的直线", 10, 16, "#2b6cb0", 13);
+    }else{
+        drawPlain(nm+" = {𝟎}（只有零向量）", 10, 16, "#718096", 13);
+    }
+}
+
+function updateDisplay(){
+    if(dragIndex<0) RANGE=fitRange();
+    sf=size/(2*RANGE);
+    drawAxes();
+    const vs=active();
+    // 练习模式下未揭晓前不画生成的空间（否则直接看出秩/相关性）
+    if(mode!=="practice" || (quiz&&quiz.revealed)) drawSpan(vs);
+    vs.forEach((v,i)=>drawVector(v,getCol(VC[i]),String(i+1)));
+    // 练习模式的目标向量 b
+    if(mode==="practice"&&quiz&&quiz.b){
+        drawVector(quiz.b,getCol("--tgt"),"");
+        const p=toPixel(quiz.b);
+        drawMathLabel("b", p.x+10, p.y-8, getCol("--tgt"), 17, true);
+    }
+    if(mode==="explore") updateReadout();
+    renderLegend();
+}
+
+function renderLegend(){
+    let h="";
+    const names=["v₁","v₂","v₃"];
+    for(let i=0;i<n;i++) h+=`<span><i style="background:${getCol(VC[i])}"></i>向量 ${names[i]}</span>`;
+    if(mode==="practice"&&quiz&&quiz.b) h+=`<span><i style="background:${getCol('--tgt')}"></i>目标 b</span>`;
+    document.getElementById("legend").innerHTML=h;
+}
+
+/* ── MathML 小工具 ── */
+function vML(i){ return `<math><msub><mi class="bm">v</mi><mn>${i}</mn></msub></math>`; }
+function coordML(v){ return `<math><mo>(</mo><mn>${fmt(v.x)}</mn><mo>,</mo><mn>${fmt(v.y)}</mn><mo>)</mo></math>`; }
+// 把实数写成最简分数（分母 ≤ 60）；写不成则返回 null
+function ratOf(x){
+    for(let q=1;q<=60;q++){ const p=Math.round(x*q); if(Math.abs(x-p/q)<1e-9){ const g=(function G(a,b){return b?G(b,a%b):a;})(Math.abs(p),q)||1; return [p/g,q/g]; } }
+    return null;
+}
+function absCoefML(a){        // |系数| 的 MathML；1 省略
+    const r=ratOf(a);
+    if(r){ if(r[1]===1) return r[0]===1?``:`<mn>${r[0]}</mn>`; return `<mfrac><mn>${r[0]}</mn><mn>${r[1]}</mn></mfrac>`; }
+    return `<mn>${fmt(a)}</mn>`;
+}
+// 生成 “lhs = k1 v_i1 + k2 v_i2 …”，0 项省略；系数不是简单分数时用 ≈
+function eqML(lhs, coefs){
+    const cs=coefs.filter(c=>Math.abs(c.k)>1e-9);
+    const approx=cs.some(c=>!ratOf(c.k));
+    let s=`<math>${lhs}<mo>${approx?"&#x2248;":"="}</mo>`;
+    if(!cs.length) s+=`<mn mathvariant="bold">0</mn>`;
+    cs.forEach((c,idx)=>{
+        if(idx>0) s+= c.k<0?`<mo>&#x2212;</mo>`:`<mo>+</mo>`;
+        else if(c.k<0) s+=`<mo>&#x2212;</mo>`;
+        s+=absCoefML(Math.abs(c.k))+`<msub><mi class="bm">v</mi><mn>${c.i}</mn></msub>`;
+    });
+    return s+`</math>`;
+}
+const vSub=i=>`<msub><mi class="bm">v</mi><mn>${i}</mn></msub>`;
+
+function describe(vs){
+    const r=rankOf(vs);
+    const dep = r<vs.length;   // 秩 < 个数 ⇒ 相关
+    let concl = dep
+      ? `<span class="concl dep">线性相关</span>`
+      : `<span class="concl ind">线性无关</span>`;
+    let reason="";
+    if(!dep){
+        reason = `秩 <math><mi>r</mi><mo>=</mo><mn>${r}</mn></math> 等于向量个数 <math><mn>${vs.length}</mn></math>，只有零解。`;
+    }else{
+        // 给一组非平凡关系
+        if(vs.filter(nz).length===0){
+            reason=`所有向量都是零向量。`;
+        }else if(vs.some(v=>!nz(v))){
+            const z=vs.findIndex(v=>!nz(v));
+            reason=`含零向量 ${vML(z+1)}，含零向量的向量组必线性相关。`;
+        }else if(vs.length===2){
+            const k=(vs[1].x*vs[0].x+vs[1].y*vs[0].y)/(vs[0].x*vs[0].x+vs[0].y*vs[0].y);
+            reason=`两向量共线：`+eqML(vSub(2),[{k,i:1}])+`。`;
+        }else{ // 3 个 2D 向量必相关
+            let done=false;
+            const tries=[[0,1,2],[0,2,1],[1,2,0]];
+            for(const [i,j,t] of tries){
+                if(pairIndep(vs[i],vs[j])){
+                    const {a,b}=comb(vs[i],vs[j],vs[t]);
+                    reason=`向量个数 3 &gt; 平面维数 2，必相关。例如 `
+                      +eqML(vSub(t+1),[{k:a,i:i+1},{k:b,i:j+1}])+`。`;
+                    done=true; break;
+                }
+            }
+            if(!done){ // 三者共线
+                reason=`三向量共线（秩 <math><mi>r</mi><mo>=</mo><mn>${r}</mn></math>），必线性相关。`;
+            }
+        }
+    }
+    return {r, concl, reason};
+}
+
+function updateReadout(){
+    const vs=active();
+    const {r,concl,reason}=describe(vs);
+    let coords="";
+    vs.forEach((v,i)=>{ coords+=`${vML(i+1)} <math><mo>=</mo></math> ${coordML(v)}　`; });
+    document.getElementById("readout").innerHTML=
+        `<div>${coords}</div>`
+      + `<div>秩 <math><mi>r</mi><mo>=</mo><mn>${r}</mn></math>　结论：${concl}</div>`
+      + `<div style="font-size:13px;color:var(--sub);margin-top:4px;">${reason}</div>`;
+}
+
+/* ── 向量输入 UI ── */
+function buildVecInputs(){
+    const box=document.getElementById("vecInputs");
+    let h="";
+    for(let i=0;i<n;i++){
+        h+=`<div class="row">`
+         +`<span class="dot" style="background:${getCol(VC[i])}"></span>`
+         +`<span class="lbl">${['v₁','v₂','v₃'][i]}：</span>`
+         +`<input type="number" step="1" id="vx${i}" value="${vecs[i].x}"> ,`
+         +`<input type="number" step="1" id="vy${i}" value="${vecs[i].y}">`
+         +`</div>`;
+    }
+    box.innerHTML=h;
+    for(let i=0;i<n;i++){
+        document.getElementById("vx"+i).addEventListener("input",()=>readVecInputs());
+        document.getElementById("vy"+i).addEventListener("input",()=>readVecInputs());
+    }
+}
+function readVecInputs(){
+    for(let i=0;i<n;i++){
+        const x=parseFloat(document.getElementById("vx"+i).value);
+        const y=parseFloat(document.getElementById("vy"+i).value);
+        if(!Number.isNaN(x)) vecs[i].x=x;
+        if(!Number.isNaN(y)) vecs[i].y=y;
+    }
+    updateDisplay();
+}
+function syncVecInputs(){
+    for(let i=0;i<n;i++){
+        document.getElementById("vx"+i).value=fmt(vecs[i].x);
+        document.getElementById("vy"+i).value=fmt(vecs[i].y);
+    }
+}
+function setN(k){
+    n=k;
+    document.getElementById("btnN2").classList.toggle("on",k===2);
+    document.getElementById("btnN3").classList.toggle("on",k===3);
+    buildVecInputs();
+    updateDisplay();
+}
+function preset(t){
+    if(t==='ind'){ setN(2); vecs[0]={x:2,y:1}; vecs[1]={x:-1,y:2}; }
+    else if(t==='par'){ setN(2); vecs[0]={x:2,y:1}; vecs[1]={x:-4,y:-2}; }
+    else if(t==='three'){ setN(3); vecs[0]={x:3,y:0}; vecs[1]={x:0,y:2}; vecs[2]={x:2,y:3}; }
+    buildVecInputs(); updateDisplay();
+}
+
+/* ── 拖动 ── */
+function nearestVec(px,py){
+    let best=-1, bd=1e9;
+    for(let i=0;i<n;i++){
+        const p=toPixel(vecs[i]);
+        const d=Math.hypot(p.x-px,p.y-py);
+        if(d<bd){ bd=d; best=i; }
+    }
+    return bd<40?best:-1;
+}
+function eventXY(e){
+    const rect=canvas.getBoundingClientRect();
+    return {x:(e.touches?e.touches[0].clientX:e.clientX)-rect.left,
+            y:(e.touches?e.touches[0].clientY:e.clientY)-rect.top};
+}
+canvas.addEventListener("mousedown",e=>{
+    if(mode==="practice") return;
+    const {x,y}=eventXY(e); dragIndex=nearestVec(x,y);
+    if(dragIndex>=0){ const d=fromPixel({x,y}); vecs[dragIndex]={x:d.x,y:d.y}; syncVecInputs(); updateDisplay(); }
+});
+canvas.addEventListener("mousemove",e=>{
+    if(mode==="practice"||dragIndex<0) return;
+    const {x,y}=eventXY(e); const d=fromPixel({x,y});
+    vecs[dragIndex]={x:Math.round(d.x*2)/2,y:Math.round(d.y*2)/2}; syncVecInputs(); updateDisplay();
+});
+window.addEventListener("mouseup",()=>{ if(dragIndex>=0){ dragIndex=-1; updateDisplay(); } });
+canvas.addEventListener("touchend",()=>{ if(dragIndex>=0){ dragIndex=-1; updateDisplay(); } });
+canvas.addEventListener("touchstart",e=>{ if(mode==="practice")return; e.preventDefault();
+    const {x,y}=eventXY(e); dragIndex=nearestVec(x,y); },{passive:false});
+canvas.addEventListener("touchmove",e=>{ if(mode==="practice"||dragIndex<0)return; e.preventDefault();
+    const {x,y}=eventXY(e); const d=fromPixel({x,y});
+    vecs[dragIndex]={x:Math.round(d.x*2)/2,y:Math.round(d.y*2)/2}; syncVecInputs(); updateDisplay(); },{passive:false});
+
+/* ══════════════ 练习模式 ══════════════ */
+const QUIZKEY="la-span-depend-quiz";
+let streak=0;
+let stats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){
+  if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return;
+  stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats();
+}
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function rnz(){ let v; do{ v={x:ri(-3,3),y:ri(-3,3)}; }while(!nz(v)); return v; }
+
+function genProblem(){
+    const kind=["depend","rank","represent"][ri(0,2)];
+    if(kind==="depend"){
+        let m=ri(2,3), vs;
+        if(m===3){ vs=[rnz(),rnz(),rnz()]; }         // 3 个 2D 向量必相关
+        else if(Math.random()<0.5){ const d=rnz(); const k=[-2,-1,2,3][ri(0,3)]; vs=[d,{x:d.x*k,y:d.y*k}]; } // 共线→相关
+        else { do{ vs=[rnz(),rnz()]; }while(!pairIndep(vs[0],vs[1])); }                                       // 无关
+        const dep = rankOf(vs)<vs.length;
+        const opts=["线性相关","线性无关"];
+        return {kind, vs, opts, ansIdx: dep?0:1, selected:-1, revealed:false, done:false, correct:false};
+    }
+    if(kind==="rank"){
+        let m=ri(2,3), tr=ri(1,2), vs;
+        if(tr===1){ const d=rnz(); vs=[]; for(let i=0;i<m;i++){ const k=[-2,-1,1,2,3][ri(0,4)]; vs.push({x:d.x*k,y:d.y*k}); } }
+        else { let a,b; do{ a=rnz(); b=rnz(); }while(!pairIndep(a,b)); vs=[a,b]; if(m===3) vs.push(rnz()); }
+        return {kind, vs, ans:rankOf(vs), revealed:false, done:false, correct:false};
+    }
+    // represent
+    let m=ri(2,2), vs, b, can;
+    if(Math.random()<0.55){ // 秩 1 组：b 在线上(能) / 不在线上(不能)
+        const d=rnz(); vs=[d,{x:d.x*2,y:d.y*2}];
+        if(Math.random()<0.5){ const mm=[-2,-1,1,2][ri(0,3)]; b={x:d.x*mm,y:d.y*mm}; can=true; }
+        else { b={x:d.x+ -d.y, y:d.y + d.x}; can=false; }   // 加垂直分量→离开直线
+    }else{ // 秩 2 组：任意 b 都能表示
+        do{ vs=[rnz(),rnz()]; }while(!pairIndep(vs[0],vs[1]));
+        b=rnz(); can=true;
+    }
+    if(!nz(b)) b={x:1,y:1};
+    const opts=["能（可由该向量组线性表示）","不能"];
+    return {kind:"represent", vs, b, opts, ansIdx: can?0:1, selected:-1, revealed:false, done:false, correct:false};
+}
+
+function grpML(vs){
+    let s="";
+    vs.forEach((v,i)=>{ s+=`${vML(i+1)}<math><mo>=</mo></math>${coordML(v)}　`; });
+    return s;
+}
+
+function renderProblem(){
+    const q=quiz, body=document.getElementById("qBody"), fb=document.getElementById("qFeedback");
+    fb.className="feedback"; fb.innerHTML="";
+    ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+    // 同步画布到题目
+    n=q.vs.length; vecs=[{x:0,y:0},{x:0,y:0},{x:0,y:0}];
+    q.vs.forEach((v,i)=>vecs[i]={x:v.x,y:v.y});
+    q.revealed=false;
+
+    if(q.kind==="depend"){
+        body.innerHTML=`已知向量组 ${grpML(q.vs)}<br>它是<b>线性相关</b>还是<b>线性无关</b>？`
+          +optsHTML(q.opts);
+        bindOpts(q);
+    }else if(q.kind==="rank"){
+        body.innerHTML=`求向量组 ${grpML(q.vs)}<br>的<b>秩</b> <math><mi>r</mi></math> =`
+          +`<div class="ans"><input class="qin" id="qRank" type="number" step="1" placeholder="r"></div>`
+          +`<div style="margin-top:6px;font-size:12.5px;color:#a0aec0;">秩 = 极大线性无关组所含向量个数（0、1 或 2）。</div>`;
+        document.getElementById("qRank").addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); });
+    }else{
+        body.innerHTML=`已知向量组 ${grpML(q.vs)}<br>目标向量 <math><mi class="bm">b</mi><mo>=</mo></math>${coordML(q.b)}（左图紫色）。<br>`
+          +`<math><mi class="bm">b</mi></math> 能否由该向量组<b>线性表示</b>？`+optsHTML(q.opts);
+        bindOpts(q);
+    }
+    updateDisplay(); renderStats();
+}
+function optsHTML(opts){
+    let h=`<div class="opts" id="qOpts">`;
+    opts.forEach((o,i)=>{ h+=`<label data-i="${i}"><input type="radio" name="qopt" value="${i}"><span>${o}</span></label>`; });
+    return h+`</div>`;
+}
+function bindOpts(q){
+    document.querySelectorAll('#qOpts label').forEach(l=>l.addEventListener("click",()=>{
+        document.querySelectorAll('#qOpts label').forEach(x=>x.classList.remove("sel"));
+        l.classList.add("sel"); l.querySelector('input').checked=true; q.selected=+l.dataset.i;
+    }));
+}
+function renderStats(){
+    const acc=stats.attempted?Math.round(stats.correct/stats.attempted*100):0;
+    document.getElementById("quizStats").innerHTML=
+        `已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`;
+}
+
+function submitAnswer(){
+    const q=quiz; if(!q||q.done) return;
+    const fb=document.getElementById("qFeedback");
+    if(q.kind==="rank"){
+        const val=parseInt(document.getElementById("qRank").value,10);
+        if(Number.isNaN(val)){ fb.className="feedback no"; fb.textContent="请填一个整数"; return; }
+        if(val===q.ans) markCorrect(); else { fb.className="feedback no"; fb.textContent="还不对，数数看有几个线性无关的方向～（可点看解析）"; }
+    }else{
+        if(q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个选项"; return; }
+        if(q.selected===q.ansIdx) markCorrect(); else { fb.className="feedback no"; fb.textContent="不对哦，再想想～（可点看解析）"; }
+    }
+}
+
+function solHTML(){
+    const q=quiz;
+    if(q.kind==="depend"){
+        const {reason}=describe(q.vs);
+        const ans=q.ansIdx===0?"线性相关":"线性无关";
+        return `<div class="sol">秩 <math><mi>r</mi><mo>=</mo><mn>${rankOf(q.vs)}</mn></math>，向量个数 ${q.vs.length}。`
+          +`因 ${rankOf(q.vs)<q.vs.length?"秩 &lt; 个数":"秩 = 个数"} ⇒ <b>${ans}</b>。${reason}</div>`;
+    }
+    if(q.kind==="rank"){
+        return `<div class="sol">该组的极大线性无关组含 <b>${q.ans}</b> 个向量，故秩 <math><mi>r</mi><mo>=</mo><mn>${q.ans}</mn></math>。`
+          + (q.ans===1?`（所有向量都共线）`:q.ans===2?`（可找到两个不共线的向量）`:``) + `</div>`;
+    }
+    // represent
+    const r=rankOf(q.vs);
+    if(q.ansIdx===0){
+        let expr="";
+        if(pairIndep(q.vs[0],q.vs[1])){
+            const {a,b}=comb(q.vs[0],q.vs[1],q.b);
+            expr=`此时 `+eqML(`<mi class="bm">b</mi>`,[{k:a,i:1},{k:b,i:2}]);
+        }else{
+            const d=q.vs.filter(nz)[0];
+            const k=(q.b.x*d.x+q.b.y*d.y)/(d.x*d.x+d.y*d.y);
+            expr=`此时 `+eqML(`<mi class="bm">b</mi>`,[{k,i:1}]);
+        }
+        return `<div class="sol">向量组秩 <math><mi>r</mi><mo>=</mo><mn>${r}</mn></math>，${r===2?"生成的向量空间是整个 ℝ²，任意向量都可表示":"b 恰在它生成的直线上"}。<b>能</b>。${expr}。</div>`;
+    }
+    return `<div class="sol">向量组秩 <math><mi>r</mi><mo>=</mo><mn>${r}</mn></math>，生成的向量空间只是一条直线；而 <math><mi class="bm">b</mi></math> 不在这条直线上，故 <b>不能</b>由该组线性表示。</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+function markCorrect(){
+    const q=quiz; q.done=true; q.correct=true; q.revealed=true;
+    stats.attempted++; stats.correct++; streak++; saveStats();
+    updateDisplay();
+    const fb=document.getElementById("qFeedback"); fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML();
+    lockQ(); renderStats();
+}
+function onReveal(){
+    const q=quiz; if(!q||q.done) return;
+    q.done=true; q.revealed=true; stats.attempted++; streak=0; saveStats();
+    updateDisplay();
+    const fb=document.getElementById("qFeedback"); fb.className="feedback";
+    fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML();
+    lockQ(); renderStats();
+}
+function onHint(){
+    const q=quiz; if(!q) return;
+    const fb=document.getElementById("qFeedback"); fb.className="feedback";
+    if(q.kind==="depend") fb.innerHTML=`提示：先求<b>秩</b>。秩 &lt; 向量个数 ⇒ 相关；相等 ⇒ 无关。两个 2D 向量共线即相关；3 个 2D 向量一定相关。`;
+    else if(q.kind==="rank") fb.innerHTML=`提示：看有几个方向彼此<b>不共线</b>。全共线秩为 1，能找到两个不共线的秩为 2。`;
+    else fb.innerHTML=`提示：向量组能线性表示的向量，正是它生成的向量空间 <math><mi>span</mi><mo>(</mo><msub><mi class="bm">v</mi><mn>1</mn></msub><mo>,</mo><msub><mi class="bm">v</mi><mn>2</mn></msub><mo>,</mo><mo>&#x22EF;</mo><mo>)</mo></math> 中的向量。若秩 = 2，生成整个平面；若秩 = 1，只生成一条直线，只有落在该直线上的 <math><mi class="bm">b</mi></math> 才能表示。`;
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+
+/* ── 模式切换 ── */
+let savedExplore=null;
+function setMode(m){
+    mode=m;
+    document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+    document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+    document.getElementById("exploreCard").style.display=m==="explore"?"":"none";
+    document.getElementById("quizCard").style.display=m==="practice"?"":"none";
+    if(m==="practice"){
+        savedExplore={n, vecs:vecs.map(v=>({x:v.x,y:v.y}))};
+        quiz=genProblem(); renderProblem();
+    }else{
+        if(savedExplore){ n=savedExplore.n; vecs=savedExplore.vecs.map(v=>({x:v.x,y:v.y}));
+            document.getElementById("btnN2").classList.toggle("on",n===2);
+            document.getElementById("btnN3").classList.toggle("on",n===3);
+            buildVecInputs(); }
+        quiz=null; updateDisplay();
+    }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
+
+buildVecInputs();
+resize();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-span-depend";
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
