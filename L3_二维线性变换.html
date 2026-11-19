@@ -118,7 +118,7 @@
         <mrow><mo>(</mo><mtable><mtr><mtd><msub><mi>x</mi><mi>A</mi></msub></mtd></mtr><mtr><mtd><msub><mi>y</mi><mi>A</mi></msub></mtd></mtr></mtable><mo>)</mo></mrow>
       </math>
     </div>
-    拖动或点击画布移动蓝色向量 <math><mi class="bm">A</mi></math>，或改动矩阵 <math><mi class="bm">H</mi></math> 的四个元素，观察红色像 <math><mi class="bm">B</mi></math> 如何随之改变；<math><mi>&#x3BB;</mi><mo>=</mo><mfrac><mrow><mo>|</mo><mi class="bm">B</mi><mo>|</mo></mrow><mrow><mo>|</mo><mi class="bm">A</mi><mo>|</mo></mrow></mfrac></math> 是这个方向上的<b>长度伸缩比</b>。
+    拖动或点击画布移动蓝色向量 <math><mi class="bm">A</mi></math>，或改动矩阵 <math><mi class="bm">H</mi></math> 的四个元素，观察红色像 <math><mi class="bm">B</mi></math> 如何随之改变；<math><mi>&#x3BB;</mi><mo>=</mo><mfrac><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">B</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow></mfrac></math> 是这个方向上的<b>长度伸缩比</b>。
   </div>
 
   <div class="modebar">
@@ -343,7 +343,7 @@ function updateDisplay(){
         lamMath=`<math><mi>&#x3BB;</mi></math> = —（向量 <math><mi class="bm">A</mi></math> 在原点，无法计算长度比）`;
     }else{
         lamMath=`<math><mi>&#x3BB;</mi><mo>=</mo>`
-          +`<mfrac><mrow><mo>|</mo><mi class="bm">B</mi><mo>|</mo></mrow><mrow><mo>|</mo><mi class="bm">A</mi><mo>|</mo></mrow></mfrac>`
+          +`<mfrac><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">B</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow></mfrac>`
           +`<mo>=</mo><mfrac><mn>${lenB.toFixed(2)}</mn><mn>${lenA.toFixed(2)}</mn></mfrac>`
           +`<mo>=</mo><mn>${(lenB/lenA).toFixed(2)}</mn></math>`;
     }

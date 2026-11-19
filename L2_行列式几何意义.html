@@ -358,7 +358,7 @@ function updatePanel(){
     document.getElementById("detValue").innerHTML=
         `<math><mi>det</mi><mo>&#x2009;</mo><mi class="bm">A</mi><mo>=</mo></math> <span class="num">${det.toFixed(4)}</span>`;
     document.getElementById("absDetValue").innerHTML=
-        `<math><mo>|</mo><mi>det</mi><mo>&#x2009;</mo><mi class="bm">A</mi><mo>|</mo><mo>=</mo></math> <span class="num">${area.toFixed(4)}</span>`;
+        `<math><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi>det</mi><mo>&#x2009;</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo><mo>=</mo></math> <span class="num">${area.toFixed(4)}</span>`;
     document.getElementById("areaValue").innerHTML=
         `平行四边形面积 = <span class="num">${area.toFixed(4)}</span>`;
 

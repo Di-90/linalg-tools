@@ -121,7 +121,7 @@
         <mrow><mo>(</mo><mtable><mtr><mtd><msub><mi>x</mi><mi>A</mi></msub></mtd></mtr><mtr><mtd><msub><mi>y</mi><mi>A</mi></msub></mtd></mtr><mtr><mtd><msub><mi>z</mi><mi>A</mi></msub></mtd></mtr></mtable><mo>)</mo></mrow>
       </math>
     </div>
-    修改向量 <math><mi class="bm">A</mi></math> 的坐标或矩阵 <math><mi class="bm">H</mi></math> 的元素，观察蓝色 <math><mi class="bm">A</mi></math> 与红色像 <math><mi class="bm">B</mi></math>；用鼠标<b>拖动可旋转</b>三维视角、<b>滚轮缩放</b>。<math><mi>&#x3BB;</mi><mo>=</mo><mfrac><mrow><mo>|</mo><mi class="bm">B</mi><mo>|</mo></mrow><mrow><mo>|</mo><mi class="bm">A</mi><mo>|</mo></mrow></mfrac></math> 为该方向上的长度伸缩比。
+    修改向量 <math><mi class="bm">A</mi></math> 的坐标或矩阵 <math><mi class="bm">H</mi></math> 的元素，观察蓝色 <math><mi class="bm">A</mi></math> 与红色像 <math><mi class="bm">B</mi></math>；用鼠标<b>拖动可旋转</b>三维视角、<b>滚轮缩放</b>。<math><mi>&#x3BB;</mi><mo>=</mo><mfrac><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">B</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow></mfrac></math> 为该方向上的长度伸缩比。
   </div>
 
   <div class="modebar">
@@ -424,7 +424,7 @@ function updateDisplay(){
         lam=`<math><mi>&#x3BB;</mi></math> = —（向量 <math><mi class="bm">A</mi></math> 在原点，无法计算长度比）`;
     }else{
         lam=`<math><mi>&#x3BB;</mi><mo>=</mo>`
-          +`<mfrac><mrow><mo>|</mo><mi class="bm">B</mi><mo>|</mo></mrow><mrow><mo>|</mo><mi class="bm">A</mi><mo>|</mo></mrow></mfrac>`
+          +`<mfrac><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">B</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow></mfrac>`
           +`<mo>=</mo><mfrac><mn>${lenB.toFixed(2)}</mn><mn>${lenA.toFixed(2)}</mn></mfrac>`
           +`<mo>=</mo><mn>${(lenB/lenA).toFixed(2)}</mn></math>`;
     }

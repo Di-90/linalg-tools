@@ -125,7 +125,7 @@
         <msub><mi class="bm">b</mi><mn>1</mn></msub>
       </math>
     </div>
-    其中 <math><mo>[</mo><mi class="bm">x</mi><mo>,</mo><mi class="bm">y</mi><mo>]</mo></math> 表示内积。单位化：<math><msub><mi class="bm">e</mi><mi>i</mi></msub></math> <math><mo>=</mo><msub><mi class="bm">b</mi><mi>i</mi></msub><mo>/</mo><mo>|</mo><msub><mi class="bm">b</mi><mi>i</mi></msub><mo>|</mo></math>。拖动画布上的向量端点，或输入坐标，再点“单步演示”一步步观察。
+    其中 <math><mo>[</mo><mi class="bm">x</mi><mo>,</mo><mi class="bm">y</mi><mo>]</mo></math> 表示内积。单位化：<math><msub><mi class="bm">e</mi><mi>i</mi></msub></math> <math><mo>=</mo><msub><mi class="bm">b</mi><mi>i</mi></msub><mo>/</mo><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><msub><mi class="bm">b</mi><mi>i</mi></msub><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></math>。拖动画布上的向量端点，或输入坐标，再点“单步演示”一步步观察。
   </div>
 
   <div class="modebar">
@@ -443,9 +443,9 @@ function renderStepInfo(g,dep){
           +`验证 <math><mo>[</mo><msub><mi class="bm">b</mi><mn>1</mn></msub><mo>,</mo><msub><mi class="bm">b</mi><mn>2</mn></msub><mo>]</mo><mo>=</mo><mn>0</mn></math> ✓</div>`;
     }
     if(step>=3){
-        h+=`<div class="stepline"><b>③ </b><math><mo>|</mo><msub><mi class="bm">b</mi><mn>1</mn></msub><mo>|</mo>${normEq(g.b1)}</math>，`
+        h+=`<div class="stepline"><b>③ </b><math><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><msub><mi class="bm">b</mi><mn>1</mn></msub><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo>${normEq(g.b1)}</math>，`
           +`<math><msub><mi class="bm">e</mi><mn>1</mn></msub></math> ${unitEq(g.b1)}</div>`;
-        h+=`<div class="stepline"><math><mo>|</mo><msub><mi class="bm">b</mi><mn>2</mn></msub><mo>|</mo>${normEq(g.b2)}</math>，`
+        h+=`<div class="stepline"><math><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><msub><mi class="bm">b</mi><mn>2</mn></msub><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo>${normEq(g.b2)}</math>，`
           +`<math><msub><mi class="bm">e</mi><mn>2</mn></msub></math> ${unitEq(g.b2)}</div>`;
         h+=`<div class="stepline muted"><math><msub><mi class="bm">e</mi><mn>1</mn></msub></math>, <math><msub><mi class="bm">e</mi><mn>2</mn></msub></math> 两两正交且长度为 1，构成一组标准正交基。</div>`;
     }

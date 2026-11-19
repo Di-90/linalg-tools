@@ -662,7 +662,7 @@ function solHTML(){
     if(q.kind==="lambda"){
         const T=q.A[0][0]+q.A[1][1], D=q.A[0][0]*q.A[1][1]-q.A[0][1]*q.A[1][0];
         return `<div class="sol">特征方程 ${charEqML(T,D)}`
-          +`（<math><mi>tr</mi><mi class="bm">A</mi><mo>=</mo>${numML(T)}</math>，<math><mo>|</mo><mi class="bm">A</mi><mo>|</mo><mo>=</mo>${numML(D)}</math>），解得 <math><msub><mi>&#x3BB;</mi><mn>1</mn></msub><mo>=</mo>${numML(q.l1)}</math>、`
+          +`（<math><mi>tr</mi><mi class="bm">A</mi><mo>=</mo>${numML(T)}</math>，<math><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo><mo>=</mo>${numML(D)}</math>），解得 <math><msub><mi>&#x3BB;</mi><mn>1</mn></msub><mo>=</mo>${numML(q.l1)}</math>、`
           +`<math><msub><mi>&#x3BB;</mi><mn>2</mn></msub><mo>=</mo>${numML(q.l2)}</math>。</div>`;
     }
     if(q.kind==="element"){
@@ -695,11 +695,11 @@ function onHint(){
     if(q.kind==="lambda"){
         fb.innerHTML=`提示：特征值满足 <math><msup><mi>&#x3BB;</mi><mn>2</mn></msup><mo>&#x2212;</mo>`
           +`<mo>(</mo><mi>tr</mi><mi class="bm">A</mi><mo>)</mo><mi>&#x3BB;</mi><mo>+</mo>`
-          +`<mo>|</mo><mi class="bm">A</mi><mo>|</mo><mo>=</mo><mn>0</mn></math>（<math><mi>tr</mi><mi class="bm">A</mi></math> 为对角线元素之和）。`;
+          +`<mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo><mo>=</mo><mn>0</mn></math>（<math><mi>tr</mi><mi class="bm">A</mi></math> 为对角线元素之和）。`;
     }else if(q.kind==="element"){
         fb.innerHTML=`提示：先求 <math><msup><mi class="bm">P</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup></math>，再按矩阵连乘 <math><mi class="bm">P</mi><mi>&#x39B;</mi><msup><mi class="bm">P</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup></math> 取该位置的元素。`;
     }else{
-        fb.innerHTML=`提示：算判别式 <math><msup><mrow><mo>(</mo><mi>tr</mi><mi class="bm">A</mi><mo>)</mo></mrow><mn>2</mn></msup><mo>&#x2212;</mo><mn>4</mn><mo>|</mo><mi class="bm">A</mi><mo>|</mo></math>：`
+        fb.innerHTML=`提示：算判别式 <math><msup><mrow><mo>(</mo><mi>tr</mi><mi class="bm">A</mi><mo>)</mo></mrow><mn>2</mn></msup><mo>&#x2212;</mo><mn>4</mn><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></math>：`
           +`大于 0，有两个不同的特征值 → 可以对角化；等于 0，是二重特征值 → 只有 <math><mi class="bm">A</mi><mo>=</mo><mi>&#x3BB;</mi><mi class="bm">E</mi></math> 时才可以。`;
     }
 }

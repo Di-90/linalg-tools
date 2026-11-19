@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>逆矩阵 · 初等行变换求法 · L14 · 线性代数</title>
+<style>
+  /* ===== 线性代数工具箱 · 共用脚手架样式 ===== */
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --hl-pivot:#fff3cd; --hl-row:#f8d7da; --hl-right:#d1e7dd;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.2em;}
+  var,.va{font-style:italic;font-family:"Cambria Math","STIX Two Math",serif;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:920px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  .row{margin:8px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;}
+  .row .lbl{color:var(--sub);font-size:13px;}
+  input.mx{width:56px;font-size:15px;padding:5px 6px;border:1px solid var(--line);
+       border-radius:6px;font-variant-numeric:tabular-nums;text-align:center;}
+  input.mx:focus{outline:none;border-color:var(--blue);}
+  .matInputs{display:inline-grid;gap:6px;padding:8px 12px;
+       border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-radius:3px;}
+  button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  button.primary:hover{filter:brightness(1.06);}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .seg button{border:none;border-radius:0;padding:6px 14px;background:#fff;color:var(--sub);}
+  .seg button.on{background:var(--blue);color:#fff;}
+  /* 增广矩阵表格 */
+  .augwrap{display:flex;justify-content:center;margin-top:6px;}
+  table.aug{border-collapse:collapse;}
+  table.aug td{border:1px solid #e2e8f0;min-width:46px;height:44px;text-align:center;
+       vertical-align:middle;font-size:15px;font-variant-numeric:tabular-nums;padding:2px 6px;}
+  table.aug td.divider{border-left:2px solid var(--ink);}
+  table.aug td.hl-pivot{background:var(--hl-pivot);font-weight:700;}
+  table.aug td.hl-row{background:var(--hl-row);}
+  table.aug td.hl-right{background:var(--hl-right);}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;line-height:1.05;
+       font-size:12.5px;vertical-align:middle;}
+  .frac .num{border-bottom:1px solid currentColor;padding:0 2px;}
+  .frac .den{padding:0 2px;}
+  .stepinfo{margin-top:14px;font-size:14px;min-height:24px;color:var(--ink);text-align:center;}
+  .stepinfo.err{color:#c53030;font-weight:600;}
+  .stepinfo .op{color:var(--purple);font-weight:600;}
+  .result{margin-top:10px;font-size:13.5px;color:var(--sub);text-align:center;}
+  .result b{color:var(--green);}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:12px;justify-content:center;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:14px;height:14px;border:1px solid #cbd5e1;border-radius:3px;display:inline-block;}
+  /* ── 练习模式 ── */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;
+       flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;
+       text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody .ans{display:inline-flex;align-items:center;gap:6px;margin-top:8px;}
+  .qbody input.qin{width:92px;font-size:15px;padding:6px 7px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);
+       border-radius:8px;cursor:pointer;font-size:14px;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .opts input{accent-color:var(--blue);}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:13.5px;margin-top:6px;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .qbtns button:disabled{opacity:.45;cursor:not-allowed;}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,360px);gap:16px;align-items:start;}
+  .layout .card{margin-bottom:16px;}
+  @media(max-width:860px){ .layout{grid-template-columns:1fr;} }
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
+       font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>逆矩阵 · 初等行变换求法</h1>
+  <span class="sub"><math><mo>[</mo><mi class="bm">A</mi><mo>&#x2223;</mo><mi class="bm">E</mi><mo>]</mo></math> 化到 <math><mo>[</mo><mi class="bm">E</mi><mo>&#x2223;</mo><msup><mi class="bm">A</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup><mo>]</mo></math></span>
+  <span class="tag">L14 · 线性代数</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    求逆矩阵的<b>初等行变换法</b>：把 <math><mi class="bm">A</mi></math> 与单位矩阵 <math><mi class="bm">E</mi></math> 并排写成增广矩阵 <math><mo>[</mo><mi class="bm">A</mi><mo>&#x2223;</mo><mi class="bm">E</mi><mo>]</mo></math>，
+    只用<b>初等行变换</b>把左块化为单位矩阵；此时右块就是 <math><msup><mi class="bm">A</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup></math>：
+    <div class="formula">
+      <math display="block">
+        <mo>[</mo><mi class="bm">A</mi><mo>&#x2223;</mo><mi class="bm">E</mi><mo>]</mo>
+        <mover><mo>&#x2192;</mo><mtext>初等行变换</mtext></mover>
+        <mo>[</mo><mi class="bm">E</mi><mo>&#x2223;</mo><msup><mi class="bm">A</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup><mo>]</mo>
+      </math>
+    </div>
+    行变换的顺序不唯一：先交换哪两行、先消哪一列、主元何时化为 1，都可以不同，中间过程也就不同；但只要左块最后化成 <math><mi class="bm">E</mi></math>，右块一定是同一个 <math><msup><mi class="bm">A</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup></math>（逆矩阵是唯一的）。下面的演示只是其中一种做法：逐列先把主元化为 1，再消去该列其余元素。<br>
+    若化简中某主元位置及其下方元素全为 <math><mn>0</mn></math>，则 <math><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo><mo>=</mo><mn>0</mn></math>，<math><mi class="bm">A</mi></math> <b>不可逆（奇异）</b>，过程停止。
+  </div>
+
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div class="layout">
+  <div class="col-left">
+  <div class="card">
+    <div class="augwrap" id="augBox"></div>
+    <div class="legend">
+      <span><i style="background:var(--hl-pivot)"></i>当前主元</span>
+      <span><i style="background:var(--hl-row)"></i>正在变换的行</span>
+      <span><i style="background:var(--hl-right)"></i>右块（结果 <math><msup><mi class="bm">A</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup></math>）</span>
+    </div>
+    <div class="stepinfo" id="stepInfo"></div>
+    <div class="actions" id="qStepBar" style="display:none;justify-content:center;">
+      <button onclick="qStep(-1)">‹ 上一步</button>
+      <button onclick="qStep(1)">下一步 ›</button>
+    </div>
+    <div class="result" id="resultInfo"></div>
+  </div>
+  </div><!--/col-left-->
+
+  <div class="col-right">
+  <div class="card" id="quizCard" style="display:none;">
+    <div class="quizhead">
+      <h2>练习 · 逆矩阵</h2>
+      <span class="stats" id="quizStats"></span>
+      <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+    </div>
+    <div class="qbody" id="qBody"></div>
+    <div class="feedback" id="qFeedback"></div>
+    <div class="qbtns">
+      <button class="primary" id="qSubmit">提交</button>
+      <button id="qHint">提示</button>
+      <button id="qReveal">看解析</button>
+      <button id="qNext">下一题 ▸</button>
+    </div>
+  </div>
+
+  <div class="card" id="exploreCard">
+    <h2>输入方阵 A</h2>
+    <div class="row">
+      <span class="lbl">阶数：</span>
+      <div class="seg" id="sizeSeg">
+        <button data-n="2">2 × 2</button>
+        <button data-n="3" class="on">3 × 3</button>
+      </div>
+    </div>
+    <div class="row" style="align-items:flex-start;">
+      <span class="lbl">矩阵 <math><mi class="bm">A</mi></math>：</span>
+      <div class="matInputs" id="matInputs"></div>
+    </div>
+    <div class="row">
+      <span class="lbl">示例：</span>
+      <div class="presets">
+        <button onclick="loadPreset('inv3')">可逆 3×3</button>
+        <button onclick="loadPreset('sing3')">不可逆 3×3</button>
+        <button onclick="loadPreset('inv2')">可逆 2×2</button>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="primary" onclick="buildAndReset()">构造 [A∣E]</button>
+      <button onclick="prevStep()">‹ 上一步</button>
+      <button onclick="nextStep()">下一步 ›</button>
+      <button onclick="playAuto()">▶ 自动</button>
+      <button onclick="stopAuto()">⏸ 停止</button>
+      <button onclick="buildAndReset()">重置</button>
+    </div>
+  </div>
+  </div><!--/col-right-->
+  </div><!--/layout-->
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+/* ══════════ 有理数（分数）精确运算 ══════════ */
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a||1;}
+function F(n,d){ if(d===undefined)d=1; if(d===0)d=1; if(d<0){n=-n;d=-d;} const g=gcd(n,d); return {n:n/g,d:d/g}; }
+function fadd(x,y){return F(x.n*y.d+y.n*x.d, x.d*y.d);}
+function fsub(x,y){return F(x.n*y.d-y.n*x.d, x.d*y.d);}
+function fmul(x,y){return F(x.n*y.n, x.d*y.d);}
+function fdiv(x,y){return F(x.n*y.d, x.d*y.n);}
+function fzero(x){return x.n===0;}
+function fone(x){return x.n===x.d;}                       // 已约分，n===d ⇒ =1
+function feq(x,y){return x.n===y.n && x.d===y.d;}
+function fclone(x){return {n:x.n,d:x.d};}
+function fabs(x){return F(Math.abs(x.n),x.d);}
+// 纯文本分数（用 − 负号）
+function fstr(x){ if(x.d===1) return x.n<0? "−"+Math.abs(x.n): ""+x.n;
+  return (x.n<0?"−":"")+Math.abs(x.n)+"/"+x.d; }
+// HTML 竖排分数
+function fhtml(x){ if(x.d===1) return (x.n<0?"−":"")+Math.abs(x.n);
+  return `<span class="frac"><span class="num">${(x.n<0?"−":"")+Math.abs(x.n)}</span><span class="den">${x.d}</span></span>`; }
+
+/* ══════════ 状态 ══════════ */
+let N=3;
+let mode="explore";
+let frames=[];          // 逐步快照
+let fi=0;               // 当前帧
+let autoTimer=null;
+
+const PRESETS={
+  inv3:[[2,-1,0],[-1,2,-1],[0,-1,2]],
+  sing3:[[1,2,3],[2,4,6],[1,1,1]],
+  inv2:[[2,1],[1,1]]
+};
+
+function buildGrid(n, vals){
+  N=n;
+  const wrap=document.getElementById("matInputs");
+  wrap.style.gridTemplateColumns=`repeat(${n},auto)`;
+  wrap.innerHTML="";
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++){
+    const inp=document.createElement("input");
+    inp.type="text"; inp.className="mx"; inp.id=`m_${r}_${c}`;
+    inp.value = vals? vals[r][c] : (r===c?1:0);
+    wrap.appendChild(inp);
+  }
+  document.querySelectorAll("#sizeSeg button").forEach(b=>b.classList.toggle("on",+b.dataset.n===n));
+}
+function loadPreset(key){
+  const M=PRESETS[key];
+  buildGrid(M.length, M);
+  buildAndReset();
+}
+function readMatrix(){
+  const M=[];
+  for(let r=0;r<N;r++){ const row=[];
+    for(let c=0;c<N;c++){
+      const raw=document.getElementById(`m_${r}_${c}`).value.trim().replace(/−/g,"-");
+      const v=parseFloat(raw);
+      if(Number.isNaN(v)) return null;
+      row.push(v);
+    } M.push(row);
+  }
+  return M;
+}
+// 数值 → 分数（整数直用；小数按 1e6 有限精度转）
+function toF(v){ if(Number.isInteger(v)) return F(v,1); return F(Math.round(v*1e6),1e6); }
+
+/* ══════════ 逐步 Gauss-Jordan（记录每一帧） ══════════ */
+function snap(W){ return W.map(r=>r.map(fclone)); }
+function buildFrames(Mnum){
+  const n=Mnum.length;
+  // 增广 [A|E]
+  let W=[];
+  for(let r=0;r<n;r++){ const row=[];
+    for(let c=0;c<n;c++) row.push(toF(Mnum[r][c]));
+    for(let c=0;c<n;c++) row.push(F(r===c?1:0,1));
+    W.push(row);
+  }
+  const fr=[];
+  fr.push({aug:snap(W), desc:`构造增广矩阵 <math><mo>[</mo><mi class="bm">A</mi><mo>&#x2223;</mo><mi class="bm">E</mi><mo>]</mo></math>：左块为 <math><mi class="bm">A</mi></math>，右块为单位矩阵。`, pivot:null, rows:[], done:false, singular:false});
+  let singular=false;
+  for(let p=0;p<n && !singular;p++){
+    // 选主元
+    if(fzero(W[p][p])){
+      let sr=-1;
+      for(let r=p+1;r<n;r++){ if(!fzero(W[r][p])){ sr=r; break; } }
+      if(sr<0){ singular=true;
+        fr.push({aug:snap(W), desc:`第 <b>${p+1}</b> 列主元位置及其下方元素全为 0 ⇒ 无法继续，<b>A 不可逆（奇异）</b>。`, pivot:[p,p], rows:[], done:true, singular:true});
+        break;
+      }
+      [W[p],W[sr]]=[W[sr],W[p]];
+      fr.push({aug:snap(W), desc:`第 ${p+1} 列主元为 0，<span class="op">交换 r<sub>${p+1}</sub> ↔ r<sub>${sr+1}</sub></span>。`, pivot:[p,p], rows:[p,sr], done:false, singular:false});
+    }
+    // 主元归一
+    if(!fone(W[p][p])){
+      const recip=fdiv(F(1,1),W[p][p]);
+      const old=fstr(W[p][p]);
+      for(let c=0;c<2*n;c++) W[p][c]=fmul(W[p][c],recip);
+      fr.push({aug:snap(W), desc:`主元 ${old} 归一：<span class="op">r<sub>${p+1}</sub> → (${fstr(recip)})·r<sub>${p+1}</sub></span>。`, pivot:[p,p], rows:[p], done:false, singular:false});
+    }
+    // 消去其余各行的第 p 列
+    for(let r=0;r<n;r++){
+      if(r===p) continue;
+      if(fzero(W[r][p])) continue;
+      const f=fclone(W[r][p]);
+      for(let c=0;c<2*n;c++) W[r][c]=fsub(W[r][c], fmul(f,W[p][c]));
+      const sign=f.n>=0?"−":"+";
+      fr.push({aug:snap(W), desc:`消去第 ${r+1} 行第 ${p+1} 列：<span class="op">r<sub>${r+1}</sub> → r<sub>${r+1}</sub> ${sign} (${fstr(fabs(f))})·r<sub>${p+1}</sub></span>。`, pivot:[p,p], rows:[r,p], done:false, singular:false});
+    }
+  }
+  if(!singular){
+    fr.push({aug:snap(W), desc:`左块已化为单位矩阵 <math><mi class="bm">E</mi></math> ✅ —— 右块（绿色）即 <math><msup><mi class="bm">A</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup></math>。换一种行变换顺序，中间步骤会不同，但得到的 <math><msup><mi class="bm">A</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup></math> 一样。`, pivot:null, rows:[], done:true, singular:false, showRight:true});
+  }
+  return fr;
+}
+
+/* ══════════ 行列式（分数消元，任意阶） ══════════ */
+function detF(Mnum){
+  const n=Mnum.length;
+  const W=Mnum.map(r=>r.map(toF));
+  let det=F(1,1), sign=1;
+  for(let p=0;p<n;p++){
+    if(fzero(W[p][p])){
+      let sr=-1; for(let r=p+1;r<n;r++){ if(!fzero(W[r][p])){sr=r;break;} }
+      if(sr<0) return F(0,1);
+      [W[p],W[sr]]=[W[sr],W[p]]; sign=-sign;
+    }
+    det=fmul(det,W[p][p]);
+    for(let r=p+1;r<n;r++){
+      if(fzero(W[r][p])) continue;
+      const f=fdiv(W[r][p],W[p][p]);
+      for(let c=p;c<n;c++) W[r][c]=fsub(W[r][c],fmul(f,W[p][c]));
+    }
+  }
+  return sign<0? F(-det.n,det.d): det;
+}
+// 完整逆矩阵（分数），singular 时返回 null
+function inverseF(Mnum){
+  const n=Mnum.length;
+  let W=[];
+  for(let r=0;r<n;r++){ const row=[];
+    for(let c=0;c<n;c++) row.push(toF(Mnum[r][c]));
+    for(let c=0;c<n;c++) row.push(F(r===c?1:0,1)); W.push(row);
+  }
+  for(let p=0;p<n;p++){
+    if(fzero(W[p][p])){ let sr=-1; for(let r=p+1;r<n;r++){if(!fzero(W[r][p])){sr=r;break;}} if(sr<0) return null; [W[p],W[sr]]=[W[sr],W[p]]; }
+    const recip=fdiv(F(1,1),W[p][p]);
+    for(let c=0;c<2*n;c++) W[p][c]=fmul(W[p][c],recip);
+    for(let r=0;r<n;r++){ if(r===p) continue; if(fzero(W[r][p])) continue;
+      const f=fclone(W[r][p]);
+      for(let c=0;c<2*n;c++) W[r][c]=fsub(W[r][c],fmul(f,W[p][c]));
+    }
+  }
+  return W.map(r=>r.slice(n));
+}
+
+/* ══════════ 渲染增广矩阵 ══════════ */
+function renderAug(box, aug, hl){
+  hl=hl||{};
+  const n=aug.length;
+  let html=`<table class="aug"><tbody>`;
+  for(let r=0;r<n;r++){ html+="<tr>";
+    for(let c=0;c<2*n;c++){
+      let cls=[];
+      if(c===n) cls.push("divider");
+      if(hl.pivot && hl.pivot[0]===r && hl.pivot[1]===c) cls.push("hl-pivot");
+      else if(hl.rows && hl.rows.includes(r)) cls.push("hl-row");
+      if(hl.showRight && c>=n) cls.push("hl-right");
+      html+=`<td class="${cls.join(' ')}">${fhtml(aug[r][c])}</td>`;
+    }
+    html+="</tr>";
+  }
+  html+="</tbody></table>";
+  box.innerHTML=html;
+}
+
+/* ══════════ 探索：步进控制 ══════════ */
+function buildAndReset(){
+  stopAuto();
+  const M=readMatrix();
+  const info=document.getElementById("stepInfo");
+  if(!M){ info.className="stepinfo err"; info.textContent="⚠ 请把矩阵每个位置都填成有效数字。";
+    document.getElementById("augBox").innerHTML=""; document.getElementById("resultInfo").innerHTML=""; return; }
+  frames=buildFrames(M); fi=0;
+  renderFrame();
+}
+function renderFrame(){
+  const f=frames[fi];
+  renderAug(document.getElementById("augBox"), f.aug, {pivot:f.pivot, rows:f.rows, showRight:f.showRight});
+  const info=document.getElementById("stepInfo");
+  info.className="stepinfo"+(f.singular?" err":"");
+  info.innerHTML=`第 ${fi}/${frames.length-1} 步　${f.desc}`;
+  const res=document.getElementById("resultInfo");
+  const d=detF(readMatrix()||[[1]]);
+  if(f.done && f.singular) res.innerHTML=`<math><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo><mo>=</mo><mn>${fstr(d)}</mn></math> ⇒ 矩阵不可逆。`;
+  else res.innerHTML=`<math><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo><mo>=</mo><mn>${fstr(d)}</mn></math>${f.done?"　右块已是 <b>A⁻¹</b>。":""}`;
+}
+function nextStep(){ if(!frames.length){buildAndReset();return;} if(fi<frames.length-1){fi++;renderFrame();} else stopAuto(); }
+function prevStep(){ if(!frames.length){buildAndReset();return;} if(fi>0){fi--;renderFrame();} }
+function playAuto(){ if(autoTimer) return; if(!frames.length) buildAndReset();
+  autoTimer=setInterval(()=>{ if(fi<frames.length-1){fi++;renderFrame();} else stopAuto(); }, 950); }
+function stopAuto(){ clearInterval(autoTimer); autoTimer=null; }
+
+/* ══════════ 练习模式 ══════════ */
+const QUIZKEY="la-inverse-rref-quiz";
+let quiz=null, streak=0, stats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){ if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return;
+  stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats(); }
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function shuffle(a){ for(let k=a.length-1;k>0;k--){ const t=Math.floor(Math.random()*(k+1)); [a[k],a[t]]=[a[t],a[k]]; } return a; }
+
+function randInvertible(n, dmax){
+  for(let tries=0;tries<400;tries++){
+    const M=Array.from({length:n},()=>Array.from({length:n},()=>ri(-3,3)));
+    const d=detF(M);
+    if(d.n!==0 && d.d===1 && Math.abs(d.n)<=(dmax||6)) return {M, det:d};
+  }
+  return {M:(n===2?[[2,1],[1,1]]:[[2,-1,0],[-1,2,-1],[0,-1,2]]), det:detF(n===2?[[2,1],[1,1]]:[[2,-1,0],[-1,2,-1],[0,-1,2]])};
+}
+function randSingular(n){
+  const M=Array.from({length:n},()=>Array.from({length:n},()=>ri(-3,3)));
+  // 让第 2 行 = k·第 1 行 （k∈{-2,-1,2}）保证奇异
+  const k=[-2,-1,2][ri(0,2)];
+  M[1]=M[0].map(v=>v*k);
+  return M;
+}
+function plainMatHTML(Mnum){
+  const n=Mnum.length;
+  let html=`<math><mrow><mo>(</mo><mtable columnspacing="0.7em" rowspacing="0.2em">`;
+  for(let r=0;r<n;r++){ html+="<mtr>";
+    for(let c=0;c<n;c++){ const v=Mnum[r][c]; html+=`<mtd><mn>${v<0?"−"+Math.abs(v):v}</mn></mtd>`; }
+    html+="</mtr>"; }
+  html+=`</mtable><mo>)</mo></mrow></math>`; return html;
+}
+function fracMatHTML(Fmat){
+  const n=Fmat.length;
+  let html=`<table class="aug" style="display:inline-table;"><tbody>`;
+  for(let r=0;r<n;r++){ html+="<tr>";
+    for(let c=0;c<n;c++) html+=`<td>${fhtml(Fmat[r][c])}</td>`;
+    html+="</tr>"; } html+="</tbody></table>"; return html;
+}
+
+function genProblem(){
+  const roll=Math.random();
+  if(roll<0.4){                                   // ① 求逆矩阵指定元素
+    const n=Math.random()<0.5?2:3;
+    const {M}=randInvertible(n,6);
+    const inv=inverseF(M);
+    const i=ri(0,n-1), j=ri(0,n-1);
+    return {kind:"elem", M, inv, i, j, ans:inv[i][j], done:false, correct:false};
+  }else if(roll<0.72){                            // ② 判断是否可逆
+    const n=Math.random()<0.5?2:3;
+    let M, invertible;
+    if(Math.random()<0.5){ M=randInvertible(n,9).M; invertible=true; }
+    else { M=randSingular(n); invertible=false; }
+    const d=detF(M);
+    const opts=["可逆","不可逆（奇异）"];
+    return {kind:"invert", M, det:d, invertible, opts, ansIdx:invertible?0:1, selected:-1, done:false, correct:false};
+  }else{                                          // ③ 下一步行变换
+    const n=Math.random()<0.5?2:3;
+    // 造 a11 = 1、a21 ≠ 0 的矩阵，问：为把第2行第1列消为0该做的行变换
+    let M;
+    do{ M=Array.from({length:n},()=>Array.from({length:n},()=>ri(-3,3))); M[0][0]=1; }
+    while(M[1][0]===0 || detF(M).n===0);
+    const k=M[1][0];                              // 正确：r2 → r2 − k·r1
+    const c=a=>Math.abs(a)===1?"":String(Math.abs(a));      // 系数 1 省略
+    const lin=(t,a,u)=>`r${t} → r${t} ${a>0?"−":"+"} ${c(a)}r${u}`;   // r_t − a·r_u
+    const correct=lin("₂",k,"₁");
+    const set=new Set([correct]);
+    set.add(lin("₂",-k,"₁"));                       // 符号弄反
+    set.add(lin("₁",k,"₂"));                        // 改错了行
+    set.add(`r₂ → ${c(k)}r₁`);                       // 不是初等行变换
+    const opts=shuffle([...set]).slice(0,4);
+    if(!opts.includes(correct)) opts[0]=correct;
+    shuffle(opts);
+    const W=buildFrames(M)[0].aug.map(r=>r.map(fclone)), kf=F(k,1);
+    for(let cc=0;cc<2*n;cc++) W[1][cc]=fsub(W[1][cc], fmul(kf,W[0][cc]));
+    return {kind:"nextop", M, k, opts, ansIdx:opts.indexOf(correct), after:W, selected:-1, done:false, correct:false};
+  }
+}
+
+/* 练习时左侧：显示题目的 [A|E]；揭晓后可逐步查看一种化简过程 */
+function qLeft(){
+  const q=quiz; if(!q) return;
+  const box=document.getElementById("augBox"), info=document.getElementById("stepInfo"), res=document.getElementById("resultInfo");
+  const bar=document.getElementById("qStepBar");
+  res.innerHTML="";
+  if(!q.done){
+    bar.style.display="none";
+    let aug=q.frames[0].aug, hl={};
+    if(q.kind==="nextop"){ hl={pivot:[0,0], rows:[1]}; info.className="stepinfo"; info.innerHTML=`黄色为主元 <math><msub><mi>a</mi><mn>11</mn></msub></math>，粉色为要处理的第 2 行。`; }
+    else { info.className="stepinfo"; info.innerHTML=`题目的增广矩阵 <math><mo>[</mo><mi class="bm">A</mi><mo>&#x2223;</mo><mi class="bm">E</mi><mo>]</mo></math>。提交或看解析后，可在这里逐步查看一种化简过程。`; }
+    renderAug(box, aug, hl);
+    return;
+  }
+  bar.style.display="flex";
+  if(q.kind==="nextop" && q.fi===-1){       // 先显示这一步做完后的结果
+    renderAug(box, q.after, {rows:[1]});
+    info.className="stepinfo"; info.innerHTML=`做完 <span class="op">${q.opts[q.ansIdx]}</span> 后，第 2 行第 1 列变成 0。点“下一步”继续看完整过程。`;
+    return;
+  }
+  const f=q.frames[q.fi];
+  let hl={pivot:f.pivot, rows:f.rows, showRight:f.showRight};
+  if(q.kind==="elem" && f.showRight) hl.pivot=[q.i, q.n+q.j];       // 标出所求元素
+  renderAug(box, f.aug, hl);
+  info.className="stepinfo"+(f.singular?" err":"");
+  info.innerHTML=`一种化简过程：第 ${q.fi}/${q.frames.length-1} 步　${f.desc}`;
+}
+function qStep(d){
+  const q=quiz; if(!q||!q.done) return;
+  if(q.kind==="nextop" && q.fi===-1){ if(d>0) q.fi=0; qLeft(); return; }
+  q.fi=Math.max(0,Math.min(q.frames.length-1,q.fi+d)); qLeft();
+}
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody"), fb=document.getElementById("qFeedback");
+  q.frames=buildFrames(q.M); q.n=q.M.length;
+  q.fi = q.kind==="nextop"? -1 : q.frames.length-1;
+  fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  if(q.kind==="elem"){
+    body.innerHTML=
+      `已知 <math><mi class="bm">A</mi><mo>=</mo></math> ${plainMatHTML(q.M)}（可逆）。<br>`
+      +`用初等行变换求 <math><msup><mi class="bm">A</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup></math>，其第 <b>${q.i+1}</b> 行第 <b>${q.j+1}</b> 列元素为：`
+      +`<div class="ans"><math><msup><mrow><mo>(</mo><msup><mi class="bm">A</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup><mo>)</mo></mrow><mrow><mn>${q.i+1}</mn><mn>${q.j+1}</mn></mrow></msup><mo>=</mo></math>`
+      +`<input class="qin" id="qElem" type="text" placeholder="如 3 或 -1/2"></div>`
+      +`<div style="margin-top:6px;font-size:12.5px;color:#a0aec0;">可填整数或分数（分数写成 a/b，如 -1/2）。</div>`;
+    document.getElementById("qElem").addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); });
+  }else if(q.kind==="invert"){
+    let html=`矩阵 <math><mi class="bm">A</mi><mo>=</mo></math> ${plainMatHTML(q.M)} 是否可逆？<div class="opts" id="qOpts">`;
+    q.opts.forEach((o,i)=>{ html+=`<label data-i="${i}"><input type="radio" name="qopt" value="${i}"><span>${o}</span></label>`; });
+    html+="</div>"; body.innerHTML=html; bindOpts(body);
+  }else{
+    let html=`把 <math><mi class="bm">A</mi><mo>=</mo></math> ${plainMatHTML(q.M)} 增广成 <math><mo>[</mo><mi class="bm">A</mi><mo>&#x2223;</mo><mi class="bm">E</mi><mo>]</mo></math>，`
+      +`主元 <math><msub><mi>a</mi><mn>11</mn></msub><mo>=</mo><mn>1</mn></math>。<br>下列哪一个初等行变换能把<b>第 2 行第 1 列</b>消成 0（且不改变第 1 行）？<div class="opts" id="qOpts">`;
+    q.opts.forEach((o,i)=>{ html+=`<label data-i="${i}"><input type="radio" name="qopt" value="${i}"><span>${o}</span></label>`; });
+    html+="</div>"; body.innerHTML=html; bindOpts(body);
+  }
+  qLeft();
+  renderStats();
+}
+function bindOpts(body){
+  body.querySelectorAll('#qOpts label').forEach(l=>l.addEventListener("click",()=>{
+    body.querySelectorAll('#qOpts label').forEach(x=>x.classList.remove("sel"));
+    l.classList.add("sel"); const r=l.querySelector('input'); if(r) r.checked=true;
+    quiz.selected=+l.dataset.i;
+  }));
+}
+function renderStats(){
+  const acc=stats.attempted? Math.round(stats.correct/stats.attempted*100):0;
+  document.getElementById("quizStats").innerHTML=`已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`;
+}
+// 解析用户输入的分数/整数/小数
+function parseFrac(s){ s=(s||"").trim().replace(/−/g,"-"); if(!s) return null;
+  if(s.includes("/")){ const p=s.split("/"); const n=parseInt(p[0],10),d=parseInt(p[1],10); if(Number.isNaN(n)||Number.isNaN(d)||d===0) return null; return {frac:F(n,d)}; }
+  if(/^-?\d+$/.test(s)) return {frac:F(parseInt(s,10),1)};
+  const v=parseFloat(s); if(Number.isNaN(v)) return null; return {approx:v}; }
+
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return; const fb=document.getElementById("qFeedback");
+  if(q.kind==="elem"){
+    const p=parseFrac(document.getElementById("qElem").value);
+    if(!p){ fb.className="feedback no"; fb.textContent="请填入整数或分数（如 3 或 -1/2）"; return; }
+    let ok; if(p.frac) ok=feq(p.frac,q.ans); else ok=Math.abs(p.approx - q.ans.n/q.ans.d)<1e-3;
+    if(ok) markCorrect(); else { fb.className="feedback no"; fb.textContent="还不对～ 用 [A∣E] 化到 [E∣A⁻¹] 再读该位置（也可点“看解析”）"; }
+  }else{
+    if(q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个选项"; return; }
+    if(q.selected===q.ansIdx) markCorrect(); else { fb.className="feedback no"; fb.textContent="不对哦，再想想～（也可以点“看解析”）"; }
+  }
+}
+function solHTML(){
+  const q=quiz;
+  if(q.kind==="elem"){
+    return `<div class="sol"><math><msup><mi class="bm">A</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup></math> = ${fracMatHTML(q.inv)}，第 ${q.i+1} 行第 ${q.j+1} 列 = <b>${fstr(q.ans)}</b>。</div>`;
+  }
+  if(q.kind==="invert"){
+    return `<div class="sol"><math><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo><mo>=</mo><mn>${fstr(q.det)}</mn></math>，${q.invertible?"不为 0 ⇒ <b>可逆</b>":"等于 0 ⇒ <b>不可逆（奇异）</b>"}。行变换法中，${q.invertible?"左块可化为 E":"左块必出现全零行，无法化为 E"}。</div>`;
+  }
+  return `<div class="sol">第 2 行第 1 列现为 ${q.k<0?"−"+Math.abs(q.k):q.k}，主元 a₁₁ = 1，所以第 2 行减去 ${q.k<0?"−"+Math.abs(q.k):q.k} 倍的第 1 行：<b>${q.opts[q.ansIdx]}</b>。其他选项：符号反了的会让该元素变成 ${2*q.k<0?"−"+Math.abs(2*q.k):2*q.k}；改第 1 行的会动到主元所在行；“r₂ → 倍数·r₁”不是初等行变换（第 2 行原来的信息丢了）。</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+function markCorrect(){ const q=quiz; q.done=true; q.correct=true; stats.attempted++; stats.correct++; streak++; saveStats();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML(); lockQ(); renderStats(); qLeft(); }
+function onReveal(){ const q=quiz; if(!q||q.done) return; q.done=true; stats.attempted++; streak=0; saveStats();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML(); lockQ(); renderStats(); qLeft(); }
+function onHint(){ const q=quiz; if(!q) return; const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="elem") fb.innerHTML=`提示：把 <math><mo>[</mo><mi class="bm">A</mi><mo>&#x2223;</mo><mi class="bm">E</mi><mo>]</mo></math> 用初等行变换化到 <math><mo>[</mo><mi class="bm">E</mi><mo>&#x2223;</mo><msup><mi class="bm">A</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup><mo>]</mo></math>，右块对应位置即答案。行变换的顺序可以自己选，过程不同，结果一样。`;
+  else if(q.kind==="invert") fb.innerHTML=`提示：可逆 ⟺ <math><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo><mo>&#x2260;</mo><mn>0</mn></math> ⟺ 行变换能把左块化为 <math><mi class="bm">E</mi></math>。`;
+  else fb.innerHTML=`提示：消去下方元素用「目标行 − 倍数 × 主元行」，倍数 = 该位置当前值 ÷ 主元。`;
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+
+/* ══════════ 模式切换 ══════════ */
+function setMode(m){
+  mode=m;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("exploreCard").style.display = m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display   = m==="practice"?"":"none";
+  document.getElementById("qStepBar").style.display="none";
+  if(m==="practice"){ stopAuto(); quiz=genProblem(); renderProblem(); }
+  else { quiz=null; buildAndReset(); }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
+document.querySelectorAll("#sizeSeg button").forEach(b=>b.addEventListener("click",()=>{ buildGrid(+b.dataset.n); buildAndReset(); }));
+
+// 初始化
+buildGrid(3, PRESETS.inv3);
+buildAndReset();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-inverse-rref";          // ← 计数键：与编号 L# 解耦的稳定标识，永不改动
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
