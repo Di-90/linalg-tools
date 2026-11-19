@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>克拉默法则 · L15 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --hl-col:#fde8e8; --line1:#2b6cb0; --line2:#c53030; --line3:#2f855a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.2em;}
+  var{font-style:italic;font-family:"Cambria Math","STIX Two Math",serif;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:920px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  #canvasContainer{width:100%;border:1px solid var(--line);
+       border-radius:10px;overflow:hidden;display:flex;justify-content:center;
+       background:radial-gradient(120% 120% at 50% 8%,#ffffff 0%,#f5f8fc 60%,#eef3f9 100%);}
+  canvas{touch-action:none;display:block;max-width:100%;}
+  .row{margin:8px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:15px;}
+  .row .lbl{color:var(--sub);font-size:13px;}
+  input[type=text].mx{width:52px;font-size:15px;padding:5px 6px;
+       border:1px solid var(--line);border-radius:6px;font-variant-numeric:tabular-nums;text-align:center;}
+  input:focus{outline:none;border-color:var(--blue);}
+  button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .segbar{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;}
+  .segbar button{border:none;border-radius:0;padding:6px 14px;color:var(--sub);}
+  .segbar button.on{background:var(--blue);color:#fff;}
+  /* 增广矩阵输入 [A | b] */
+  .augwrap{display:inline-flex;align-items:center;gap:4px;padding:6px 2px;}
+  .augbar{width:2px;align-self:stretch;background:var(--sub);margin:0 6px;}
+  .auggrid{display:inline-grid;gap:6px;}
+  /* 行列式表格 |·| */
+  table.det{border-collapse:collapse;border-left:2.5px solid var(--ink);border-right:2.5px solid var(--ink);margin:0 5px;}
+  table.det td{padding:4px 11px;text-align:center;font-variant-numeric:tabular-nums;min-width:24px;font-size:16px;font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;}
+  table.det td.hl{background:var(--hl-col);color:#c53030;font-weight:700;}
+  table.mat{border-collapse:collapse;border-left:2.5px solid var(--ink);border-right:2.5px solid var(--ink);
+       border-radius:4px;margin:0 4px;}
+  table.mat td{padding:4px 11px;text-align:center;font-variant-numeric:tabular-nums;min-width:24px;font-size:15px;}
+  .resline{margin:12px 0;font-size:15px;line-height:2.1;}
+  .resline .eq{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .sysbox{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px 14px;
+       font-size:15px;line-height:2.2;font-variant-numeric:tabular-nums;}
+  .banner{border-radius:8px;padding:10px 14px;font-size:14px;margin-top:6px;}
+  .banner.warn{background:#fffaf0;border:1px solid #f6e05e;color:#744210;}
+  .banner.ok{background:#f0fff4;border:1px solid #9ae6b4;color:#22543d;}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:10px;justify-content:center;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:14px;height:6px;border-radius:2px;display:inline-block;}
+  /* ── 练习模式 ── */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;
+       flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;
+       text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody .ans{display:inline-flex;align-items:center;gap:6px;margin-top:8px;}
+  .qbody input.qin{width:90px;font-size:15px;padding:6px 7px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:13.5px;margin-top:6px;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .qbtns button:disabled{opacity:.45;cursor:not-allowed;}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,360px);gap:16px;align-items:start;}
+  .layout .card{margin-bottom:16px;}
+  @media(max-width:820px){ .layout{grid-template-columns:1fr;} }
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
+       font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>克拉默法则</h1>
+  <span class="sub">用行列式解线性方程组 <math><msub><mi>x</mi><mi>i</mi></msub><mo>=</mo><mfrac><msub><mi>D</mi><mi>i</mi></msub><mi>D</mi></mfrac></math></span>
+  <span class="tag">L15 · 线性代数</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    对含 <var>n</var> 个方程、<var>n</var> 个未知数的线性方程组 <math><mi class="bm">A</mi><mi class="bm">x</mi><mo>=</mo><mi class="bm">b</mi></math>，
+    当<b>系数行列式</b> <math><mi>D</mi><mo>=</mo><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo><mo>&#x2260;</mo><mn>0</mn></math> 时，它有唯一解：
+    <div class="formula">
+      <math display="block">
+        <msub><mi>x</mi><mi>i</mi></msub><mo>=</mo>
+        <mfrac><msub><mi>D</mi><mi>i</mi></msub><mi>D</mi></mfrac>
+        <mo>,</mo><mspace width="1.2em"/>
+        <mi>i</mi><mo>=</mo><mn>1</mn><mo>,</mo><mn>2</mn><mo>,</mo><mo>&#x2026;</mo><mo>,</mo><mi>n</mi>
+      </math>
+    </div>
+    其中 <math><msub><mi>D</mi><mi>i</mi></msub></math> 是把系数行列式 <math><mi>D</mi></math> 的<b>第 <var>i</var> 列换成常数列 <math><mi class="bm">b</mi></math></b>后所得的行列式。
+    若 <math><mi>D</mi><mo>=</mo><mn>0</mn></math>，克拉默法则不适用（方程组没有唯一解），这时再比较 <math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo></math> 与 <math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>,</mo><mi class="bm">b</mi><mo>)</mo></math> 判断是无解还是无穷多解。下方左侧列出 <math><mi>D</mi></math>、各 <math><msub><mi>D</mi><mi>i</mi></msub></math> 与解；几何上，二元时每个方程是一条直线，三元时每个方程是一个平面，<b>它们的公共交点就是解</b>。
+  </div>
+
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div class="layout">
+  <div class="col-left">
+    <div class="card" id="resultCard">
+      <h2>方程组、行列式与解</h2>
+      <div id="sysArea"></div>
+      <div id="detArea" style="margin-top:12px;"></div>
+      <div id="bannerArea"></div>
+    </div>
+    <div class="card" id="canvasCard">
+      <h2 id="canvasTitle">几何：两条直线的交点</h2>
+      <div id="canvasContainer"><canvas id="canvas"></canvas></div>
+      <div class="legend">
+        <span><i style="background:var(--line1)"></i>方程 ①</span>
+        <span><i style="background:var(--line2)"></i>方程 ②</span>
+        <span id="lg3" style="display:none;"><i style="background:var(--line3)"></i>方程 ③</span>
+        <span><i style="background:#dd6b20;border-radius:50%;"></i><span id="lgDot">交点＝解</span></span>
+      </div>
+    </div>
+  </div><!--/col-left-->
+
+  <div class="col-right">
+    <div class="card" id="quizCard" style="display:none;">
+      <div class="quizhead">
+        <h2>练习 · 克拉默法则</h2>
+        <span class="stats" id="quizStats"></span>
+        <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+      </div>
+      <div class="qbody" id="qBody"></div>
+      <div class="feedback" id="qFeedback"></div>
+      <div class="qbtns">
+        <button class="primary" id="qSubmit">提交</button>
+        <button id="qHint">提示</button>
+        <button id="qReveal">看解析</button>
+        <button id="qNext">下一题 ▸</button>
+      </div>
+    </div>
+
+    <div class="card" id="exploreCard">
+      <h2>输入方程组 <math><mi class="bm">A</mi><mi class="bm">x</mi><mo>=</mo><mi class="bm">b</mi></math></h2>
+      <div class="row">
+        <span class="lbl">未知数个数：</span>
+        <div class="segbar">
+          <button id="segN2" class="on" onclick="setN(2)">二元 (2×2)</button>
+          <button id="segN3" onclick="setN(3)">三元 (3×3)</button>
+        </div>
+      </div>
+      <div class="row" style="align-items:flex-start;">
+        <span class="lbl">增广 <math><mo>[</mo><mi class="bm">A</mi><mo>|</mo><mi class="bm">b</mi><mo>]</mo></math>：</span>
+        <div id="inputArea"></div>
+      </div>
+      <div class="row">
+        <span class="lbl">示例：</span>
+        <div class="presets">
+          <button onclick="loadPreset('e2')">二元 · 唯一解</button>
+          <button onclick="loadPreset('e0')">二元 · D=0 无解</button>
+          <button onclick="loadPreset('e0b')">二元 · D=0 无穷多解</button>
+          <button onclick="loadPreset('e3')">三元 · 唯一解</button>
+          <button onclick="loadPreset('e30')">三元 · D=0 无解</button>
+          <button onclick="loadPreset('e30b')">三元 · D=0 无穷多解</button>
+        </div>
+      </div>
+      <div style="font-size:12.5px;color:#a0aec0;margin-top:6px;">
+        每格填一个数（可负、可小数）；左侧竖线左边是系数矩阵 <math><mi class="bm">A</mi></math>，右边是常数列 <math><mi class="bm">b</mi></math>。
+      </div>
+    </div>
+  </div><!--/col-right-->
+  </div><!--/layout-->
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+/* ══════════════ 通用数学工具 ══════════════ */
+function det2(m){ return m[0][0]*m[1][1]-m[0][1]*m[1][0]; }
+function det3(m){
+  return m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])
+        -m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])
+        +m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);
+}
+function detN(m){ return m.length===2?det2(m):det3(m); }
+function replaceCol(A,i,b){ return A.map((row,r)=>row.map((v,c)=>c===i?b[r]:v)); }
+function gcd(a,b){ a=Math.abs(a);b=Math.abs(b); while(b){[a,b]=[b,a%b];} return a||1; }
+function isInt(x){ return Math.abs(x-Math.round(x))<1e-9; }
+function fracText(p,q){
+  if(q<0){ p=-p; q=-q; }
+  const g=gcd(Math.round(p),Math.round(q));
+  p=Math.round(p)/g; q=Math.round(q)/g;
+  const s=v=>v<0?"−"+Math.abs(v):""+v;
+  return q===1 ? s(p) : `${s(p)}/${q}`;
+}
+function fracML(p,q){
+  if(q<0){ p=-p; q=-q; }
+  const g=gcd(Math.round(p),Math.round(q));
+  p=Math.round(p)/g; q=Math.round(q)/g;
+  const sign = p<0 ? `<mo>&#x2212;</mo>` : "";
+  if(q===1) return `<math>${sign}<mn>${Math.abs(p)}</mn></math>`;
+  return `<math>${sign}<mfrac><mn>${Math.abs(p)}</mn><mn>${q}</mn></mfrac></math>`;
+}
+function solML(Di,D,allInt){
+  if(allInt && isInt(Di) && isInt(D)) return `<math><mo>=</mo></math>`+fracML(Di,D);
+  const t=(Di/D).toFixed(3).replace(/\.?0+$/,"");
+  return `<math>${isInt(Di/D)?"<mo>=</mo>":"<mo>&#x2248;</mo>"}${t.startsWith("-")?`<mo>&#x2212;</mo><mn>${t.slice(1)}</mn>`:`<mn>${t}</mn>`}</math>`;
+}
+function nf(x){ const v=isInt(x)?Math.round(x):Math.round(x*1000)/1000; return v<0?"−"+Math.abs(v):""+v; }
+function nml(x){ const v=isInt(x)?Math.round(x):Math.round(x*1000)/1000; return v<0?`<mrow><mo form="prefix" lspace="0" rspace="0">&#x2212;</mo><mn>${Math.abs(v)}</mn></mrow>`:`<mn>${v}</mn>`; }
+// 秩（数值消元，2×2/3×3/增广均可）
+function rankOf(M){
+  const W=M.map(r=>r.slice()); const m=W.length, k=W[0].length; let r=0;
+  for(let c=0;c<k&&r<m;c++){
+    let p=-1, best=1e-9; for(let i=r;i<m;i++){ if(Math.abs(W[i][c])>best){ best=Math.abs(W[i][c]); p=i; } }
+    if(p<0) continue; [W[p],W[r]]=[W[r],W[p]];
+    for(let i=0;i<m;i++){ if(i===r) continue; const f=W[i][c]/W[r][c]; for(let j=c;j<k;j++) W[i][j]-=f*W[r][j]; }
+    r++;
+  }
+  return r;
+}
+const BAR_L='<mo fence="true" form="prefix" lspace="0" rspace="0">|</mo>', BAR_R='<mo fence="true" form="postfix" lspace="0" rspace="0">|</mo>';
+const DETA=`${BAR_L}<mi class="bm">A</mi>${BAR_R}`;
+
+/* ══════════════ 状态 ══════════════ */
+let n=2;
+let mode="explore";
+let quiz=null;
+let A=[[2,1],[1,-1]], b=[5,1];      // 当前显示的数据（探索或练习）
+let RANGE=6;
+let size, origin, sf;
+let yaw=-0.7, pitch=0.5;           // 三维视角
+const COLS=["--line1","--line2","--line3"];
+
+/* ══════════════ 增广输入 ══════════════ */
+function buildInputs(){
+  const area=document.getElementById("inputArea");
+  let g=`<div class="augwrap">`;
+  g+=`<div class="auggrid" style="grid-template-columns:repeat(${n},auto);">`;
+  for(let r=0;r<n;r++) for(let c=0;c<n;c++)
+    g+=`<input class="mx" type="text" id="a_${r}_${c}" value="${A[r][c]}">`;
+  g+=`</div><div class="augbar"></div>`;
+  g+=`<div class="auggrid" style="grid-template-columns:auto;">`;
+  for(let r=0;r<n;r++)
+    g+=`<input class="mx" type="text" id="b_${r}" value="${b[r]}">`;
+  g+=`</div></div>`;
+  area.innerHTML=g;
+  for(let r=0;r<n;r++){
+    for(let c=0;c<n;c++) document.getElementById(`a_${r}_${c}`).addEventListener("input",readInputs);
+    document.getElementById(`b_${r}`).addEventListener("input",readInputs);
+  }
+}
+function readInputs(){
+  const A2=Array.from({length:n},()=>Array(n).fill(0));
+  const b2=Array(n).fill(0);
+  for(let r=0;r<n;r++){
+    for(let c=0;c<n;c++){
+      const v=parseFloat(document.getElementById(`a_${r}_${c}`).value.replace(/−/g,"-"));
+      if(Number.isNaN(v)) return;
+      A2[r][c]=v;
+    }
+    const bv=parseFloat(document.getElementById(`b_${r}`).value.replace(/−/g,"-"));
+    if(Number.isNaN(bv)) return;
+    b2[r]=bv;
+  }
+  A=A2; b=b2; updateExplore();
+}
+const PRESETS={
+  e2:{A:[[2,1],[1,-1]], b:[5,1]},
+  e0:{A:[[1,2],[2,4]], b:[3,7]},
+  e0b:{A:[[1,2],[2,4]], b:[3,6]},
+  e3:{A:[[1,1,1],[2,-1,1],[1,2,-1]], b:[6,3,2]},
+  e30:{A:[[1,1,1],[1,2,3],[2,3,4]], b:[3,6,8]},
+  e30b:{A:[[1,1,1],[1,2,3],[2,3,4]], b:[3,6,9]},
+};
+function setN(k){ loadPreset(k===2?"e2":"e3"); }
+function loadPreset(key){
+  const P=PRESETS[key]; n=P.A.length;
+  A=P.A.map(r=>r.slice()); b=P.b.slice();
+  document.getElementById("segN2").classList.toggle("on",n===2);
+  document.getElementById("segN3").classList.toggle("on",n===3);
+  buildInputs(); updateExplore();
+}
+
+/* ══════════════ 行列式 HTML ══════════════ */
+function detHTML(M,hlCol){
+  let h=`<table class="det">`;
+  for(let r=0;r<M.length;r++){
+    h+="<tr>";
+    for(let c=0;c<M.length;c++)
+      h+=`<td class="${c===hlCol?'hl':''}">${nf(M[r][c])}</td>`;
+    h+="</tr>";
+  }
+  return h+"</table>";
+}
+function absML(v){ const a=Math.abs(v); return `<mn>${isInt(a)?Math.round(a):Math.round(a*1000)/1000}</mn>`; }
+function sysHTMLof(A,b){
+  let sys=`<div class="sysbox">`;
+  for(let r=0;r<A.length;r++){
+    let t="", first=true;
+    for(let c=0;c<A.length;c++){
+      const co=A[r][c];
+      if(Math.abs(co)<1e-12) continue;
+      if(first){ if(co<0) t+=`<mo>&#x2212;</mo>`; } else t+=`<mo>${co<0?"&#x2212;":"+"}</mo>`;
+      if(Math.abs(Math.abs(co)-1)>1e-12) t+=absML(co);
+      t+=`<msub><mi>x</mi><mn>${c+1}</mn></msub>`; first=false;
+    }
+    if(first) t+=`<mn>0</mn>`;
+    sys+=`<div><math>${t}<mo>=</mo>${nml(b[r])}</math></div>`;
+  }
+  return sys+`</div>`;
+}
+function vecML(v){ return `<math><mo>(</mo>${v.map(nml).join("<mo>,</mo>")}<mo>)</mo></math>`; }
+
+/* ══════════════ 探索：计算并渲染 ══════════════ */
+function updateExplore(){
+  if(mode!=="explore") return;
+  renderResults(A,b);
+  drawCanvas(true);
+}
+// D=0 时用秩判断解的情况
+function zeroCase(A,b){
+  const nn=A.length, rA=rankOf(A), rAb=rankOf(A.map((r,i)=>r.concat([b[i]])));
+  const geo2 = rA<rAb ? (rA===1?"两条直线平行、没有交点":"") : (rA===1?"两条直线重合":"");
+  const geo3 = rA<rAb ? "三个平面没有公共点" : (rA===2?"三个平面交于同一条直线，或有平面重合":(rA===1?"三个平面重合":""));
+  const geo = nn===2?geo2:geo3;
+  const rk=`<math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo><mo>=</mo><mn>${rA}</mn></math>，<math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>,</mo><mi class="bm">b</mi><mo>)</mo><mo>=</mo><mn>${rAb}</mn></math>`;
+  if(rA<rAb) return `<div class="banner warn"><math><mi>D</mi><mo>=</mo><mn>0</mn></math>：克拉默法则不适用。再看秩：${rk}，两者不等 ⇒ 方程组<b>无解</b>${geo?"（"+geo+"）":""}。</div>`;
+  return `<div class="banner warn"><math><mi>D</mi><mo>=</mo><mn>0</mn></math>：克拉默法则不适用。再看秩：${rk}，两者相等且小于 ${nn} ⇒ 方程组有<b>无穷多解</b>${geo?"（"+geo+"）":""}。</div>`;
+}
+function renderResults(A,b){
+  const nn=A.length, D=detN(A);
+  const allInt=A.every(r=>r.every(isInt)) && b.every(isInt);
+  document.getElementById("sysArea").innerHTML=sysHTMLof(A,b);
+  let out=`<div class="resline"><span class="eq"><math><mi>D</mi><mo>=</mo>${DETA}<mo>=</mo></math> ${detHTML(A,-1)} <math><mo>=</mo>${nml(D)}</math></span></div>`;
+  if(Math.abs(D)<1e-9){
+    document.getElementById("detArea").innerHTML=out;
+    document.getElementById("bannerArea").innerHTML=zeroCase(A,b);
+    return;
+  }
+  for(let i=0;i<nn;i++){
+    const Mi=replaceCol(A,i,b), Di=detN(Mi);
+    out+=`<div class="resline"><span class="eq">`
+      +`<math><msub><mi>D</mi><mn>${i+1}</mn></msub><mo>=</mo></math> ${detHTML(Mi,i)} <math><mo>=</mo>${nml(Di)}</math>`
+      +`<math><mo>,</mo><mspace width="0.6em"/><msub><mi>x</mi><mn>${i+1}</mn></msub><mo>=</mo><mfrac><msub><mi>D</mi><mn>${i+1}</mn></msub><mi>D</mi></mfrac></math> ${solML(Di,D,allInt)}`
+      +`</span></div>`;
+  }
+  document.getElementById("detArea").innerHTML=out;
+  document.getElementById("bannerArea").innerHTML=
+    `<div class="banner ok">系数行列式 <math><mi>D</mi><mo>=</mo>${nml(D)}<mo>&#x2260;</mo><mn>0</mn></math>，方程组有<b>唯一解</b>。</div>`;
+}
+
+/* ══════════════ 画布：二元画直线，三元画平面 ══════════════ */
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+const container=document.getElementById("canvasContainer");
+const CMFONT='"Cambria Math","STIX Two Math",serif';
+function toMath(str,bold){
+  let out="";
+  for(const ch of str){
+    const cp=ch.codePointAt(0);
+    if(cp>=0x41&&cp<=0x5A) out+=String.fromCodePoint((bold?0x1D468:0x1D434)+(cp-0x41));
+    else if(cp>=0x61&&cp<=0x7A) out+=String.fromCodePoint((bold?0x1D482:0x1D44E)+(cp-0x61));
+    else out+=ch;
+  }
+  return out;
+}
+function drawMathLabel(text,x,y,color,px,bold){
+  px=px||16; ctx.save();
+  ctx.font=`${px}px ${CMFONT}`; ctx.textAlign="left"; ctx.textBaseline="middle";
+  ctx.lineJoin="round"; ctx.lineWidth=px*0.15; ctx.strokeStyle="rgba(255,255,255,.9)";
+  const s=toMath(text,bold); ctx.strokeText(s,x,y);
+  ctx.fillStyle=color; ctx.fillText(s,x,y); ctx.restore();
+}
+function drawText(t,x,y,color,px){
+  ctx.save(); ctx.font=`${px||12.5}px "Segoe UI","Microsoft YaHei",system-ui`; ctx.fillStyle=color||"#4a5568";
+  ctx.lineJoin="round"; ctx.lineWidth=3; ctx.strokeStyle="rgba(255,255,255,.92)";
+  ctx.strokeText(t,x,y); ctx.fillText(t,x,y); ctx.restore();
+}
+function resize(){
+  size=Math.min(container.clientWidth, Math.round(window.innerHeight*0.6), 440);
+  size=Math.max(size,300);
+  const dpr=Math.min(2, window.devicePixelRatio||1);
+  canvas.width=Math.round(size*dpr); canvas.height=Math.round(size*dpr);
+  canvas.style.width=size+"px"; canvas.style.height=size+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  origin=size/2;
+  if(mode==="explore") updateExplore(); else if(quiz) drawCanvas(!!quiz.done);
+}
+window.addEventListener("resize",resize);
+function getCol(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim()||"#000"; }
+const NICE=[4,5,6,8,10,12,15,20,25,30,40,50];
+function niceUp(v){ for(const k of NICE){ if(k>=v) return k; } return NICE[NICE.length-1]; }
+function solutionOf(A,b){ const D=detN(A); if(Math.abs(D)<1e-9) return null; return A.map((_,i)=>detN(replaceCol(A,i,b))/D); }
+
+function drawCanvas(showDot){
+  const nn=A.length;
+  document.getElementById("canvasTitle").textContent = nn===2? "几何：两条直线的交点" : "几何：三个平面的位置关系（可拖动旋转）";
+  document.getElementById("lg3").style.display = nn===3?"":"none";
+  document.getElementById("lgDot").innerHTML = nn===2
+    ? `交点＝解 <math><mo>(</mo><msub><mi>x</mi><mn>1</mn></msub><mo>,</mo><msub><mi>x</mi><mn>2</mn></msub><mo>)</mo></math>`
+    : `交点＝解 <math><mo>(</mo><msub><mi>x</mi><mn>1</mn></msub><mo>,</mo><msub><mi>x</mi><mn>2</mn></msub><mo>,</mo><msub><mi>x</mi><mn>3</mn></msub><mo>)</mo></math>`;
+  const sol=solutionOf(A,b);
+  if(!sol && nn===3 && solutionLine(A,b)) document.getElementById("lgDot").innerHTML="交线＝解（无穷多解）";
+  else if(!sol) document.getElementById("lgDot").innerHTML="（无唯一解）";
+  let need = sol? Math.max(...sol.map(Math.abs))*1.3+1 : 4;
+  if(!sol && nn===3){ const ln=solutionLine(A,b); if(ln) need=Math.max(need, Math.max(...ln.p.map(Math.abs))*1.3+1); }
+  if(nn===2){ RANGE=niceUp(Math.max(6,need)); draw2(showDot,sol); }
+  else { RANGE=niceUp(Math.max(4,need)); draw3(showDot,sol); }
+}
+
+/* —— 二元 —— */
+function toPixel(d){return {x:origin+d.x*sf, y:origin-d.y*sf};}
+function tickStep(){ return RANGE<=8?1: RANGE<=15?2: RANGE<=30?5:10; }
+function drawAxes2(){
+  ctx.clearRect(0,0,size,size);
+  ctx.strokeStyle="#eaeff6"; ctx.lineWidth=1;
+  const st=tickStep();
+  for(let k=-Math.floor(RANGE/st)*st;k<=RANGE;k+=st){
+    const px=Math.round(origin+k*sf)+0.5, py=Math.round(origin+k*sf)+0.5;
+    ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,size);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(size,py);ctx.stroke();
+  }
+  const oc=Math.round(origin)+0.5;
+  ctx.strokeStyle="#94a3b8"; ctx.fillStyle="#94a3b8"; ctx.lineWidth=1.5; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(6,oc);ctx.lineTo(size-6,oc); ctx.moveTo(oc,size-6);ctx.lineTo(oc,6); ctx.stroke();
+  const ah=7;
+  ctx.beginPath(); ctx.moveTo(size-6,oc); ctx.lineTo(size-6-ah,oc-ah*0.55); ctx.lineTo(size-6-ah,oc+ah*0.55); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(oc,6); ctx.lineTo(oc-ah*0.55,6+ah); ctx.lineTo(oc+ah*0.55,6+ah); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="#a0aec0"; ctx.font='11px "Segoe UI",system-ui'; ctx.textAlign="center"; ctx.textBaseline="top";
+  for(let k=-Math.floor(RANGE/st)*st;k<=RANGE;k+=st){ if(k===0||Math.abs(k)>RANGE-0.5*st) continue; ctx.fillText(k, origin+k*sf, origin+5); }
+  ctx.textAlign="left"; ctx.textBaseline="middle";
+  for(let k=-Math.floor(RANGE/st)*st;k<=RANGE;k+=st){ if(k===0||Math.abs(k)>RANGE-0.5*st) continue; ctx.fillText(k, origin+5, origin-k*sf); }
+  drawMathLabel("x₁", size-22, oc+13, "#64748b", 15);
+  drawMathLabel("x₂", oc+11, 15, "#64748b", 15);
+}
+function drawLine(a,bb,c,color){
+  if(Math.abs(a)<1e-12 && Math.abs(bb)<1e-12) return;
+  const nn=a*a+bb*bb;
+  const p0={x:a*c/nn, y:bb*c/nn};
+  const dir={x:bb/Math.sqrt(nn), y:-a/Math.sqrt(nn)};
+  const t=RANGE*6;
+  const e1=toPixel({x:p0.x-dir.x*t, y:p0.y-dir.y*t});
+  const e2=toPixel({x:p0.x+dir.x*t, y:p0.y+dir.y*t});
+  ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=2.5; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(e1.x,e1.y); ctx.lineTo(e2.x,e2.y); ctx.stroke(); ctx.restore();
+}
+function draw2(showDot,sol){
+  sf=size/(2*RANGE);
+  drawAxes2();
+  for(let r=0;r<2;r++) drawLine(A[r][0],A[r][1],b[r],getCol(COLS[r]));
+  if(showDot && sol){
+    const p=toPixel({x:sol[0],y:sol[1]});
+    ctx.save(); ctx.beginPath(); ctx.arc(p.x,p.y,5.5,0,2*Math.PI);
+    ctx.fillStyle="#dd6b20"; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle="#fff"; ctx.stroke(); ctx.restore();
+    drawMathLabel(`(${nf(sol[0])}, ${nf(sol[1])})`, p.x+9, p.y-10, "#dd6b20", 14, false);
+  }
+}
+
+/* —— 三元：正交投影，拖动旋转 —— */
+function proj3(p){
+  const u=p[0]*Math.cos(yaw)-p[1]*Math.sin(yaw);
+  const v=p[0]*Math.sin(yaw)+p[1]*Math.cos(yaw);
+  const X=u, Y=p[2]*Math.cos(pitch)-v*Math.sin(pitch), Z=p[2]*Math.sin(pitch)+v*Math.cos(pitch);
+  return {x:origin+X*sf, y:origin-Y*sf, depth:Z};
+}
+function planePoly(a,c,R){          // 平面 a·p=c 与立方体 [-R,R]³ 的截面多边形
+  const V=[]; for(const x of [-R,R]) for(const y of [-R,R]) for(const z of [-R,R]) V.push([x,y,z]);
+  const E=[]; for(let i=0;i<8;i++) for(let j=i+1;j<8;j++){ let d=0; for(let k=0;k<3;k++) if(V[i][k]!==V[j][k]) d++; if(d===1) E.push([V[i],V[j]]); }
+  const pts=[];
+  for(const [p,q] of E){
+    const fp=a[0]*p[0]+a[1]*p[1]+a[2]*p[2]-c, fq=a[0]*q[0]+a[1]*q[1]+a[2]*q[2]-c;
+    if(Math.abs(fp)<1e-12) pts.push(p);
+    if((fp<0&&fq>0)||(fp>0&&fq<0)){ const t=fp/(fp-fq); pts.push([p[0]+t*(q[0]-p[0]),p[1]+t*(q[1]-p[1]),p[2]+t*(q[2]-p[2])]); }
+  }
+  if(pts.length<3) return [];
+  const cen=[0,0,0]; pts.forEach(p=>{for(let k=0;k<3;k++) cen[k]+=p[k]/pts.length;});
+  const nrm=Math.hypot(...a), nv=a.map(x=>x/nrm);
+  let e1=Math.abs(nv[0])<0.9?[1,0,0]:[0,1,0];
+  const d1=e1[0]*nv[0]+e1[1]*nv[1]+e1[2]*nv[2]; e1=e1.map((x,k)=>x-d1*nv[k]); const l1=Math.hypot(...e1); e1=e1.map(x=>x/l1);
+  const e2=[nv[1]*e1[2]-nv[2]*e1[1], nv[2]*e1[0]-nv[0]*e1[2], nv[0]*e1[1]-nv[1]*e1[0]];
+  const ang=p=>{ const w=[p[0]-cen[0],p[1]-cen[1],p[2]-cen[2]]; return Math.atan2(w[0]*e2[0]+w[1]*e2[1]+w[2]*e2[2], w[0]*e1[0]+w[1]*e1[1]+w[2]*e1[2]); };
+  const uniq=[]; pts.forEach(p=>{ if(!uniq.some(q=>Math.hypot(p[0]-q[0],p[1]-q[1],p[2]-q[2])<1e-9)) uniq.push(p); });
+  return uniq.sort((p,q)=>ang(p)-ang(q));
+}
+function hexA(col,al){ const c=col.replace("#",""); const r=parseInt(c.slice(0,2),16),g=parseInt(c.slice(2,4),16),bl=parseInt(c.slice(4,6),16); return `rgba(${r},${g},${bl},${al})`; }
+function draw3(showDot,sol){
+  const R=RANGE; sf=size/(2*R*1.85);
+  ctx.clearRect(0,0,size,size);
+  // 立方体框
+  const V=[]; for(const x of [-R,R]) for(const y of [-R,R]) for(const z of [-R,R]) V.push([x,y,z]);
+  ctx.save(); ctx.strokeStyle="#e2e8f0"; ctx.lineWidth=1;
+  for(let i=0;i<8;i++) for(let j=i+1;j<8;j++){ let d=0; for(let k=0;k<3;k++) if(V[i][k]!==V[j][k]) d++; if(d===1){ const p=proj3(V[i]),q=proj3(V[j]); ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke(); } }
+  ctx.restore();
+  // 坐标轴
+  const axes=[[[-R,0,0],[R,0,0],"x₁"],[[0,-R,0],[0,R,0],"x₂"],[[0,0,-R],[0,0,R],"x₃"]];
+  ctx.save(); ctx.strokeStyle="#94a3b8"; ctx.lineWidth=1.4;
+  axes.forEach(([p,q,l])=>{ const P=proj3(p),Q=proj3(q); ctx.beginPath(); ctx.moveTo(P.x,P.y); ctx.lineTo(Q.x,Q.y); ctx.stroke(); drawMathLabel(l,Q.x+4,Q.y-6,"#64748b",14); });
+  ctx.restore();
+  // 平面（按深度从远到近画）
+  const polys=[];
+  for(let r=0;r<3;r++){
+    if(Math.hypot(...A[r])<1e-12) continue;
+    const poly=planePoly(A[r],b[r],R); if(!poly.length) continue;
+    const pp=poly.map(proj3); polys.push({r, pp, d:pp.reduce((s,p)=>s+p.depth,0)/pp.length});
+  }
+  polys.sort((p,q)=>p.d-q.d);
+  polys.forEach(({r,pp})=>{
+    const col=getCol(COLS[r]);
+    ctx.save(); ctx.beginPath(); pp.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.closePath();
+    ctx.fillStyle=hexA(col,0.18); ctx.fill(); ctx.strokeStyle=hexA(col,0.85); ctx.lineWidth=1.6; ctx.stroke(); ctx.restore();
+  });
+  // 无穷多解且 R(A)=2：三个平面交于一条直线，把这条线画出来
+  const ln = (!sol) ? solutionLine(A,b) : null;
+  if(ln){
+    const seg=clipLine(ln.p, ln.d, R);
+    if(seg){
+      const P=proj3(seg[0]), Q=proj3(seg[1]);
+      ctx.save(); ctx.strokeStyle="#dd6b20"; ctx.lineWidth=4; ctx.lineCap="round";
+      ctx.beginPath(); ctx.moveTo(P.x,P.y); ctx.lineTo(Q.x,Q.y); ctx.stroke(); ctx.restore();
+      drawText("交线上每一点都是解（无穷多解）", 10, 18, "#dd6b20", 12.5);
+    }
+  }
+  // 唯一解：标出交点
+  if(showDot && sol){
+    const P=proj3(sol);
+    ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle="#dd6b20"; ctx.lineWidth=1.2;
+    const O=proj3([sol[0],sol[1],0]), X=proj3([sol[0],0,0]), Y=proj3([0,sol[1],0]);
+    [[P,O],[O,X],[O,Y]].forEach(([p,q])=>{ ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke(); });
+    ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.arc(P.x,P.y,6,0,2*Math.PI); ctx.fillStyle="#dd6b20"; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle="#fff"; ctx.stroke(); ctx.restore();
+    drawMathLabel(`(${nf(sol[0])}, ${nf(sol[1])}, ${nf(sol[2])})`, P.x+10, P.y-12, "#dd6b20", 14, false);
+  }
+  drawText("按住拖动可旋转", 10, size-10, "#a0aec0", 11.5);
+}
+// R(A)=R(A,b)=2 时求解集直线 p + t·d（d 为两行法向量的叉积）
+function solutionLine(A,b){
+  if(A.length!==3) return null;
+  const rA=rankOf(A), rAb=rankOf(A.map((r,i)=>r.concat([b[i]])));
+  if(!(rA===2 && rAb===2)) return null;
+  const cr=(u,v)=>[u[1]*v[2]-u[2]*v[1], u[2]*v[0]-u[0]*v[2], u[0]*v[1]-u[1]*v[0]];
+  for(let i=0;i<3;i++) for(let j=i+1;j<3;j++){
+    const d=cr(A[i],A[j]); if(Math.hypot(...d)<1e-9) continue;
+    // 取 |d_k| 最大的分量 k，令 x_k=0，解另外两个未知数
+    let k=0; for(let t=1;t<3;t++) if(Math.abs(d[t])>Math.abs(d[k])) k=t;
+    const o=[0,1,2].filter(t=>t!==k);
+    const M=[[A[i][o[0]],A[i][o[1]]],[A[j][o[0]],A[j][o[1]]]], Dm=det2(M);
+    const u=(b[i]*M[1][1]-M[0][1]*b[j])/Dm, w=(M[0][0]*b[j]-b[i]*M[1][0])/Dm;
+    const p=[0,0,0]; p[o[0]]=u; p[o[1]]=w;
+    return {p, d};
+  }
+  return null;
+}
+function clipLine(p,d,R){        // 直线与立方体 [-R,R]³ 的交线段
+  let t0=-1e9, t1=1e9;
+  for(let k=0;k<3;k++){
+    if(Math.abs(d[k])<1e-12){ if(Math.abs(p[k])>R) return null; continue; }
+    let a=(-R-p[k])/d[k], c=(R-p[k])/d[k]; if(a>c) [a,c]=[c,a];
+    t0=Math.max(t0,a); t1=Math.min(t1,c);
+  }
+  if(t0>t1) return null;
+  return [p.map((x,k)=>x+t0*d[k]), p.map((x,k)=>x+t1*d[k])];
+}
+let rot=null;
+canvas.addEventListener("mousedown",e=>{ if(A.length===3) rot={x:e.clientX,y:e.clientY,yaw,pitch}; });
+window.addEventListener("mousemove",e=>{ if(!rot) return; yaw=rot.yaw+(e.clientX-rot.x)*0.01; pitch=Math.max(-1.4,Math.min(1.4,rot.pitch+(e.clientY-rot.y)*0.01)); drawCanvas(mode==="explore"||!!(quiz&&quiz.done)); });
+window.addEventListener("mouseup",()=>rot=null);
+canvas.addEventListener("touchstart",e=>{ if(A.length===3){ e.preventDefault(); const t=e.touches[0]; rot={x:t.clientX,y:t.clientY,yaw,pitch}; } },{passive:false});
+canvas.addEventListener("touchmove",e=>{ if(!rot) return; e.preventDefault(); const t=e.touches[0]; yaw=rot.yaw+(t.clientX-rot.x)*0.01; pitch=Math.max(-1.4,Math.min(1.4,rot.pitch+(t.clientY-rot.y)*0.01)); drawCanvas(mode==="explore"||!!(quiz&&quiz.done)); },{passive:false});
+canvas.addEventListener("touchend",()=>rot=null);
+
+/* ══════════════ 练习 ══════════════ */
+const QUIZKEY="la-cramer-quiz";
+let streak=0;
+let stats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){
+  if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return;
+  stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats();
+}
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function parseAns(str){
+  str=(str||"").trim().replace(/\s+/g,"").replace(/−/g,"-");
+  if(str==="") return NaN;
+  if(str.includes("/")){ const [p,q]=str.split("/"); const pv=parseFloat(p),qv=parseFloat(q); if(Number.isNaN(pv)||Number.isNaN(qv)||qv===0) return NaN; return pv/qv; }
+  return parseFloat(str);
+}
+function genProblem(){
+  const nn = Math.random()<0.5?2:3;
+  let M, bb, D;
+  if(nn===2){
+    do{ M=[[ri(-3,3),ri(-3,3)],[ri(-3,3),ri(-3,3)]]; D=det2(M); }while(D===0);
+    bb=[ri(-4,4),ri(-4,4)];
+  }else{
+    // 三元：解取小整数，b=A·x，保证计算量适中
+    do{ M=Array.from({length:3},()=>Array.from({length:3},()=>ri(-2,2))); D=det3(M); }while(D===0 || Math.abs(D)>12);
+    const x=[ri(-2,2),ri(-2,2),ri(-2,2)];
+    bb=M.map(r=>r[0]*x[0]+r[1]*x[1]+r[2]*x[2]);
+  }
+  const Ds=[0,1,2].slice(0,nn).map(i=>detN(replaceCol(M,i,bb)));
+  const kind=["D","Di","xi"][ri(0,2)];
+  return {n:nn, A:M, b:bb, D, Ds, kind, idx:ri(0,nn-1), done:false, correct:false};
+}
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody");
+  const fb=document.getElementById("qFeedback"); fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  let ask;
+  if(q.kind==="D") ask=`求<b>系数行列式</b> <math><mi>D</mi><mo>=</mo>${DETA}</math>：`;
+  else if(q.kind==="Di") ask=`求 <math><msub><mi>D</mi><mn>${q.idx+1}</mn></msub></math>（把 <math><mi>D</mi></math> 的<b>第 ${q.idx+1} 列</b>换成常数列后的行列式）：`;
+  else ask=`用克拉默法则求 <math><msub><mi>x</mi><mn>${q.idx+1}</mn></msub></math>（可填分数，如 <b>3/2</b>）：`;
+  const geo = q.n===2? "左图两条直线即这两个方程" : "左图三个平面即这三个方程（可拖动旋转）";
+  body.innerHTML=
+    `已知${q.n===2?"二":"三"}元方程组：${sysHTMLof(q.A,q.b)}<div style="margin-top:8px;">${ask}</div>`
+    +`<div class="ans"><math>${q.kind==="D"?`<mi>D</mi>`:(q.kind==="Di"?`<msub><mi>D</mi><mn>${q.idx+1}</mn></msub>`:`<msub><mi>x</mi><mn>${q.idx+1}</mn></msub>`)}<mo>=</mo></math>`
+    +`<input class="qin" id="qIn" type="text" placeholder="${q.kind==="xi"?"整数或 p/q":"整数"}"></div>`
+    +`<div style="margin-top:6px;font-size:12.5px;color:#a0aec0;">${geo}；提交或看解析后会标出交点（即方程组的解）。</div>`;
+  document.getElementById("qIn").addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); });
+  A=q.A; b=q.b;
+  drawCanvas(false);
+  renderStats();
+}
+function renderStats(){
+  const acc = stats.attempted ? Math.round(stats.correct/stats.attempted*100) : 0;
+  document.getElementById("quizStats").innerHTML=
+    `已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`;
+}
+function targetVal(q){
+  if(q.kind==="D") return q.D;
+  if(q.kind==="Di") return q.Ds[q.idx];
+  return q.Ds[q.idx]/q.D;
+}
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return;
+  const fb=document.getElementById("qFeedback");
+  const v=parseAns(document.getElementById("qIn").value);
+  if(Number.isNaN(v)){ fb.className="feedback no"; fb.textContent="请填一个数值（求解未知数时可填分数 p/q）"; return; }
+  if(Math.abs(v-targetVal(q))<1e-6) markCorrect();
+  else { fb.className="feedback no"; fb.textContent="还不对，再按行列式定义算算～（也可以点“看解析”）"; }
+}
+// 行列式展开式（文字）：二阶对角线法；三阶按第一行展开
+function pML(v){ return v<0?`<mrow><mo>(</mo><mo form="prefix" lspace="0" rspace="0">&#x2212;</mo><mn>${Math.abs(v)}</mn><mo>)</mo></mrow>`:`<mn>${v}</mn>`; }
+function detExpText(M){
+  if(M.length===2) return `<math>${pML(M[0][0])}<mo>&#xD7;</mo>${pML(M[1][1])}<mo>&#x2212;</mo>${pML(M[0][1])}<mo>&#xD7;</mo>${pML(M[1][0])}<mo>=</mo>${nml(det2(M))}</math>`;
+  const m=j=>M.filter((_,r)=>r!==0).map(r=>r.filter((_,c)=>c!==j));
+  const t=[0,1,2].map(j=>`${j===0?"":(j===1?"<mo>&#x2212;</mo>":"<mo>+</mo>")}${pML(M[0][j])}<mo>&#xD7;</mo>${pML(det2(m(j)))}`).join("");
+  return `按第 1 行展开 <math>${t}<mo>=</mo>${nml(det3(M))}</math>`;
+}
+function solHTML(){
+  const q=quiz;
+  let s=`<div class="sol">系数行列式 <math><mi>D</mi></math>：${detExpText(q.A)}。`;
+  if(q.kind==="D") return s+`</div>`;
+  const Mi=replaceCol(q.A,q.idx,q.b), Di=q.Ds[q.idx];
+  s+=`<br>第 ${q.idx+1} 列换成常数列后，<math><msub><mi>D</mi><mn>${q.idx+1}</mn></msub></math>：${detExpText(Mi)}。`;
+  if(q.kind==="Di") return s+`</div>`;
+  return s+`<br>所以 <math><msub><mi>x</mi><mn>${q.idx+1}</mn></msub><mo>=</mo><mfrac><msub><mi>D</mi><mn>${q.idx+1}</mn></msub><mi>D</mi></mfrac><mo>=</mo><mfrac><mrow>${nml(Di)}</mrow><mrow>${nml(q.D)}</mrow></mfrac><mo>=</mo></math>${fracML(Di,q.D)}。</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+function markCorrect(){
+  const q=quiz; q.done=true; q.correct=true;
+  stats.attempted++; stats.correct++; streak++; saveStats();
+  drawCanvas(true);
+  const fb=document.getElementById("qFeedback"); fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML();
+  lockQ(); renderStats();
+}
+function onReveal(){
+  const q=quiz; if(!q||q.done) return;
+  q.done=true; stats.attempted++; streak=0; saveStats();
+  drawCanvas(true);
+  const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML();
+  lockQ(); renderStats();
+}
+function onHint(){
+  const q=quiz; if(!q) return;
+  const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  const how = q.n===2? `二阶行列式 = 主对角线之积 − 副对角线之积` : `三阶行列式可按第 1 行展开（或用对角线法则）`;
+  if(q.kind==="D") fb.innerHTML=`提示：${how}。`;
+  else if(q.kind==="Di") fb.innerHTML=`提示：先把系数行列式的<b>第 ${q.idx+1} 列</b>整列换成常数列 ${vecML(q.b)}，再计算：${how}。`;
+  else fb.innerHTML=`提示：<math><msub><mi>x</mi><mn>${q.idx+1}</mn></msub><mo>=</mo><mfrac><msub><mi>D</mi><mn>${q.idx+1}</mn></msub><mi>D</mi></mfrac></math>，先分别算出 <math><msub><mi>D</mi><mn>${q.idx+1}</mn></msub></math> 与 <math><mi>D</mi></math> 再相除（结果可能是分数）。`;
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+
+/* ══════════════ 模式切换 ══════════════ */
+let savedExplore=null;
+function setMode(m){
+  mode=m;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("exploreCard").style.display = m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display   = m==="practice"?"":"none";
+  document.getElementById("resultCard").style.display = m==="explore"?"":"none";
+  if(m==="practice"){
+    savedExplore={A:A.map(r=>r.slice()), b:b.slice(), n};
+    quiz=genProblem(); renderProblem();
+  }else{
+    quiz=null;
+    if(savedExplore){ A=savedExplore.A; b=savedExplore.b; n=savedExplore.n; }
+    document.getElementById("segN2").classList.toggle("on",n===2);
+    document.getElementById("segN3").classList.toggle("on",n===3);
+    buildInputs(); updateExplore();
+  }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
+
+/* 初始化 */
+buildInputs();
+resize();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-cramer";                // ← 计数键：与编号 L# 解耦的稳定标识，永不改动
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
