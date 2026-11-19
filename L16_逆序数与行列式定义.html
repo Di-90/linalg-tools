@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>逆序数与行列式定义 · L16 · 线性代数</title>
+<style>
+  /* ===== 线性代数工具箱 · 共用脚手架样式 ===== */
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --hl-row:#d1e7dd; --hl-col:#f8d7da; --hl-cell:#fff3cd;
+    --rowc:#2b6cb0; --colc:#b7791f;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;font-family:"Cambria Math","STIX Two Math",serif;font-size:1.12em;}
+  var,.va{font-style:italic;font-family:"Cambria Math","STIX Two Math",serif;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:920px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .actions button{padding:8px 14px;border:1px solid var(--line);background:#fff;
+       border-radius:8px;font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  .actions button:hover{border-color:var(--blue);}
+  .actions button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  .actions button.primary:hover{filter:brightness(1.06);}
+  .actions button.warn{border-color:#feb2b2;color:#c53030;}
+  .actions button.warn:hover{background:#fff5f5;}
+  .plabel{font-size:12.5px;color:var(--sub);margin:12px 0 2px;}
+  .hint{font-size:12.5px;color:#a0aec0;margin-top:8px;}
+  /* ── 模式切换 ── */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  /* ── 逆序数：牌与弧 ── */
+  .permrow{position:relative;display:flex;justify-content:center;padding:6px 0 2px;overflow-x:auto;}
+  .permrow svg.arcs{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;}
+  .tiles{display:flex;gap:10px;touch-action:none;}
+  .tile{width:52px;height:52px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+     font-size:24px;font-weight:600;background:#fff;border:1.6px solid var(--blue);color:var(--blue);
+     cursor:grab;user-select:none;box-shadow:0 1px 2px rgba(0,0,0,.06);
+     font-variant-numeric:tabular-nums;transition:box-shadow .12s,transform .12s;}
+  .tile.dragging{cursor:grabbing;transform:scale(1.08);box-shadow:0 6px 18px rgba(0,0,0,.18);opacity:.95;z-index:5;border-color:var(--green);}
+  .swaprow{display:flex;justify-content:center;gap:10px;margin-top:8px;}
+  .swaprow .gap{width:52px;display:flex;justify-content:center;}
+  .swapbtn{width:30px;height:26px;border:1px solid var(--line);background:#fff;border-radius:7px;
+     cursor:pointer;font-size:14px;color:var(--sub);line-height:1;transition:.12s;}
+  .swapbtn:hover{border-color:var(--green);color:var(--green);}
+  /* ── 行列式：骨牌 ── */
+  .domrow{position:relative;display:flex;justify-content:center;gap:12px;padding:8px 0 2px;overflow-x:auto;touch-action:none;}
+  .domino{width:74px;border:1.6px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;
+     cursor:grab;user-select:none;box-shadow:0 1px 2px rgba(0,0,0,.06);
+     display:flex;flex-direction:column;transition:box-shadow .12s,transform .12s;}
+  .domino.dragging{cursor:grabbing;transform:scale(1.06);box-shadow:0 6px 18px rgba(0,0,0,.18);opacity:.95;z-index:5;}
+  .domino .lab{font-size:12px;text-align:center;padding:3px 0;font-weight:600;line-height:1.2;}
+  .domino .rowlab{background:#e6effa;color:var(--rowc);}
+  .domino .collab{background:#fbf1e0;color:var(--colc);}
+  .domino .mid{padding:9px 4px;text-align:center;}
+  .domino .aij{font-family:"Cambria Math","STIX Two Math",serif;font-style:italic;font-size:15px;color:var(--sub);}
+  .domino .val{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px;}
+  .domino.bad{border-color:#feb2b2;background:#fff5f5;}
+  .domino.bad .val{color:#c53030;}
+  .times{align-self:center;font-size:20px;color:#a0aec0;}
+  /* 信息条 */
+  .info{font-size:14px;line-height:2;font-variant-numeric:tabular-nums;margin-top:6px;}
+  .info .seq{font-family:"Consolas","Courier New",monospace;}
+  .info .rowc{color:var(--rowc);font-weight:600;}
+  .info .colc{color:var(--colc);font-weight:600;}
+  .chip{display:inline-block;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:600;margin-left:4px;}
+  .chip.even{background:#e6fffa;color:#234e52;border:1px solid #b2f5ea;}
+  .chip.odd{background:#fff5f5;color:#822727;border:1px solid #feb2b2;}
+  .keyline{margin-top:10px;padding:9px 13px;border-radius:8px;background:#f0f7ff;border:1px solid #cfe0f2;
+     font-size:13px;color:#2a4365;}
+  .badbox{margin-top:12px;padding:11px 14px;border:1px solid #feb2b2;background:#fff5f5;border-radius:8px;
+     font-size:13px;color:#822727;display:none;}
+  .badbox.show{display:block;}
+  .badbox b{color:#c53030;}
+  /* 矩阵输入 */
+  .matgrid{display:inline-grid;gap:6px;margin:4px auto;}
+  .matgrid input{width:52px;height:40px;border:1px solid var(--line);border-radius:7px;text-align:center;
+     font-size:16px;font-variant-numeric:tabular-nums;}
+  .matgrid input:focus{outline:none;border-color:var(--blue);}
+  .nsel{display:inline-flex;gap:6px;margin-left:10px;}
+  .nsel button{padding:5px 12px;border:1px solid var(--line);background:#fff;border-radius:7px;cursor:pointer;font-size:13px;}
+  .nsel button.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+  /* 展开式表 */
+  table.exp{border-collapse:collapse;width:100%;font-size:13px;margin-top:4px;}
+  table.exp th,table.exp td{border:1px solid var(--line);padding:5px 8px;text-align:center;font-variant-numeric:tabular-nums;}
+  table.exp th{background:#f7fafc;color:var(--sub);font-weight:600;}
+  table.exp tbody tr{cursor:pointer;}
+  table.exp tbody tr:hover{background:#eef4fb;}
+  table.exp tbody tr.cur{background:#e6fffa;}
+  table.exp td.term{text-align:left;}
+  table.exp .sgnp{color:var(--green);font-weight:600;}
+  table.exp .sgnm{color:#c53030;font-weight:600;}
+  .detline{margin-top:10px;font-size:15px;font-weight:600;color:var(--ink);text-align:center;}
+  .detline b{color:var(--blue);font-size:19px;}
+  /* ── 练习 ── */
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:15px;line-height:2;}
+  .qbody .ans{display:inline-flex;align-items:center;gap:6px;margin-top:8px;}
+  .qbody input.qin{width:84px;font-size:15px;padding:6px 7px;border:1px solid var(--line);border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;max-width:420px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:14px;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;line-height:1.9;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:14px;margin-top:6px;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .qbtns button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  .qbtns button:hover{border-color:var(--blue);}
+  .qbtns button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  .qbtns button:disabled{opacity:.45;cursor:not-allowed;}
+  .info math, .keyline math{font-size:1.08em;}
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>逆序数与行列式定义</h1>
+  <span class="sub">拖动感受逆序数；行列式定义里行标、列标必须跟着元素一起走；含练习</span>
+  <span class="tag">L16 · 线性代数</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    <b><math><mi>n</mi></math> 阶行列式</b>的定义：取遍 <math><mn>1</mn><mo>,</mo><mn>2</mn><mo>,</mo><mo>⋯</mo><mo>,</mo><mi>n</mi></math> 的所有排列 <math><msub><mi>p</mi><mn>1</mn></msub><msub><mi>p</mi><mn>2</mn></msub><mo>⋯</mo><msub><mi>p</mi><mi>n</mi></msub></math> 作为列标，每项带符号 <math><msup><mrow><mo>(</mo><mo form="prefix" lspace="0" rspace="0">−</mo><mn>1</mn><mo>)</mo></mrow><mi>t</mi></msup></math> 后求和：
+    <div class="formula">
+      <math display="block">
+        <mi>D</mi><mo>=</mo><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo><mo>=</mo>
+        <mo>∑</mo><msup><mrow><mo>(</mo><mo form="prefix" lspace="0" rspace="0">−</mo><mn>1</mn><mo>)</mo></mrow><mi>t</mi></msup>
+        <msub><mi>a</mi><mrow><mn>1</mn><msub><mi>p</mi><mn>1</mn></msub></mrow></msub>
+        <msub><mi>a</mi><mrow><mn>2</mn><msub><mi>p</mi><mn>2</mn></msub></mrow></msub>
+        <mo>⋯</mo>
+        <msub><mi>a</mi><mrow><mi>n</mi><msub><mi>p</mi><mi>n</mi></msub></mrow></msub>
+      </math>
+    </div>
+    其中 <math><mi>t</mi></math> 是排列 <math><msub><mi>p</mi><mn>1</mn></msub><msub><mi>p</mi><mn>2</mn></msub><mo>⋯</mo><msub><mi>p</mi><mi>n</mi></msub></math> 的<b>逆序数</b>（排列中前面的数大于后面的数，就构成一个逆序；逆序的总个数即逆序数）。
+    如果一项里各因子不按行标顺序排列，写成 <math><msub><mi>a</mi><mrow><msub><mi>i</mi><mn>1</mn></msub><msub><mi>j</mi><mn>1</mn></msub></mrow></msub><msub><mi>a</mi><mrow><msub><mi>i</mi><mn>2</mn></msub><msub><mi>j</mi><mn>2</mn></msub></mrow></msub><mo>⋯</mo><msub><mi>a</mi><mrow><msub><mi>i</mi><mi>n</mi></msub><msub><mi>j</mi><mi>n</mi></msub></mrow></msub></math>，那么它的符号由行标排列与列标排列的逆序数<b>之和</b>决定：
+    <div class="formula">
+      <math display="block">
+        <msup><mrow><mo>(</mo><mo form="prefix" lspace="0" rspace="0">−</mo><mn>1</mn><mo>)</mo></mrow><mrow><mi>t</mi><mo>(</mo><msub><mi>i</mi><mn>1</mn></msub><msub><mi>i</mi><mn>2</mn></msub><mo>⋯</mo><msub><mi>i</mi><mi>n</mi></msub><mo>)</mo><mo>+</mo><mi>t</mi><mo>(</mo><msub><mi>j</mi><mn>1</mn></msub><msub><mi>j</mi><mn>2</mn></msub><mo>⋯</mo><msub><mi>j</mi><mi>n</mi></msub><mo>)</mo></mrow></msup>
+      </math>
+    </div>
+    关键：每个元素 <math><msub><mi>a</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></math> 自带行标 <span style="color:var(--rowc);font-weight:600;"><math><mi>i</mi></math></span> 和列标 <span style="color:var(--colc);font-weight:600;"><math><mi>j</mi></math></span>，
+    <b>调换因子顺序时，行标与列标必须跟着元素一起动</b>，不能各排各的。
+  </div>
+
+  <div class="modebar">
+    <button id="btnA" class="on">① 逆序数（排列）</button>
+    <button id="btnB">② 行列式定义</button>
+    <button id="btnC">③ 练习</button>
+  </div>
+
+  <!-- ═══════════ TAB A：逆序数 ═══════════ -->
+  <section id="tabA">
+    <div class="card">
+      <h2>拖动方块重排，或点下方 ⇄ 做相邻对换</h2>
+      <div class="permrow" id="permRow">
+        <svg class="arcs" id="permArcs"></svg>
+        <div class="tiles" id="permTiles"></div>
+      </div>
+      <div class="swaprow" id="swapRow"></div>
+      <div class="info" id="permInfo"></div>
+      <div class="keyline" id="permKey"></div>
+    </div>
+    <div class="card">
+      <h2>控制</h2>
+      <div class="actions">
+        <span style="align-self:center;font-size:13px;color:var(--sub);">阶数 <math><mi>n</mi></math> =</span>
+        <span class="nsel" id="permN"></span>
+        <button onclick="permShuffle()">🎲 打乱</button>
+        <button onclick="permReset()">复位为 1, 2, ⋯, n</button>
+      </div>
+      <div class="hint">红色弧线连接的两个数构成一个<b>逆序</b>（左大右小），弧线的条数就是逆序数。每做一次<b>相邻</b>对换，逆序数恰好增加或减少 1，奇偶性改变。</div>
+    </div>
+  </section>
+
+  <!-- ═══════════ TAB B：行列式定义 ═══════════ -->
+  <section id="tabB" style="display:none;">
+    <div class="card">
+      <h2>矩阵 <math><mi class="bm">A</mi></math>（可编辑整数）
+        <span class="nsel" id="detN"></span>
+      </h2>
+      <div style="text-align:center;"><div class="matgrid" id="matGrid"></div></div>
+    </div>
+
+    <div class="card">
+      <h2>当前这一项：拖动骨牌改变因子顺序（行标 <span style="color:var(--rowc)">蓝</span> / 列标 <span style="color:var(--colc)">金</span> 一起动）</h2>
+      <div class="domrow" id="domRow"></div>
+      <div class="info" id="detInfo"></div>
+      <div class="keyline" id="detKey"></div>
+      <div class="actions" style="margin-top:12px;">
+        <button onclick="detSortRow()">按行标升序</button>
+        <button onclick="detSortCol()">按列标升序</button>
+        <button onclick="detShuffle()">🎲 打乱因子</button>
+        <button class="warn" onclick="detWrong()">✗ 只给列标排序会怎样？</button>
+      </div>
+      <div class="badbox" id="badBox"></div>
+    </div>
+
+    <div class="card">
+      <h2>完整展开式（行标按 1, 2, ⋯, n 排；点任一行选为当前项）</h2>
+      <div style="overflow-x:auto;"><table class="exp" id="expTable"></table></div>
+      <div class="detline" id="detLine"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ TAB C：练习 ═══════════ -->
+  <section id="tabC" style="display:none;">
+    <div class="card">
+      <div class="quizhead">
+        <h2>练习 · 逆序数与行列式定义</h2>
+        <span class="stats" id="quizStats"></span>
+        <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+      </div>
+      <div class="qbody" id="qBody"></div>
+      <div id="qVis" style="margin-top:10px;"></div>
+      <div class="feedback" id="qFeedback"></div>
+      <div class="qbtns">
+        <button class="primary" id="qSubmit">提交</button>
+        <button id="qHint">提示</button>
+        <button id="qReveal">看解析</button>
+        <button id="qNext">下一题 ▸</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+/* ══════════ 工具函数 ══════════ */
+function inversions(a){ let c=0; for(let i=0;i<a.length;i++) for(let j=i+1;j<a.length;j++) if(a[i]>a[j]) c++; return c; }
+function perms(a){ if(a.length<=1) return [a.slice()]; const r=[]; for(let i=0;i<a.length;i++){ const rest=a.slice(0,i).concat(a.slice(i+1)); perms(rest).forEach(p=>r.push([a[i],...p])); } return r; }
+function shuffleArr(a){ for(let k=a.length-1;k>0;k--){ const t=Math.floor(Math.random()*(k+1)); [a[k],a[t]]=[a[t],a[k]]; } return a; }
+function parityChip(x){ const odd=x%2!==0; return `<span class="chip ${odd?'odd':'even'}">${odd?'奇':'偶'}</span>`; }
+/* —— 公式（MathML）小工具 —— */
+const NEG='<mo form="prefix" lspace="0" rspace="0">&#x2212;</mo>';
+function num(v){ return v<0?`<mrow>${NEG}<mn>${Math.abs(v)}</mn></mrow>`:`<mn>${v}</mn>`; }
+function M(x){ return `<math>${x}</math>`; }
+function tEq(k,sub){ return M(`${sub?`<msub><mi>t</mi><mtext>${sub}</mtext></msub>`:`<mi>t</mi>`}<mo>=</mo><mn>${k}</mn>`); }
+function powNeg1(e){ return `<msup><mrow><mo>(</mo>${NEG}<mn>1</mn><mo>)</mo></mrow>${e}</msup>`; }
+function aML(i,j){ return `<msub><mi>a</mi><mrow><mn>${i}</mn><mn>${j}</mn></mrow></msub>`; }
+function seqML(arr){ return arr.map(v=>`<mn>${v}</mn>`).join(`<mspace width="0.35em"/>`); }
+const DETA=`<mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo>`;
+
+/* 通用：持久 DOM 节点的指针拖拽重排（触摸/鼠标均可） */
+function attachSortable(container, getArr, itemSel, onChange){
+  let dragging=null;
+  container.addEventListener('pointerdown', e=>{
+    const t=e.target.closest(itemSel); if(!t) return;
+    dragging=t; t.setPointerCapture(e.pointerId); t.classList.add('dragging'); e.preventDefault();
+  });
+  container.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const arr=getArr();
+    const tiles=[...container.querySelectorAll(itemSel)];
+    let to=0, best=Infinity;
+    tiles.forEach((t,k)=>{ const r=t.getBoundingClientRect(); const c=r.left+r.width/2; const d=Math.abs(c-e.clientX); if(d<best){ best=d; to=k; } });
+    const from=tiles.indexOf(dragging);
+    if(to!==from){
+      const id=dragging.dataset.id;
+      const ai=arr.findIndex(x=>String(x)===id);
+      const it=arr.splice(ai,1)[0]; arr.splice(to,0,it);
+      arr.forEach(x=>{ const nd=[...container.querySelectorAll(itemSel)].find(n=>n.dataset.id===String(x)); container.appendChild(nd); });
+      onChange();
+    }
+  });
+  const end=()=>{ if(dragging){ dragging.classList.remove('dragging'); dragging=null; onChange(); } };
+  container.addEventListener('pointerup', end);
+  container.addEventListener('pointercancel', end);
+}
+
+/* 弧线：rowEl 内 tilesEl 的方块，按 arr 画逆序弧 */
+const ARCH=56;
+function drawArcs(rowEl, svgEl, tilesEl, arr, show){
+  const tiles=[...tilesEl.querySelectorAll('.tile')];
+  const rr=rowEl.getBoundingClientRect();
+  const cx=tiles.map(t=>{ const r=t.getBoundingClientRect(); return r.left-rr.left+r.width/2; });
+  svgEl.setAttribute('width',rowEl.scrollWidth); svgEl.setAttribute('height',ARCH);
+  let paths='';
+  if(show) for(let i=0;i<arr.length;i++) for(let j=i+1;j<arr.length;j++){
+    if(arr[i]>arr[j]){
+      const span=j-i, cy=ARCH-6-Math.min(span*13,ARCH-10);
+      paths+=`<path d="M ${cx[i]} ${ARCH-2} Q ${(cx[i]+cx[j])/2} ${cy} ${cx[j]} ${ARCH-2}" fill="none" stroke="#e15b64" stroke-width="1.8" opacity="0.85"/>`;
+    }
+  }
+  svgEl.innerHTML=paths;
+  tilesEl.style.marginTop=ARCH+'px';
+}
+
+/* ══════════════════════════════════════════
+   TAB A：逆序数
+   ══════════════════════════════════════════ */
+let permN=4, perm=[3,1,4,2];
+function buildNSel(id, cur, list, cb){
+  const box=document.getElementById(id); box.innerHTML='';
+  list.forEach(v=>{ const b=document.createElement('button'); b.textContent=v; if(v===cur) b.className='on';
+    b.onclick=()=>cb(v); box.appendChild(b); });
+}
+function rebuildPermTiles(){
+  const box=document.getElementById('permTiles'); box.innerHTML='';
+  perm.forEach(v=>{ const d=document.createElement('div'); d.className='tile'; d.dataset.id=v; d.textContent=v; box.appendChild(d); });
+  const sr=document.getElementById('swapRow'); sr.innerHTML='';
+  for(let k=0;k<perm.length;k++){
+    const g=document.createElement('div'); g.className='gap';
+    if(k<perm.length-1){ const b=document.createElement('button'); b.className='swapbtn'; b.textContent='⇄';
+      b.title='对换第 '+(k+1)+' 与第 '+(k+2)+' 个'; b.onclick=()=>permAdjSwap(k); g.appendChild(b); }
+    sr.appendChild(g);
+  }
+}
+function drawPermArcs(){ drawArcs(document.getElementById('permRow'),document.getElementById('permArcs'),document.getElementById('permTiles'),perm,true); }
+function refreshPerm(){
+  drawPermArcs();
+  const inv=inversions(perm);
+  document.getElementById('permInfo').innerHTML=
+    `排列 ${M(seqML(perm))}　·　逆序数 ${tEq(inv)}　${parityChip(inv)}排列`;
+  document.getElementById('permKey').innerHTML=
+    `${M(powNeg1(`<mi>t</mi>`)+`<mo>=</mo>`+powNeg1(`<mn>${inv}</mn>`)+`<mo>=</mo>`+num(inv%2?-1:1))}　——${inv%2?'奇':'偶'}排列在行列式里对应的项带${inv%2?'负':'正'}号。`;
+}
+function permAdjSwap(k){
+  const before=inversions(perm);
+  [perm[k],perm[k+1]]=[perm[k+1],perm[k]];
+  const after=inversions(perm);
+  rebuildPermTiles(); refreshPerm();
+  const delta=after-before;
+  document.getElementById('permInfo').innerHTML+=
+    `　<span style="color:${delta>0?'#c53030':'var(--green)'};font-weight:600;">（相邻对换：${M(`<mi>t</mi><mo>:</mo><mn>${before}</mn><mo>→</mo><mn>${after}</mn>`)}，${delta>0?'增加 1':'减少 1'}）</span>`;
+}
+function permShuffle(){ do{ shuffleArr(perm); }while(inversions(perm)===0 && perm.length>1); rebuildPermTiles(); refreshPerm(); }
+function permReset(){ perm=Array.from({length:permN},(_,i)=>i+1); rebuildPermTiles(); refreshPerm(); }
+function setPermN(n){ permN=n; buildNSel('permN',permN,[3,4,5,6],setPermN); permReset(); }
+
+/* ══════════════════════════════════════════
+   TAB B：行列式定义
+   ══════════════════════════════════════════ */
+let detN=3;
+let A=[[2,1,3],[0,4,1],[5,2,1]];
+let sigma=[1,0,2];          // sigma[r] = 该行选取的列（0 基）
+let order=[0,1,2];          // 骨牌显示顺序（行下标的排列）
+const DEFAULTS={
+  2:{A:[[3,1],[2,4]], s:[1,0]},
+  3:{A:[[2,1,3],[0,4,1],[5,2,1]], s:[1,0,2]},
+  4:{A:[[1,2,0,1],[0,3,1,2],[2,1,1,0],[1,0,2,3]], s:[1,0,3,2]}
+};
+function buildMatGrid(){
+  const g=document.getElementById('matGrid'); g.style.gridTemplateColumns=`repeat(${detN},auto)`; g.innerHTML='';
+  for(let i=0;i<detN;i++) for(let j=0;j<detN;j++){
+    const inp=document.createElement('input'); inp.type='number'; inp.step='1'; inp.value=A[i][j];
+    inp.oninput=()=>{ const v=parseInt(inp.value,10); A[i][j]=Number.isNaN(v)?0:v; refreshDet(); buildExpTable(); };
+    g.appendChild(inp);
+  }
+}
+function dominoHTML(r,c,val){
+  return `<div class="lab rowlab">行 ${r+1}</div>
+      <div class="mid"><div class="aij">${M(aML(r+1,c+1))}</div><div class="val">${val}</div></div>
+      <div class="lab collab">列 ${c+1}</div>`;
+}
+function rebuildDominoes(){
+  const box=document.getElementById('domRow'); box.innerHTML='';
+  order.forEach((r,idx)=>{
+    const c=sigma[r];
+    const d=document.createElement('div'); d.className='domino'; d.dataset.id=r;
+    d.innerHTML=dominoHTML(r,c,A[r][c]);
+    box.appendChild(d);
+    if(idx<order.length-1){ const x=document.createElement('span'); x.className='times'; x.textContent='×'; box.appendChild(x); }
+  });
+}
+function refreshDet(){
+  const rowSeq=order.map(r=>r+1);
+  const colSeq=order.map(r=>sigma[r]+1);
+  const tR=inversions(rowSeq), tC=inversions(colSeq);
+  const sum=tR+tC, sign=sum%2? -1:1;
+  let prod=1; order.forEach(r=>prod*=A[r][sigma[r]]);
+  const term=sign*prod;
+  [...document.querySelectorAll('#domRow .domino')].forEach(d=>{
+    const r=+d.dataset.id, c=sigma[r]; d.classList.remove('bad');
+    d.querySelector('.val').textContent=A[r][c];
+  });
+  document.getElementById('detInfo').innerHTML=
+    `行标排列 <span class="rowc">${M(seqML(rowSeq))}</span>：${tEq(tR,'行')} ${parityChip(tR)}<br>`+
+    `列标排列 <span class="colc">${M(seqML(colSeq))}</span>：${tEq(tC,'列')} ${parityChip(tC)}<br>`+
+    `两者之和 ${M(`<msub><mi>t</mi><mtext>行</mtext></msub><mo>+</mo><msub><mi>t</mi><mtext>列</mtext></msub><mo>=</mo><mn>${sum}</mn>`)} ${parityChip(sum)}　⇒　符号 ${M(powNeg1(`<mn>${sum}</mn>`)+`<mo>=</mo>`+num(sign))}`;
+  document.getElementById('detKey').innerHTML=
+    `该项 = 符号 × 各因子之积 = ${M(num(sign)+`<mo>×</mo>`+num(prod)+`<mo>=</mo>`)} <b style="font-size:16px;color:${term<0?'#c53030':'var(--green)'}">${M(num(term))}</b>　`+
+    `<span style="color:var(--sub)">随便拖动骨牌，行标、列标两个逆序数会各自变化，但它们<b>之和的奇偶性</b>不变，这一项的值也不变。</span>`;
+  document.getElementById('badBox').classList.remove('show');
+  markExpCur();
+}
+function reflowDominoes(){
+  const box=document.getElementById('domRow');
+  const doms=order.map(r=>box.querySelector('.domino[data-id="'+r+'"]'));
+  const times=[...box.querySelectorAll('.times')];
+  doms.forEach((d,i)=>{ box.appendChild(d); if(i<doms.length-1 && times[i]) box.appendChild(times[i]); });
+}
+function detSortRow(){ order.sort((a,b)=>a-b); rebuildDominoes(); refreshDet(); }
+function detSortCol(){ order.sort((a,b)=>sigma[a]-sigma[b]); rebuildDominoes(); refreshDet(); }
+function detShuffle(){ const o=order.slice(); do{ shuffleArr(order); }while(order.length>1 && order.every((v,i)=>v===o[i])); rebuildDominoes(); refreshDet(); }
+function detWrong(){
+  const rowSeq=order.map(r=>r+1);
+  const colSeq=order.map(r=>sigma[r]+1);
+  const sortedCol=colSeq.slice().sort((a,b)=>a-b);
+  const box=document.getElementById('badBox');
+  if(colSeq.every((v,i)=>v===sortedCol[i])){
+    box.innerHTML=`现在列标已经是升序 <span class="colc">${M(seqML(colSeq))}</span>，单独给列标排序不会改变任何东西。请先点“🎲 打乱因子”或拖动骨牌，再试一次。`;
+    box.classList.add('show'); return;
+  }
+  let origProd=1; order.forEach(r=>origProd*=A[r][sigma[r]]);
+  let wrongProd=1, cells=[];
+  for(let k=0;k<order.length;k++){
+    const r=rowSeq[k]-1, c=sortedCol[k]-1; wrongProd*=A[r][c];
+    cells.push(aML(r+1,c+1)+`<mo>=</mo>`+num(A[r][c]));
+  }
+  box.innerHTML=`<b>✗ 错误做法：</b>把列标单独排成升序 <span class="colc">${M(seqML(sortedCol))}</span>，而行标 `+
+    `<span class="rowc">${M(seqML(rowSeq))}</span> 保持不动。<br>`+
+    `这样各位置取到的元素变成 ${M(cells.join(`<mo>,</mo><mspace width="0.3em"/>`))}，<b>元素已经被换掉了</b>，得到的是另一个排列对应的项。`+
+    `按错误做法算出的乘积是 ${M(num(wrongProd))}，原来这一项的乘积是 ${M(num(origProd))}${wrongProd===origProd?'（这次数值碰巧相等，但取的元素已经不同）':''}。<br>`+
+    `<b>正确做法：</b>行标和列标印在同一张牌上，被元素捆在一起，只能<b>整张牌一起拖动</b>。`;
+  box.classList.add('show');
+  [...document.querySelectorAll('#domRow .domino')].forEach(d=>{ d.classList.add('bad'); setTimeout(()=>d.classList.remove('bad'),1200); });
+}
+function termML(p){ let s=''; for(let i=0;i<p.length;i++) s+=aML(i+1,p[i]+1); return M(s); }
+function buildExpTable(){
+  const P=perms(Array.from({length:detN},(_,i)=>i));
+  let det=0;
+  let html=`<thead><tr><th>列标排列</th><th>${M('<mi>t</mi>')}</th><th>符号</th><th>该项</th><th>值</th></tr></thead><tbody>`;
+  P.forEach(p=>{
+    const inv=inversions(p.map(x=>x+1)); const sg=inv%2?-1:1;
+    let prod=1; for(let i=0;i<detN;i++) prod*=A[i][p[i]];
+    const val=sg*prod; det+=val;
+    html+=`<tr data-p="${p.join(',')}"><td>${M(seqML(p.map(x=>x+1)))}</td><td>${M(`<mn>${inv}</mn>`)}</td>`+
+      `<td class="${sg>0?'sgnp':'sgnm'}">${sg>0?'+':'−'}</td>`+
+      `<td class="term">${termML(p)}</td><td>${M(num(val))}</td></tr>`;
+  });
+  html+=`</tbody>`;
+  const tb=document.getElementById('expTable'); tb.innerHTML=html;
+  tb.querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>{
+    sigma=tr.dataset.p.split(',').map(Number); order=Array.from({length:detN},(_,i)=>i);
+    rebuildDominoes(); refreshDet();
+  });
+  document.getElementById('detLine').innerHTML=`${M(DETA+`<mo>=</mo>`)} 各项之和 ${M(`<mo>=</mo>`)} <b>${M(num(det))}</b>`;
+  markExpCur();
+}
+function markExpCur(){
+  const key=sigma.join(',');
+  document.querySelectorAll('#expTable tbody tr').forEach(tr=>tr.classList.toggle('cur', tr.dataset.p===key));
+}
+function setDetN(n){
+  detN=n; const d=DEFAULTS[n]; A=d.A.map(r=>r.slice()); sigma=d.s.slice(); order=Array.from({length:n},(_,i)=>i);
+  buildNSel('detN',detN,[2,3,4],setDetN);
+  buildMatGrid(); rebuildDominoes(); refreshDet(); buildExpTable();
+}
+
+/* ══════════════════════════════════════════
+   TAB C：练习
+   题型：inv 求逆序数 | parity 判奇偶 | sign 判断某项的符号（或不是行列式的项）| det 用定义算行列式
+   ══════════════════════════════════════════ */
+const QUIZKEY="la-inv-det-quiz";
+let quiz=null, streak=0, stats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){ if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return; stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats(); }
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function randPerm(n){ let p; do{ p=shuffleArr(Array.from({length:n},(_,i)=>i+1)); }while(n>1 && inversions(p)===0); return p; }
+
+function genProblem(){
+  const kind=["inv","parity","sign","det"][ri(0,3)];
+  if(kind==="inv"||kind==="parity"){
+    const n=kind==="inv"?ri(4,6):ri(4,7), p=randPerm(n);
+    return {kind, p, t:inversions(p), opts:["奇排列","偶排列"], selected:-1};
+  }
+  if(kind==="sign"){
+    const n=ri(4,5);
+    let rows=Array.from({length:n},(_,i)=>i+1), cols=shuffleArr(rows.slice());
+    let valid=true;
+    if(Math.random()<0.25){            // 造一个不是行列式的项：某个列标（或行标）重复
+      valid=false; const i=ri(0,n-1); let j; do{ j=ri(0,n-1); }while(j===i);
+      if(Math.random()<0.5) cols[i]=cols[j]; else rows[i]=rows[j];
+    }
+    const pairs=shuffleArr(rows.map((r,k)=>[r,cols[k]]));   // 打乱因子顺序
+    const R=pairs.map(x=>x[0]), C=pairs.map(x=>x[1]);
+    const sum=inversions(R)+inversions(C);
+    const ans = !valid? 2 : (sum%2?1:0);
+    return {kind, n, pairs, R, C, tR:inversions(R), tC:inversions(C), valid, ansIdx:ans,
+            opts:["带正号","带负号",`不是 ${n} 阶行列式中的项`], selected:-1};
+  }
+  const n=Math.random()<0.4?2:3;
+  const Am=Array.from({length:n},()=>Array.from({length:n},()=>ri(-2,3)));
+  return {kind:"det", n, A:Am, val:detByDef(Am)};
+}
+function detByDef(Am){ const n=Am.length; let s=0; perms(Array.from({length:n},(_,i)=>i)).forEach(p=>{ let pr=1; for(let i=0;i<n;i++) pr*=Am[i][p[i]]; s+=(inversions(p)%2?-1:1)*pr; }); return s; }
+function optsHTML(opts){ let h=`<div class="opts" id="qOpts">`; opts.forEach((o,i)=>{ h+=`<label data-i="${i}"><input type="radio" name="qopt" value="${i}"><span>${o}</span></label>`; }); return h+`</div>`; }
+function bindOpts(){ document.querySelectorAll('#qOpts label').forEach(l=>l.addEventListener("click",()=>{ document.querySelectorAll('#qOpts label').forEach(x=>x.classList.remove("sel")); l.classList.add("sel"); l.querySelector('input').checked=true; quiz.selected=+l.dataset.i; })); }
+function matML(Am){ return M(`<mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mtable columnspacing="0.8em" rowspacing="0.25em">${Am.map(r=>`<mtr>${r.map(v=>`<mtd>${num(v)}</mtd>`).join('')}</mtr>`).join('')}</mtable><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow>`); }
+function productML(pairs){ return M(pairs.map(([r,c])=>aML(r,c)).join('')); }
+
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody"), fb=document.getElementById("qFeedback");
+  fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  if(q.kind==="inv"){
+    body.innerHTML=`求排列 ${M(seqML(q.p))} 的逆序数：<div class="ans">${M('<mi>t</mi><mo>=</mo>')}<input class="qin" id="qIn" type="number" step="1"></div>`;
+  }else if(q.kind==="parity"){
+    body.innerHTML=`排列 ${M(seqML(q.p))} 是奇排列还是偶排列？`+optsHTML(q.opts);
+  }else if(q.kind==="sign"){
+    body.innerHTML=`乘积 ${productML(q.pairs)} 在 ${q.n} 阶行列式的展开式中：`+optsHTML(q.opts);
+  }else{
+    body.innerHTML=`按定义计算 ${q.n} 阶行列式：<div style="margin:8px 0;">${matML(q.A)}</div><div class="ans">${M('<mi>D</mi><mo>=</mo>')}<input class="qin" id="qIn" type="number" step="1"></div>`;
+  }
+  if(q.kind!=="inv"&&q.kind!=="det") bindOpts();
+  const inp=document.getElementById("qIn"); if(inp) inp.addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); });
+  renderVis(); renderStats();
+}
+// 练习的图示：排列画方块（揭晓后画逆序弧）；判符号题画骨牌（揭晓后按行标排好）
+function renderVis(){
+  const q=quiz, box=document.getElementById("qVis");
+  if(q.kind==="inv"||q.kind==="parity"){
+    box.innerHTML=`<div class="permrow" id="qRow"><svg class="arcs" id="qArcs"></svg><div class="tiles" id="qTiles" style="touch-action:auto;">${q.p.map(v=>`<div class="tile" style="cursor:default;">${v}</div>`).join('')}</div></div>`
+      +`<div class="hint" style="text-align:center;">${q.done?"红色弧线即逆序，共 "+q.t+" 条":"提交或看解析后，用弧线标出每个逆序"}</div>`;
+    drawArcs(document.getElementById('qRow'),document.getElementById('qArcs'),document.getElementById('qTiles'),q.p,!!q.done);
+  }else if(q.kind==="sign"){
+    const show = q.done && q.valid ? q.pairs.slice().sort((a,b)=>a[0]-b[0]) : q.pairs;
+    const dom = ps=>`<div class="domrow" style="touch-action:auto;">${ps.map(([r,c],k)=>`<div class="domino" style="cursor:default;">${dominoHTML(r-1,c-1,"")}</div>${k<ps.length-1?'<span class="times">×</span>':''}`).join('')}</div>`;
+    box.innerHTML = dom(q.pairs) + (q.done&&q.valid? `<div class="hint" style="text-align:center;">按行标排好后：</div>`+dom(show) : ``);
+    box.querySelectorAll('.val').forEach(v=>v.remove());
+  }else{
+    box.innerHTML="";
+  }
+}
+function renderStats(){ const acc=stats.attempted?Math.round(stats.correct/stats.attempted*100):0; document.getElementById("quizStats").innerHTML=`已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`; }
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return; const fb=document.getElementById("qFeedback");
+  if(q.kind==="inv"||q.kind==="det"){
+    const v=parseInt(document.getElementById("qIn").value,10);
+    if(Number.isNaN(v)){ fb.className="feedback no"; fb.textContent="请填一个整数"; return; }
+    const ok = q.kind==="inv"? v===q.t : v===q.val;
+    ok?markCorrect():(fb.className="feedback no", fb.textContent="还不对，再算算～（也可以点“看解析”）");
+  }else{
+    if(q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个选项"; return; }
+    const ans = q.kind==="parity"? (q.t%2?0:1) : q.ansIdx;
+    q.selected===ans?markCorrect():(fb.className="feedback no", fb.textContent="不对哦，再想想～（也可以点“看解析”）");
+  }
+}
+function invDetail(p){            // 逐个数：它后面有几个比它小的
+  const parts=p.map((v,i)=>{ let c=0; for(let j=i+1;j<p.length;j++) if(p[j]<v) c++; return c; });
+  return M(parts.map(c=>`<mn>${c}</mn>`).join('<mo>+</mo>')+`<mo>=</mo><mn>${parts.reduce((a,b)=>a+b,0)}</mn>`);
+}
+function solHTML(){
+  const q=quiz;
+  if(q.kind==="inv"||q.kind==="parity"){
+    return `<div class="sol">从左到右，数出每个数后面比它小的数的个数，再相加：${invDetail(q.p)}，所以 ${tEq(q.t)}，是<b>${q.t%2?'奇':'偶'}排列</b>。</div>`;
+  }
+  if(q.kind==="sign"){
+    if(!q.valid){
+      const rs=new Set(q.R), cs=new Set(q.C);
+      const why = rs.size<q.n? "有两个因子取自同一行" : "有两个因子取自同一列";
+      return `<div class="sol">行标排列为 ${M(seqML(q.R))}，列标排列为 ${M(seqML(q.C))}。${why}，而行列式的每一项要从<b>每行、每列各取一个</b>元素，所以它<b>不是</b> ${q.n} 阶行列式中的项。</div>`;
+    }
+    const sum=q.tR+q.tC;
+    return `<div class="sol">行标排列 ${M(seqML(q.R))}：${tEq(q.tR,'行')}；列标排列 ${M(seqML(q.C))}：${tEq(q.tC,'列')}。`
+      +`和为 ${M(`<mn>${sum}</mn>`)}，${sum%2?'奇':'偶'}数，所以该项<b>带${sum%2?'负':'正'}号</b>。`
+      +`（也可以先把因子按行标排好，再看列标排列的逆序数，结论相同。）</div>`;
+  }
+  const P=perms(Array.from({length:q.n},(_,i)=>i));
+  const fac=v=>v<0?`<mrow><mo>(</mo>${NEG}<mn>${-v}</mn><mo>)</mo></mrow>`:`<mn>${v}</mn>`;
+  const prodML=P.map((p,k)=>{ const sg=inversions(p.map(x=>x+1))%2; const f=p.map((c,i)=>fac(q.A[i][c])).join('<mo>×</mo>'); return (k===0? (sg?`<mo>&#x2212;</mo>`:``) : (sg?`<mo>&#x2212;</mo>`:`<mo>+</mo>`))+f; }).join('');
+  const terms=P.map(p=>{ const sg=inversions(p.map(x=>x+1))%2?-1:1; let pr=1; for(let i=0;i<q.n;i++) pr*=q.A[i][p[i]]; return sg*pr; });
+  const sumML=terms.map((v,i)=> i===0? num(v) : (v<0?`<mo>&#x2212;</mo><mn>${-v}</mn>`:`<mo>+</mo><mn>${v}</mn>`)).join('');
+  return `<div class="sol">共 ${P.length} 项，列标依次取 ${P.map(p=>M(seqML(p.map(x=>x+1)))).join('，')}，列标排列为奇排列的项带负号：<br>${M(`<mi>D</mi><mo>=</mo>`+prodML)}<br>${M(`<mo>=</mo>`+sumML+`<mo>=</mo>`+num(q.val))}。</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+function markCorrect(){ const q=quiz; q.done=true; stats.attempted++; stats.correct++; streak++; saveStats(); const fb=document.getElementById("qFeedback"); fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML(); lockQ(); renderStats(); renderVis(); }
+function onReveal(){ const q=quiz; if(!q||q.done) return; q.done=true; stats.attempted++; streak=0; saveStats(); const fb=document.getElementById("qFeedback"); fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML(); lockQ(); renderStats(); renderVis(); }
+function onHint(){
+  const q=quiz; if(!q) return; const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="inv"||q.kind==="parity") fb.innerHTML=`提示：依次看每个数，数一数它<b>后面</b>有几个比它小的，全部加起来就是逆序数；逆序数为奇数是奇排列，偶数是偶排列。`;
+  else if(q.kind==="sign") fb.innerHTML=`提示：先检查是否每行、每列都恰好出现一次；再分别求行标排列和列标排列的逆序数，看它们的和是奇数还是偶数。`;
+  else fb.innerHTML=`提示：${q.n} 阶行列式共有 ${q.n===2?2:6} 项，每项从每行每列各取一个元素，列标排列为奇排列时该项带负号。`;
+}
+function nextProblem(){ quiz=genProblem(); quiz.done=false; renderProblem(); }
+
+/* ══════════ 模式切换 & 初始化 ══════════ */
+function setTab(t){
+  ['A','B','C'].forEach(k=>{ document.getElementById('btn'+k).classList.toggle('on',t===k); document.getElementById('tab'+k).style.display=t===k?'':'none'; });
+  if(t==='A') refreshPerm();
+  if(t==='C'){ if(!quiz) nextProblem(); else renderVis(); }
+}
+document.getElementById('btnA').onclick=()=>setTab('A');
+document.getElementById('btnB').onclick=()=>setTab('B');
+document.getElementById('btnC').onclick=()=>setTab('C');
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
+window.addEventListener('resize',()=>{ if(document.getElementById('tabA').style.display!=='none') drawPermArcs(); if(document.getElementById('tabC').style.display!=='none'&&quiz) renderVis(); });
+
+buildNSel('permN',permN,[3,4,5,6],setPermN);
+rebuildPermTiles();
+attachSortable(document.getElementById('permTiles'), ()=>perm, '.tile', refreshPerm);
+refreshPerm();
+
+buildNSel('detN',detN,[2,3,4],setDetN);
+buildMatGrid();
+rebuildDominoes();
+attachSortable(document.getElementById('domRow'), ()=>order, '.domino', ()=>{ reflowDominoes(); refreshDet(); });
+refreshDet();
+buildExpTable();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-inv-det";               // ← 计数键：与编号 L# 解耦的稳定标识，永不改动
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

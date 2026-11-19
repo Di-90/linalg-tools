@@ -48,18 +48,34 @@
     <p class="lead">下面每个卡片是一个可直接在浏览器里操作的可视化工具，配合课堂相应章节使用。点开即用，无需安装；手机、平板、电脑都能打开。</p>
   </header>
 
-  <div class="sect">核心概念（矩阵、行列式与线性变换）</div>
+  <div class="sect">第一章 · 行列式</div>
   <div class="grid">
-    <a class="card" href="./L1_矩阵乘法.html">
-      <span class="tag">L1</span>
-      <h3>矩阵乘法</h3>
-      <p>逐格演示矩阵乘法 <math><mi class="bm">C</mi><mo>=</mo><mi class="bm">A</mi><mi class="bm">B</mi></math> 的“行 × 列”过程：高亮当前行与列，一步步算出每个元素，看清乘法到底在做什么。</p>
+    <a class="card" href="./L16_逆序数与行列式定义.html">
+      <span class="tag">L16</span>
+      <h3>逆序数与行列式定义</h3>
+      <p>拖动方块看逆序数与奇偶排列；用“骨牌”演示行列式定义里元素的行标、列标必须<b>跟着元素一起走</b>，调换因子顺序时符号不变，并联动完整展开式；含练习（求逆序数、判断某项的符号、按定义算行列式）。</p>
       <div class="foot">▶ 打开使用</div>
     </a>
     <a class="card" href="./L2_行列式几何意义.html">
       <span class="tag">L2</span>
       <h3>行列式的几何意义</h3>
       <p>拖动两个向量，实时看它们张成的平行四边形（有向）面积就是 <math><mi>det</mi></math>：符号表示定向、<math><mi>det</mi><mo>=</mo><mn>0</mn></math> 表示线性相关。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
+    <a class="card" href="./L15_克拉默法则.html">
+      <span class="tag">L15</span>
+      <h3>克拉默法则</h3>
+      <p>二元、三元方程组实时算出系数行列式 <math><mi>D</mi></math> 与各 <math><msub><mi>D</mi><mi>i</mi></msub></math>（高亮被替换的列），得 <math><msub><mi>x</mi><mi>i</mi></msub><mo>=</mo><msub><mi>D</mi><mi>i</mi></msub><mo>/</mo><mi>D</mi></math>；二元画两条直线、三元画三个平面看交点；<math><mi>D</mi><mo>=</mo><mn>0</mn></math> 时用秩判断无解或无穷多解。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
+  </div>
+
+  <div class="sect">第二章 · 矩阵及其运算</div>
+  <div class="grid">
+    <a class="card" href="./L1_矩阵乘法.html">
+      <span class="tag">L1</span>
+      <h3>矩阵乘法</h3>
+      <p>逐格演示矩阵乘法 <math><mi class="bm">C</mi><mo>=</mo><mi class="bm">A</mi><mi class="bm">B</mi></math> 的“行 × 列”过程：高亮当前行与列，一步步算出每个元素，看清乘法到底在做什么。</p>
       <div class="foot">▶ 打开使用</div>
     </a>
     <a class="card" href="./L3_二维线性变换.html">
@@ -74,10 +90,14 @@
       <p>3×3 矩阵作用于三维向量，可用鼠标旋转/缩放场景，直观看到向量在空间中被拉伸、旋转、投影后的样子。</p>
       <div class="foot">▶ 打开使用</div>
     </a>
-    <a class="card" href="./L5_坐标基变换.html">
-      <span class="tag">L5</span>
-      <h3>坐标与基变换</h3>
-      <p>用三个点定义任意（可斜交）坐标系，读出同一个点在不同基下的坐标；可上传一张图片（如地图）作为底图，把抽象的基变换落到实景上。</p>
+  </div>
+
+  <div class="sect">第三章 · 矩阵的初等变换与线性方程组</div>
+  <div class="grid">
+    <a class="card" href="./L14_逆矩阵初等行变换.html">
+      <span class="tag">L14</span>
+      <h3>逆矩阵 · 初等行变换求法</h3>
+      <p>对 <math><mo>[</mo><mi class="bm">A</mi><mo>&#x2223;</mo><mi class="bm">E</mi><mo>]</mo></math> 逐步做初等行变换，左块化成单位矩阵时右块即 <math><msup><mi class="bm">A</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></math>；行变换顺序可以不同，结果唯一；某列主元位置及下方全为 0 时判定不可逆。</p>
       <div class="foot">▶ 打开使用</div>
     </a>
     <a class="card" href="./L9_高斯消元.html">
@@ -86,10 +106,14 @@
       <p>逐步把增广矩阵化到行阶梯形、行最简形，并给出 <math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo></math>、<math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>|</mo><mi class="bm">b</mi><mo>)</mo></math> 与解的情况；“自己动手”模式可自选行变换，体会阶梯形不唯一、行最简形唯一。</p>
       <div class="foot">▶ 打开使用</div>
     </a>
-    <a class="card" href="./L10_特征值与特征向量.html">
-      <span class="tag">L10</span>
-      <h3>特征值与特征向量</h3>
-      <p>调 2×2 矩阵，看单位圆被映射成的椭圆，高亮“方向不变、只被拉伸”的特征方向，拉伸倍数即特征值 <math><mi>λ</mi></math>；复特征值时提示含旋转成分。</p>
+  </div>
+
+  <div class="sect">第四章 · 向量组的线性相关性</div>
+  <div class="grid">
+    <a class="card" href="./L5_坐标基变换.html">
+      <span class="tag">L5</span>
+      <h3>坐标与基变换</h3>
+      <p>用三个点定义任意（可斜交）坐标系，读出同一个点在不同基下的坐标；可上传一张图片（如地图）作为底图，把抽象的基变换落到实景上。</p>
       <div class="foot">▶ 打开使用</div>
     </a>
     <a class="card" href="./L11_线性相关性与生成的向量空间.html">
@@ -104,34 +128,32 @@
       <p>给一组基，逐步演示投影、去掉投影得正交向量、再单位化的全过程，画出投影虚线与直角记号，直观看到 <math><msub><mi class="bm">b</mi><mn>2</mn></msub><mo>=</mo><msub><mi class="bm">a</mi><mn>2</mn></msub><mo>−</mo></math>投影向量 这一步。</p>
       <div class="foot">▶ 打开使用</div>
     </a>
+  </div>
+
+  <div class="sect">第五章 · 相似矩阵及二次型</div>
+  <div class="grid">
+    <a class="card" href="./L10_特征值与特征向量.html">
+      <span class="tag">L10</span>
+      <h3>特征值与特征向量</h3>
+      <p>调 2×2 矩阵，看单位圆被映射成的椭圆，高亮“方向不变、只被拉伸”的特征方向，拉伸倍数即特征值 <math><mi>λ</mi></math>；复特征值时提示含旋转成分。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
     <a class="card" href="./L13_矩阵对角化.html">
       <span class="tag">L13</span>
       <h3>矩阵对角化</h3>
       <p>给出 <math><mi class="bm">A</mi><mo>=</mo><mi class="bm">P</mi><mi class="bm">Λ</mi><msup><mi class="bm">P</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></math> 的三个因子，看网格在 <math><msup><mi class="bm">A</mi><mi>k</mi></msup></math> 作用下沿特征方向各自伸缩，滑块看 <math><msup><mi class="bm">A</mi><mi>k</mi></msup></math>；只有一个线性无关特征向量时提示不可对角化。</p>
       <div class="foot">▶ 打开使用</div>
     </a>
-    <a class="card" href="./L14_逆矩阵初等行变换.html">
-      <span class="tag">L14</span>
-      <h3>逆矩阵 · 初等行变换求法</h3>
-      <p>对 <math><mo>[</mo><mi class="bm">A</mi><mo>&#x2223;</mo><mi class="bm">E</mi><mo>]</mo></math> 逐步做初等行变换，左块化成单位矩阵时右块即 <math><msup><mi class="bm">A</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></math>；行变换顺序可以不同，结果唯一；某列主元位置及下方全为 0 时判定不可逆。</p>
-      <div class="foot">▶ 打开使用</div>
-    </a>
-    <a class="card" href="./L15_克拉默法则.html">
-      <span class="tag">L15</span>
-      <h3>克拉默法则</h3>
-      <p>二元、三元方程组实时算出系数行列式 <math><mi>D</mi></math> 与各 <math><msub><mi>D</mi><mi>i</mi></msub></math>（高亮被替换的列），得 <math><msub><mi>x</mi><mi>i</mi></msub><mo>=</mo><msub><mi>D</mi><mi>i</mi></msub><mo>/</mo><mi>D</mi></math>；二元画两条直线、三元画三个平面看交点；<math><mi>D</mi><mo>=</mo><mn>0</mn></math> 时用秩判断无解或无穷多解。</p>
-      <div class="foot">▶ 打开使用</div>
-    </a>
-  </div>
-
-  <div class="sect">应用与拓展（变换的实际用途）</div>
-  <div class="grid">
     <a class="card" href="./L6_二次型与二次曲面.html">
       <span class="tag">L6</span>
       <h3>二次型与二次曲面</h3>
       <p>调节参数观察椭球、单/双叶双曲面、抛物面、马鞍面、锥面等二次曲面的形状变化，把二次型与它的几何图形对应起来。</p>
       <div class="foot">▶ 打开使用</div>
     </a>
+  </div>
+
+  <div class="sect">应用与拓展（变换的实际用途）</div>
+  <div class="grid">
     <a class="card" href="./L7_机械臂齐次变换.html">
       <span class="tag">L7</span>
       <h3>机械臂 · 齐次变换连乘</h3>
