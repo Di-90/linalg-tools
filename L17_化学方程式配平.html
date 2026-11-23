@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>化学方程式配平 · L17 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --hl-cell:#fff3cd; --hl-col:#e9e3fb;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.12em;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  .chem{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;white-space:nowrap;}
+  .chem sub{font-size:.72em;}
+  input.eqin{width:100%;font-size:15px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+       font-family:"Consolas","Courier New",monospace;}
+  input.eqin:focus{outline:none;border-color:var(--blue);}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+  .presets button{font-size:12.5px;padding:5px 10px;text-align:left;}
+  .plabel{font-size:12.5px;color:var(--sub);margin:12px 0 2px;}
+  .hint{font-size:12.5px;color:var(--sub);margin-top:8px;line-height:1.7;}
+  .err{color:#c53030;font-size:13.5px;margin-top:8px;}
+  .warn{color:#975a16;font-size:13px;margin-top:6px;}
+  .unk{font-size:16px;line-height:2.2;text-align:center;}
+  .unk .plus{margin:0 6px;color:var(--sub);}
+  /* 矩阵表格 */
+  .matbox{display:flex;justify-content:center;padding:4px 0;overflow-x:auto;}
+  table.mat{border-collapse:collapse;margin:0 auto;}
+  table.mat td,table.mat th{border:1px solid #cbd5e1;min-width:44px;height:38px;padding:0 8px;text-align:center;
+     vertical-align:middle;font-size:15px;font-variant-numeric:tabular-nums;}
+  table.mat th{background:#f1f5f9;font-weight:600;font-size:13.5px;color:var(--sub);}
+  table.mat th.side{background:#fff8e6;}
+  table.mat td.num{font-family:"Cambria Math","STIX Two Math",serif;}
+  table.mat td.zero{color:#a0aec0;}
+  table.mat .pv{background:var(--hl-cell);font-weight:700;}
+  table.mat .fc{background:var(--hl-col);}
+  .frac{display:inline-flex;flex-direction:column;vertical-align:middle;line-height:1.05;font-size:.82em;}
+  .frac .num{border-bottom:1.4px solid currentColor;padding:0 3px;}
+  .frac .den{padding:0 3px;}
+  .eqs{display:flex;flex-direction:column;align-items:center;gap:2px;margin:4px 0 10px;}
+  .eqs .el{display:inline-block;width:3.4em;text-align:right;color:var(--sub);font-size:13px;margin-right:10px;}
+  .legend{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:10px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:14px;height:14px;border:1px solid #cbd5e1;border-radius:3px;display:inline-block;}
+  .info{font-size:14px;line-height:2;text-align:center;}
+  .info b{color:var(--blue);}
+  .verdict{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:14.5px;line-height:1.9;}
+  .verdict.uniq{background:#e6fffa;color:#234e52;border:1px solid #b2f5ea;}
+  .verdict.inf{background:#fffaf0;color:#744210;border:1px solid #f6e05e;}
+  .verdict.none{background:#fff5f5;color:#822727;border:1px solid #feb2b2;}
+  .final{font-size:19px;text-align:center;margin:12px 0 6px;line-height:1.8;}
+  .final .co{color:var(--green);font-weight:700;margin-right:1px;}
+  .final .arrow{margin:0 8px;}
+  table.chk{border-collapse:collapse;margin:8px auto 0;font-size:13.5px;}
+  table.chk td,table.chk th{border:1px solid var(--line);padding:3px 12px;text-align:center;}
+  table.chk th{background:#f8fafc;color:var(--sub);font-weight:600;}
+  table.chk td.ok{color:var(--green);font-weight:700;}
+  .note{font-size:12.5px;color:#4a5568;background:#fffbea;border:1px solid #f6e05e;border-radius:8px;padding:8px 10px;margin-top:10px;line-height:1.7;}
+  .placeholder{color:#a0aec0;font-size:13.5px;text-align:center;padding:30px 10px;}
+  /* 练习 */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody .qeq{font-size:17px;text-align:center;margin:6px 0;}
+  .qbody input.qin{width:58px;font-size:15px;padding:5px 6px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .qbody .bal{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 6px;margin-top:6px;font-size:16px;}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);
+       border-radius:8px;cursor:pointer;font-size:14px;line-height:1.6;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .opts input{accent-color:var(--blue);}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:13.5px;margin-top:6px;line-height:1.9;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,360px);gap:16px;align-items:start;}
+  @media(max-width:860px){ .layout{grid-template-columns:1fr;} .col-right{order:-1;} }
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>化学方程式配平</h1>
+  <span class="sub">原子守恒 ⇒ 齐次线性方程组 <math><mi class="bm">A</mi><mi class="bm">x</mi><mo>=</mo><mn mathvariant="bold">0</mn></math> · 基础解系给出配平系数</span>
+  <span class="tag">L17 · 应用案例</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    配平化学方程式，就是给每种物质找一个系数 <math><msub><mi>x</mi><mi>j</mi></msub></math>，使反应前后<b>每种元素的原子个数相等</b>。
+    每种元素写出一个方程，就得到一个<b>齐次线性方程组</b>（把生成物一侧移到左边，生成物的系数取负号）：
+    <div class="formula">
+      <math display="block"><mi class="bm">A</mi><mi class="bm">x</mi><mo>=</mo><mn mathvariant="bold">0</mn><mo>,</mo><mspace width="1em"/>
+        <mi class="bm">x</mi><mo>=</mo><msup><mrow><mo>(</mo><msub><mi>x</mi><mn>1</mn></msub><mo>,</mo><msub><mi>x</mi><mn>2</mn></msub><mo>,</mo><mo>…</mo><mo>,</mo><msub><mi>x</mi><mi>n</mi></msub><mo>)</mo></mrow><mi>T</mi></msup></math>
+    </div>
+    其中 <math><mi class="bm">A</mi></math> 的行对应元素、列对应物质。化为行最简形后，基础解系所含向量个数 <math><mi>n</mi><mo>&#x2212;</mo><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo></math> 决定了配平情况：
+    为 <math><mn>1</mn></math> 时配平系数在相差一个倍数的意义下<b>唯一</b>，取最小正整数即可；为 <math><mn>0</mn></math> 时只有零解，说明<b>化学式写错或漏写了物质</b>；大于 <math><mn>1</mn></math> 时<b>配平不唯一</b>，要靠实验等额外信息确定。
+  </div>
+
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div class="layout">
+  <div class="col-left" id="leftCol">
+    <div class="card"><h2>① 设各物质的系数</h2><div class="unk" id="unkBox"></div></div>
+    <div class="card"><h2>② 每种元素原子守恒 ⇒ 齐次线性方程组</h2><div class="eqs" id="eqsBox"></div>
+      <div class="plabel" style="text-align:center;">系数矩阵 <math><mi class="bm">A</mi></math>（行 = 元素，列 = 物质；生成物取负号）</div>
+      <div class="matbox" id="matBox"></div></div>
+    <div class="card"><h2>③ 初等行变换化为行最简形</h2><div class="matbox" id="rrefBox"></div>
+      <div class="legend"><span><i style="background:var(--hl-cell)"></i>主元</span><span><i style="background:var(--hl-col)"></i>自由未知量所在列</span></div>
+      <div class="info" id="rankBox"></div></div>
+    <div class="card"><h2>④ 基础解系与配平结果</h2><div id="solBox"></div></div>
+  </div>
+
+  <div class="col-right">
+    <div class="card" id="exploreCard">
+      <h2>输入化学方程式（不写系数）</h2>
+      <input class="eqin" id="eqIn" value="C3H8 + O2 -> CO2 + H2O" spellcheck="false" autocomplete="off">
+      <div class="hint" style="margin-top:4px;">边输入边自动配平，结果显示在左侧。</div>
+      <div id="parseMsg"></div>
+      <div class="hint">写法：物质之间用 <b>+</b>，反应物与生成物之间用 <b>-&gt;</b> 或 <b>=</b>；下标直接写数字，可用括号，如 Ca(OH)2；结晶水写 CuSO4·5H2O 或 CuSO4*5H2O。不支持离子电荷。</div>
+      <div class="plabel">常见例子：</div>
+      <div class="presets" id="presetBox"></div>
+    </div>
+
+    <div class="card" id="quizCard" style="display:none;">
+      <div class="quizhead">
+        <h2>练习 · 化学方程式配平</h2>
+        <span class="stats" id="quizStats"></span>
+        <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+      </div>
+      <div class="qbody" id="qBody"></div>
+      <div class="feedback" id="qFeedback"></div>
+      <div class="qbtns">
+        <button class="primary" id="qSubmit">提交</button>
+        <button id="qHint">提示</button>
+        <button id="qReveal">看解析</button>
+        <button id="qNext">下一题 ▸</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+/* ═══════════ 元素表与化学式解析 ═══════════ */
+const ELEMENTS=new Set(("H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr "+
+ "Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg "+
+ "Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og").split(" "));
+
+function parseGroup(s){            // 返回 {元素:个数}；不合法抛出 Error
+  const stack=[{}]; let i=0;
+  const readNum=()=>{ let j=i; while(j<s.length&&/[0-9]/.test(s[j])) j++; const n=j>i?parseInt(s.slice(i,j),10):1; i=j; return n; };
+  while(i<s.length){
+    const c=s[i];
+    if(c==="("||c==="["){ stack.push({}); i++; }
+    else if(c===")"||c==="]"){
+      if(stack.length<2) throw new Error("括号不配对");
+      i++; const k=readNum(); const top=stack.pop(), cur=stack[stack.length-1];
+      for(const e in top) cur[e]=(cur[e]||0)+top[e]*k;
+    }else if(/[A-Z]/.test(c)){
+      let e=c; i++; if(i<s.length&&/[a-z]/.test(s[i])){ e+=s[i]; i++; }
+      if(!ELEMENTS.has(e)) throw new Error(`“${e}”不是元素符号（注意大小写，如 Co 与 CO 不同）`);
+      const k=readNum(); const cur=stack[stack.length-1]; cur[e]=(cur[e]||0)+k;
+    }else if(c===" "){ i++; }
+    else throw new Error(`无法识别的字符“${c}”`);
+  }
+  if(stack.length!==1) throw new Error("括号不配对");
+  return stack[0];
+}
+function parseFormula(s){
+  const parts=s.split(/[·•*]/); const tot={};
+  for(let p of parts){
+    p=p.trim(); if(!p) throw new Error(`化学式“${s}”写法有误`);
+    const m=p.match(/^(\d*)(.*)$/); const k=m[1]?parseInt(m[1],10):1;
+    if(!m[2]) throw new Error(`化学式“${s}”写法有误`);
+    const g=parseGroup(m[2]); for(const e in g) tot[e]=(tot[e]||0)+g[e]*k;
+  }
+  if(Object.keys(tot).length===0) throw new Error(`化学式“${s}”写法有误`);
+  return tot;
+}
+// 解析整条方程式 → {species:[{f,side,counts}], elements:[...], warn}
+function parseEquation(str){
+  let s=str.replace(/\s+/g," ").trim();
+  s=s.replace(/-+>|⟶|→|=+>|={1,2}/g,"→");
+  const sides=s.split("→");
+  if(sides.length!==2) throw new Error("请用一个 -> 或 = 把反应物和生成物分开");
+  let warn="";
+  const species=[];
+  sides.forEach((side,si)=>{
+    const items=side.split("+").map(t=>t.trim());
+    if(items.some(t=>!t)) throw new Error(si===0?"反应物一侧有空项（检查“+”）":"生成物一侧有空项（检查“+”）");
+    items.forEach(t=>{
+      let f=t.replace(/\s+/g,"");
+      const m=f.match(/^(\d+)(?=[A-Z(\[])/);
+      if(m){ f=f.slice(m[1].length); warn="已忽略你写在化学式前面的系数（系数由本工具来求）。"; }
+      species.push({f, side:si, counts:parseFormula(f)});
+    });
+  });
+  if(species.length<2) throw new Error("至少需要两种物质");
+  if(species.length>8) throw new Error("物质最多 8 种");
+  const elements=[];
+  species.forEach(sp=>{ for(const e in sp.counts) if(!elements.includes(e)) elements.push(e); });
+  if(elements.length>8) throw new Error("元素最多 8 种");
+  return {species, elements, warn};
+}
+function chemHTML(f){            // 下标数字；结晶水前的系数不下标
+  return '<span class="chem">'+f.split(/[·•*]/).map((p,idx)=>{
+    const m=p.match(/^(\d*)(.*)$/);
+    return (idx?"·":"")+(m[1]||"")+m[2].replace(/(\d+)/g,"<sub>$1</sub>");
+  }).join("")+'</span>';
+}
+
+/* ═══════════ 有理数与线性代数 ═══════════ */
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; }
+function lcm(a,b){ return a/gcd(a,b)*b; }
+function F(n,d){ d=d||1; if(d<0){n=-n;d=-d;} const g=gcd(n,d)||1; return {n:n/g,d:d/g}; }
+const fadd=(a,b)=>F(a.n*b.d+b.n*a.d,a.d*b.d), fsub=(a,b)=>F(a.n*b.d-b.n*a.d,a.d*b.d),
+      fmul=(a,b)=>F(a.n*b.n,a.d*b.d), fdiv=(a,b)=>F(a.n*b.d,a.d*b.n), fz=a=>a.n===0;
+function rref(M){                // M: 二维数组（整数）→ {R(分数), piv:[列号]}
+  const R=M.map(r=>r.map(v=>F(v))); const m=R.length, n=R[0].length; const piv=[]; let row=0;
+  for(let c=0;c<n&&row<m;c++){
+    let p=-1; for(let r=row;r<m;r++) if(!fz(R[r][c])){ p=r; break; }
+    if(p<0) continue;
+    [R[row],R[p]]=[R[p],R[row]];
+    const pv=R[row][c]; R[row]=R[row].map(v=>fdiv(v,pv));
+    for(let r=0;r<m;r++) if(r!==row&&!fz(R[r][c])){ const k=R[r][c]; R[r]=R[r].map((v,j)=>fsub(v,fmul(k,R[row][j]))); }
+    piv.push(c); row++;
+  }
+  return {R,piv};
+}
+function nullBasis(R,piv,n){     // 每个自由未知量取 1 → 整数向量（约去公因子）
+  const free=[]; for(let j=0;j<n;j++) if(!piv.includes(j)) free.push(j);
+  const basis=free.map(f=>{
+    const v=Array(n).fill(null).map(()=>F(0)); v[f]=F(1);
+    piv.forEach((pc,i)=>{ v[pc]=F(-R[i][f].n,R[i][f].d); });
+    let L=1; v.forEach(x=>L=lcm(L,x.d));
+    let w=v.map(x=>x.n*(L/x.d)); let g=0; w.forEach(x=>g=gcd(g,x)); if(g>1) w=w.map(x=>x/g);
+    return w;
+  });
+  return {free,basis};
+}
+function analyze(eq){
+  const {species,elements}=eq, n=species.length;
+  const A=elements.map(e=>species.map(sp=>(sp.counts[e]||0)*(sp.side===0?1:-1)));
+  const {R,piv}=rref(A); const {free,basis}=nullBasis(R,piv,n);
+  const res={A,R,piv,free,basis,n,r:piv.length,dim:free.length};
+  if(res.dim===1){
+    let v=basis[0].slice(); const pos=v.filter(x=>x>0).length, neg=v.filter(x=>x<0).length;
+    if(neg>pos) v=v.map(x=>-x);
+    res.status=(pos&&neg)?"mixed":v.some(x=>x===0)?"zero":"ok";
+    res.v=v;
+  }else if(res.dim===0) res.status="none";
+  else{ res.status="multi"; res.examples=positiveCombos(basis,n); }
+  return res;
+}
+function positiveCombos(basis,n){   // 在小整数组合里找全为正的配平方式（去掉成比例的重复）
+  const d=basis.length, out=[], seen=new Set(), K=6;
+  const ks=Array(d).fill(-K);
+  const step=()=>{ for(let i=0;i<d;i++){ if(ks[i]<K){ ks[i]++; return true; } ks[i]=-K; } return false; };
+  do{
+    const w=Array(n).fill(0); basis.forEach((b,i)=>b.forEach((x,j)=>w[j]+=ks[i]*x));
+    if(w.every(x=>x>0)){ let g=0; w.forEach(x=>g=gcd(g,x)); const u=w.map(x=>x/g); const key=u.join(","); if(!seen.has(key)){ seen.add(key); out.push(u); } }
+  }while(step());
+  out.sort((a,b)=>a.reduce((s,x)=>s+x,0)-b.reduce((s,x)=>s+x,0));
+  return out.slice(0,3);
+}
+
+/* ═══════════ MathML / HTML 片段 ═══════════ */
+const xs=j=>`<msub><mi>x</mi><mn>${j+1}</mn></msub>`;
+function mnum(v){ return v<0?`<mo form="prefix" lspace="0" rspace="0">&#x2212;</mo><mn>${-v}</mn>`:`<mn>${v}</mn>`; }
+function numTxt(v){ return v<0?"&#x2212;"+(-v):""+v; }
+function fracHTML(f){
+  if(f.d===1) return numTxt(f.n);
+  return (f.n<0?"&#x2212;":"")+`<span class="frac"><span class="num">${Math.abs(f.n)}</span><span class="den">${f.d}</span></span>`;
+}
+function eqRowML(row){          // 3x1 − x3 = 0
+  let s="", first=true;
+  row.forEach((a,j)=>{ if(a===0) return;
+    const abs=Math.abs(a);
+    if(first){ if(a<0) s+="<mo>&#x2212;</mo>"; } else s+= a<0?"<mo>&#x2212;</mo>":"<mo>+</mo>";
+    s+=(abs===1?"":`<mn>${abs}</mn>`)+xs(j); first=false; });
+  return `<math>${s||"<mn>0</mn>"}<mo>=</mo><mn>0</mn></math>`;
+}
+function vecML(v){ return `<mrow><mo>(</mo>${v.map(mnum).join("<mo>,</mo>")}<msup><mo>)</mo><mi>T</mi></msup></mrow>`; }
+function sideHTML(eq,coef,useX){
+  const parts=[[],[]];
+  eq.species.forEach((sp,j)=>{
+    let c="";
+    if(useX) c=`<math>${xs(j)}</math>&thinsp;`;
+    else if(coef){ c=coef[j]===1?"":`<span class="co">${coef[j]}</span>`; }
+    parts[sp.side].push(c+chemHTML(sp.f));
+  });
+  return parts[0].join('<span class="plus">+</span>')+'<span class="arrow"> → </span>'+parts[1].join('<span class="plus">+</span>');
+}
+function matHTML(eq,A){
+  let h='<table class="mat"><tr><th></th>'+eq.species.map(sp=>`<th class="${sp.side?"side":""}">${chemHTML(sp.f)}</th>`).join("")+"</tr>";
+  A.forEach((row,i)=>{ h+=`<tr><th>${eq.elements[i]}</th>`+row.map(v=>`<td class="num${v===0?" zero":""}">${numTxt(v)}</td>`).join("")+"</tr>"; });
+  return h+"</table>";
+}
+function rrefHTML(eq,res){
+  let h='<table class="mat"><tr>'+eq.species.map((sp,j)=>`<th>${'<math>'+xs(j)+'</math>'}</th>`).join("")+"</tr>";
+  res.R.forEach((row,i)=>{
+    h+="<tr>"+row.map((f,j)=>{
+      const cls=["num"]; if(res.piv[i]===j) cls.push("pv"); else if(res.free.includes(j)) cls.push("fc"); if(fz(f)) cls.push("zero");
+      return `<td class="${cls.join(" ")}">${fracHTML(f)}</td>`; }).join("")+"</tr>";
+  });
+  return h+"</table>";
+}
+function checkHTML(eq,res,coef){
+  let h='<table class="chk"><tr><th>元素</th><th>反应物原子数</th><th>生成物原子数</th><th></th></tr>';
+  eq.elements.forEach(e=>{
+    let L=0,Rt=0; eq.species.forEach((sp,j)=>{ const c=(sp.counts[e]||0)*coef[j]; if(sp.side===0) L+=c; else Rt+=c; });
+    h+=`<tr><td>${e}</td><td>${L}</td><td>${Rt}</td><td class="${L===Rt?"ok":""}">${L===Rt?"✓":"✗"}</td></tr>`;
+  });
+  return h+"</table>";
+}
+
+/* ═══════════ 渲染完整求解过程（左栏）═══════════ */
+function renderSolution(eq){
+  const res=analyze(eq);
+  document.getElementById("unkBox").innerHTML=sideHTML(eq,null,true);
+  document.getElementById("eqsBox").innerHTML=eq.elements.map((e,i)=>
+    `<div><span class="el">${e}：</span>${eqRowML(res.A[i])}</div>`).join("");
+  document.getElementById("matBox").innerHTML=matHTML(eq,res.A);
+  document.getElementById("rrefBox").innerHTML=rrefHTML(eq,res);
+  document.getElementById("rankBox").innerHTML=
+    `未知量个数 <math><mi>n</mi><mo>=</mo><mn>${res.n}</mn></math>，<math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo><mo>=</mo><mn>${res.r}</mn></math>，`
+    +`基础解系含 <math><mi>n</mi><mo>&#x2212;</mo><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo><mo>=</mo><mn>${res.dim}</mn></math> 个向量`
+    +(res.dim?`<span style="white-space:nowrap">（自由未知量：<math>${res.free.map(xs).join("<mo>,</mo>")}</math>）</span>`:"");
+  const box=document.getElementById("solBox");
+  const xv=`<mi class="bm">x</mi>`;
+  if(res.status==="none"){
+    box.innerHTML=`<div class="verdict none">方程组只有零解 <math>${xv}<mo>=</mo><mn mathvariant="bold">0</mn></math>，不存在非零的配平系数。<br>这说明<b>化学式写错了，或者漏写了某种生成物 / 反应物</b>（例如 H<sub>2</sub>O<sub>2</sub> 分解漏写了 O<sub>2</sub>）。</div>`;
+    return res;
+  }
+  if(res.dim===1){
+    const b=res.basis[0];
+    let h=`<div class="info">基础解系 <math><mi class="bm">ξ</mi><mo>=</mo>${vecML(b)}</math>，通解 <math>${xv}<mo>=</mo><mi>k</mi><mi class="bm">ξ</mi></math>（<math><mi>k</mi></math> 为任意常数）</div>`;
+    if(res.status==="ok"){
+      const sgn=b[0]<0?"<mo>&#x2212;</mo><mn>1</mn>":"<mn>1</mn>";
+      h+=`<div class="info">取 <math><mi>k</mi><mo>=</mo>${sgn}</math>，得各系数的<b>最小正整数</b>：<math>${xv}<mo>=</mo>${vecML(res.v)}</math></div>`;
+      h+=`<div class="final">${sideHTML(eq,res.v,false)}</div>`;
+      h+=checkHTML(eq,res,res.v);
+      h+=`<div class="verdict uniq">基础解系只含 1 个向量 ⇒ 所有配平方式都是 <math><mi class="bm">ξ</mi></math> 的倍数，<b>配平在相差倍数的意义下唯一</b>。化学上取最小正整数。</div>`;
+    }else if(res.status==="zero"){
+      const z=eq.species.filter((sp,j)=>res.v[j]===0).map(sp=>chemHTML(sp.f)).join("、");
+      h+=`<div class="verdict inf">解中 ${z} 的系数为 0：它其实不参与这个反应（或者化学式写错了）。去掉它之后再配平试试。</div>`;
+    }else{
+      const neg=eq.species.filter((sp,j)=>res.v[j]<0).map(sp=>chemHTML(sp.f)).join("、");
+      h+=`<div class="verdict inf">解的分量<b>有正有负</b>，不能所有系数都取正数：${neg} 的系数为负，说明它应当写在方程式的<b>另一侧</b>。</div>`;
+    }
+    box.innerHTML=h; return res;
+  }
+  // dim ≥ 2
+  let gen=res.basis.map((b,i)=>`<msub><mi>k</mi><mn>${i+1}</mn></msub><msub><mi class="bm">ξ</mi><mn>${i+1}</mn></msub>`).join("<mo>+</mo>");
+  let h=`<div class="info">`+res.basis.map((b,i)=>`<math><msub><mi class="bm">ξ</mi><mn>${i+1}</mn></msub><mo>=</mo>${vecML(b)}</math>`).join("，")
+    +`<br>通解 <math>${xv}<mo>=</mo>${gen}</math></div>`;
+  if(res.examples.length){
+    h+=`<div class="plabel" style="text-align:center;">取不同的 <math><msub><mi>k</mi><mi>i</mi></msub></math>，可以得到多组都“守恒”的正整数系数，例如：</div>`;
+    res.examples.forEach(v=>{ h+=`<div class="final" style="font-size:16px;margin:4px 0;">${sideHTML(eq,v,false)}</div>`; });
+  }else{
+    h+=`<div class="info">在小整数组合中找不到全为正的系数：有的物质可能写反了一侧。</div>`;
+  }
+  h+=`<div class="verdict inf">基础解系含 ${res.dim} 个向量 ⇒ <b>配平不唯一</b>。这时方程式其实是几个独立反应叠加在一起，原子守恒本身不能确定各物质的比例，需要实验测定（例如产物中 H<sub>2</sub>O 与 H<sub>2</sub>O<sub>2</sub> 的比例）。</div>`;
+  box.innerHTML=h; return res;
+}
+
+/* ═══════════ 自由探索 ═══════════ */
+const PRESETS=[
+  ["丙烷燃烧","C3H8 + O2 -> CO2 + H2O"],
+  ["光合作用","CO2 + H2O -> C6H12O6 + O2"],
+  ["铝热反应","Al + Fe2O3 -> Al2O3 + Fe"],
+  ["高锰酸钾制氧","KMnO4 -> K2MnO4 + MnO2 + O2"],
+  ["酸碱中和（带括号）","Ca(OH)2 + H3PO4 -> Ca3(PO4)2 + H2O"],
+  ["铜与稀硝酸","Cu + HNO3 -> Cu(NO3)2 + NO + H2O"],
+  ["硫铁矿焙烧","FeS2 + O2 -> Fe2O3 + SO2"],
+  ["配平不唯一","H2 + O2 -> H2O + H2O2"],
+  ["漏写物质（无解）","H2O2 -> H2O"]
+];
+function doBalance(){
+  const msg=document.getElementById("parseMsg");
+  try{
+    const eq=parseEquation(document.getElementById("eqIn").value);
+    msg.innerHTML=eq.warn?`<div class="warn">${eq.warn}</div>`:"";
+    renderSolution(eq);
+  }catch(e){ msg.innerHTML=`<div class="err">${e.message}</div>`; }
+}
+document.getElementById("presetBox").innerHTML=PRESETS.map((p,i)=>`<button data-i="${i}">${p[0]}</button>`).join("");
+document.querySelectorAll("#presetBox button").forEach(b=>b.addEventListener("click",()=>{
+  document.getElementById("eqIn").value=PRESETS[+b.dataset.i][1]; doBalance(); }));
+let typingTimer=null;
+document.getElementById("eqIn").addEventListener("input",()=>{ clearTimeout(typingTimer); typingTimer=setTimeout(doBalance,500); });
+document.getElementById("eqIn").addEventListener("keydown",e=>{ if(e.key==="Enter"){ clearTimeout(typingTimer); doBalance(); } });
+
+/* ═══════════ 练习模式 ═══════════
+   题型：entry 求系数矩阵某个元素 | balance 填最小正整数系数 | dim 判断基础解系向量个数与配平情况 */
+const POOL_UNIQ=["H2 + O2 -> H2O","CH4 + O2 -> CO2 + H2O","C2H6 + O2 -> CO2 + H2O","Fe + O2 -> Fe3O4","Al + O2 -> Al2O3",
+  "N2 + H2 -> NH3","KClO3 -> KCl + O2","Fe2O3 + CO -> Fe + CO2","C2H5OH + O2 -> CO2 + H2O","NaOH + H2SO4 -> Na2SO4 + H2O",
+  "Ca(OH)2 + H3PO4 -> Ca3(PO4)2 + H2O","Al + HCl -> AlCl3 + H2","NH3 + O2 -> NO + H2O","Cu + HNO3 -> Cu(NO3)2 + NO + H2O",
+  "C6H12O6 + O2 -> CO2 + H2O","FeS2 + O2 -> Fe2O3 + SO2","Mg + CO2 -> MgO + C","NaHCO3 -> Na2CO3 + CO2 + H2O",
+  "C3H8 + O2 -> CO2 + H2O","Al + Fe2O3 -> Al2O3 + Fe","KMnO4 -> K2MnO4 + MnO2 + O2"];
+const POOL_MULTI=["H2 + O2 -> H2O + H2O2","C + O2 -> CO + CO2","Fe + O2 -> FeO + Fe2O3","NO + O2 -> NO2 + N2O5"];
+const POOL_NONE=["H2O2 -> H2O","KClO3 -> KCl","CaCO3 -> CaO","Zn + HCl -> ZnCl2"];
+const QUIZKEY="la-chem-balance-quiz";
+let streak=0, stats=loadStats(), quiz=null, mode="explore";
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){ if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return; stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats(); }
+function renderStats(){ const acc=stats.attempted?Math.round(stats.correct/stats.attempted*100):0;
+  document.getElementById("quizStats").innerHTML=`已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`; }
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+let lastEq="";
+function pickEq(pool){ let s; do{ s=pick(pool); }while(s===lastEq&&pool.length>1); lastEq=s; return s; }
+
+function genProblem(){
+  const r=Math.random();
+  if(r<0.25){
+    const eq=parseEquation(pickEq(POOL_UNIQ)), res=analyze(eq);
+    const i=Math.floor(Math.random()*eq.elements.length);
+    // 偏向挑非零元素（更有意思），但也偶尔挑 0
+    let cand=[]; eq.species.forEach((sp,j)=>{ if(res.A[i][j]!==0||Math.random()<0.25) cand.push(j); });
+    if(!cand.length) cand=[0];
+    const j=pick(cand);
+    return {kind:"entry",eq,res,i,j,ans:res.A[i][j]};
+  }else if(r<0.7){
+    const eq=parseEquation(pickEq(POOL_UNIQ)), res=analyze(eq);
+    return {kind:"balance",eq,res};
+  }else{
+    const rr=Math.random(); const pool=rr<0.4?POOL_UNIQ:rr<0.7?POOL_MULTI:POOL_NONE;
+    const eq=parseEquation(pickEq(pool)), res=analyze(eq);
+    return {kind:"dim",eq,res,selected:-1,ansIdx:res.dim===0?0:res.dim===1?1:2};
+  }
+}
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody"), fb=document.getElementById("qFeedback");
+  q.done=false; fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  const eqLine=`<div class="qeq">${sideHTML(q.eq,null,true)}</div>`;
+  if(q.kind==="entry"){
+    body.innerHTML=`对下面的反应列原子守恒方程组 <math><mi class="bm">A</mi><mi class="bm">x</mi><mo>=</mo><mn mathvariant="bold">0</mn></math>（行按元素 ${q.eq.elements.join("、")} 的顺序，生成物取负号）：${eqLine}`
+      +`系数矩阵 <math><mi class="bm">A</mi></math> 中<b>元素 ${q.eq.elements[q.i]}</b> 那一行、<math>${xs(q.j)}</math>（${chemHTML(q.eq.species[q.j].f)}）那一列的数是：`
+      +`<div style="text-align:center;margin-top:4px;"><input class="qin" id="qA" type="number"></div>`;
+    document.getElementById("qA").addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); });
+  }else if(q.kind==="balance"){
+    const parts=[[],[]];
+    q.eq.species.forEach((sp,j)=>parts[sp.side].push(`<input class="qin" id="qc${j}" type="number" min="1" step="1">${chemHTML(sp.f)}`));
+    body.innerHTML=`配平下面的化学方程式，在框里填各物质的<b>最小正整数</b>系数（系数为 1 也要填）：`
+      +`<div class="bal">${parts[0].join(' + ')} → ${parts[1].join(' + ')}</div>`;
+    q.eq.species.forEach((sp,j)=>document.getElementById("qc"+j).addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); }));
+  }else{
+    const opts=["0 个：只有零解，无法配平（化学式写错或漏写物质）","1 个：配平系数在相差倍数的意义下唯一","2 个：有两种独立的配平方式，配平不唯一"];
+    body.innerHTML=`下面反应的原子守恒方程组的系数矩阵 <math><mi class="bm">A</mi></math> 如下：${eqLine}<div class="matbox">${matHTML(q.eq,q.res.A)}</div>`
+      +`方程组 <math><mi class="bm">A</mi><mi class="bm">x</mi><mo>=</mo><mn mathvariant="bold">0</mn></math> 的基础解系含几个向量？<div class="opts" id="qOpts">`
+      +opts.map((t,i)=>`<label data-i="${i}"><input type="radio" name="qopt" value="${i}"><span>${t}</span></label>`).join("")+"</div>";
+    body.querySelectorAll("#qOpts label").forEach(l=>l.addEventListener("click",()=>{
+      body.querySelectorAll("#qOpts label").forEach(x=>x.classList.remove("sel")); l.classList.add("sel");
+      l.querySelector("input").checked=true; q.selected=+l.dataset.i; }));
+  }
+  showLeftPlaceholder();
+  renderStats();
+}
+function showLeftPlaceholder(){
+  const ph='<div class="placeholder">提交答案或点“看解析”后，这里显示完整的求解过程</div>';
+  ["unkBox","eqsBox","matBox","rrefBox","rankBox","solBox"].forEach(id=>document.getElementById(id).innerHTML="");
+  document.getElementById("unkBox").innerHTML=ph;
+}
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return;
+  const fb=document.getElementById("qFeedback");
+  if(q.kind==="entry"){
+    const v=document.getElementById("qA").value.trim();
+    if(v===""){ fb.className="feedback no"; fb.textContent="请先填一个数"; return; }
+    if(+v===q.ans) markCorrect();
+    else if(+v===-q.ans){ fb.className="feedback no"; fb.textContent="个数对了，注意符号：生成物一侧的系数取负号。"; }
+    else { fb.className="feedback no"; fb.textContent="还不对～ 数一数这种物质的一个分子里有几个该元素的原子（括号外的下标要乘进去）。"; }
+  }else if(q.kind==="balance"){
+    const c=q.eq.species.map((sp,j)=>document.getElementById("qc"+j).value.trim());
+    if(c.some(x=>x==="")){ fb.className="feedback no"; fb.textContent="每个框都要填（系数为 1 也要填 1）"; return; }
+    const v=c.map(Number);
+    if(v.some(x=>!Number.isInteger(x)||x<=0)){ fb.className="feedback no"; fb.textContent="系数要填正整数"; return; }
+    const t=q.res.v, k=v[0]/t[0];
+    const prop=v.every((x,j)=>Math.abs(x-k*t[j])<1e-9);
+    if(prop&&k===1) markCorrect();
+    else if(prop){ fb.className="feedback no"; fb.textContent=`比例对了，各原子也都守恒，但还能约分：请约成最小正整数（现在是答案的 ${k} 倍）。`; }
+    else{
+      const bad=q.eq.elements.filter(e=>{ let L=0,R=0; q.eq.species.forEach((sp,j)=>{ const a=(sp.counts[e]||0)*v[j]; if(sp.side===0) L+=a; else R+=a; }); return L!==R; });
+      fb.className="feedback no"; fb.textContent=`还不守恒：元素 ${bad.join("、")} 两边原子数不相等。`;
+    }
+  }else{
+    if(q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个选项"; return; }
+    if(q.selected===q.ansIdx) markCorrect();
+    else { fb.className="feedback no"; fb.textContent="不对哦：先求 R(A)，基础解系所含向量个数 = 未知量个数 n − R(A)。"; }
+  }
+}
+function solHTML(){
+  const q=quiz, res=q.res;
+  if(q.kind==="entry"){
+    const sp=q.eq.species[q.j], e=q.eq.elements[q.i], cnt=sp.counts[e]||0;
+    return `<div class="sol">一个 ${chemHTML(sp.f)} 分子含 ${cnt} 个 ${e} 原子；它在${sp.side?"生成物一侧，取负号":"反应物一侧，取正号"}，所以这个数是 <math>${mnum(q.ans)}</math>。左侧是整个方程组与求解过程。</div>`;
+  }
+  if(q.kind==="balance")
+    return `<div class="sol">基础解系 <math><mi class="bm">ξ</mi><mo>=</mo>${vecML(res.basis[0])}</math>，最小正整数系数 <math>${vecML(res.v)}</math>：<div class="final" style="font-size:16px;">${sideHTML(q.eq,res.v,false)}</div>完整过程见左侧。</div>`;
+  const tail=res.dim===0?"只有零解，无法配平。":res.dim===1?"配平唯一（相差倍数）。":"配平不唯一。";
+  return `<div class="sol">未知量 <math><mi>n</mi><mo>=</mo><mn>${res.n}</mn></math>，化为行最简形得 <math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo><mo>=</mo><mn>${res.r}</mn></math>，基础解系含 <math><mn>${res.n}</mn><mo>&#x2212;</mo><mn>${res.r}</mn><mo>=</mo><mn>${res.dim}</mn></math> 个向量，${tail}行最简形见左侧。</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+function markCorrect(){
+  const q=quiz; q.done=true; stats.attempted++; stats.correct++; streak++; saveStats();
+  renderSolution(q.eq);
+  const fb=document.getElementById("qFeedback"); fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML();
+  lockQ(); renderStats();
+}
+function onReveal(){
+  const q=quiz; if(!q||q.done) return;
+  q.done=true; stats.attempted++; streak=0; saveStats();
+  renderSolution(q.eq);
+  const fb=document.getElementById("qFeedback"); fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML();
+  lockQ(); renderStats();
+}
+function onHint(){
+  const q=quiz; if(!q) return; const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="entry") fb.innerHTML="提示：矩阵元素 = 该物质一个分子中这种元素的原子个数；反应物取正、生成物取负；不含这种元素就是 0。";
+  else if(q.kind==="balance") fb.innerHTML="提示：设各系数为未知量，每种元素列一个“左边原子数 = 右边原子数”的方程，解这个齐次方程组；也可以先从只出现在两种物质里的元素入手。";
+  else fb.innerHTML="提示：数一数未知量个数 n（物质种数），再判断矩阵的秩 R(A)：看有几行是线性无关的。";
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+
+function setMode(m){
+  mode=m;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("exploreCard").style.display=m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display=m==="practice"?"":"none";
+  if(m==="practice"){ quiz=genProblem(); renderProblem(); }
+  else { quiz=null; doBalance(); }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
+doBalance();
+</script>
+
+<script>
+/* ── 排版：标点不单独成行、不在行首；左括号不留在行尾 ── */
+(function(){
+  const CLOSE=/^[，。、；：）)！？」》,.;:!?…]+/, OPEN=/[（(「《]+$/;
+  function wrapOf(m){
+    if(m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr")) return m.parentNode;
+    const s=document.createElement("span"); s.className="nobr"; s.style.whiteSpace="nowrap";
+    m.parentNode.insertBefore(s,m); s.appendChild(m); return s;
+  }
+  function glue(root){
+    (root.querySelectorAll?root:document).querySelectorAll("math").forEach(m=>{
+      if(m.closest("math")!==m || m.getAttribute("display")==="block") return;
+      const host=m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let nx=host.nextSibling;
+      if(nx && nx.nodeType===3){ const k=nx.data.match(CLOSE); if(k){ const w=wrapOf(m);
+          w.appendChild(document.createTextNode(k[0])); nx.data=nx.data.slice(k[0].length); } }
+      const h2=m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let pv=h2.previousSibling;
+      if(pv && pv.nodeType===3){ const k=pv.data.match(OPEN); if(k){ const w=wrapOf(m);
+          w.insertBefore(document.createTextNode(k[0]),w.firstChild); pv.data=pv.data.slice(0,pv.data.length-k[0].length); } }
+    });
+  }
+  let busy=false;
+  const ob=new MutationObserver(()=>{ if(busy) return; busy=true; ob.disconnect(); glue(document.body); ob.observe(document.body,{childList:true,subtree:true}); busy=false; });
+  glue(document.body); ob.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-chem-balance";          // ← 计数键：与编号 L# 解耦的稳定标识，永不改动
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

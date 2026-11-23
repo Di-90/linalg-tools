@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>最小二乘拟合直线 · L18 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1; --red:#c53030;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --pt:#2b6cb0; --fit:#2f855a; --res:#e53e3e; --man:#6b46c1;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.12em;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  #canvasContainer{width:100%;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       background:#fbfdff;touch-action:none;}
+  canvas{display:block;cursor:crosshair;}
+  .axcap{font-size:13px;color:var(--sub);text-align:center;margin-top:6px;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:8px;justify-content:center;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:16px;height:4px;border-radius:2px;display:inline-block;}
+  .legend i.dot{width:10px;height:10px;border-radius:50%;}
+  .legend i.dash{background:repeating-linear-gradient(90deg,var(--res) 0 4px,transparent 4px 7px);}
+  .tip{font-size:12.5px;color:var(--sub);margin-top:6px;text-align:center;}
+  button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+  .presets button{font-size:12.5px;padding:5px 10px;}
+  .presets button.on{border-color:var(--blue);background:#eef4fb;}
+  .plabel{font-size:12.5px;color:var(--sub);margin:12px 0 2px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+  .steps{font-size:14px;line-height:2;}
+  .steps .st{margin:12px 0 2px;font-weight:600;color:var(--sub);font-size:14px;}
+  .steps .ctr{text-align:center;overflow-x:auto;overflow-y:hidden;padding:2px 0;}
+  .steps math{font-size:1.05em;}
+  .steps .tip{font-size:14px;color:var(--ink);text-align:left;}
+  .steps .ctr{line-height:2.4;}
+  .verdict{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:14px;line-height:1.9;}
+  .verdict.uniq{background:#e6fffa;color:#234e52;border:1px solid #b2f5ea;}
+  .verdict.inf{background:#fffaf0;color:#744210;border:1px solid #f6e05e;}
+  .verdict.none{background:#fff5f5;color:#822727;border:1px solid #feb2b2;}
+  .big{text-align:center;margin:4px 0;font-weight:600;}
+  /* 比一比 */
+  .sl{display:grid;grid-template-columns:72px 1fr 64px;gap:8px;align-items:center;margin:6px 0;font-size:14px;}
+  .sl input[type=range]{width:100%;accent-color:var(--man);}
+  .sl .v{font-variant-numeric:tabular-nums;text-align:right;font-family:"Cambria Math","STIX Two Math",serif;}
+  .bars{margin-top:10px;font-size:13px;}
+  .bar{display:flex;align-items:center;gap:8px;margin:5px 0;}
+  .bar .lab{width:92px;color:var(--sub);}
+  .bar .trk{flex:1;height:12px;background:#edf2f7;border-radius:6px;overflow:hidden;}
+  .bar .fill{height:100%;border-radius:6px;}
+  .bar .num{width:70px;text-align:right;font-variant-numeric:tabular-nums;}
+  label.chk{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;}
+  label.chk input{accent-color:var(--man);width:16px;height:16px;}
+  /* 练习 */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody input.qin{width:64px;font-size:15px;padding:4px 6px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .qgrid{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;flex-wrap:wrap;}
+  .qmat{display:inline-grid;grid-template-columns:auto auto;gap:4px;padding:2px 8px;border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-radius:6px;}
+  .qvec{display:inline-grid;grid-template-columns:auto;gap:4px;padding:2px 8px;border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-radius:6px;}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid var(--line);
+       border-radius:8px;cursor:pointer;font-size:14px;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .opts input{accent-color:var(--blue);}
+  .opts .sw{display:inline-block;width:18px;height:4px;border-radius:2px;}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:13.5px;margin-top:6px;line-height:1.9;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,350px);gap:16px;align-items:start;}
+  @media(max-width:860px){ .layout{grid-template-columns:1fr;} }
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>最小二乘拟合直线</h1>
+  <span class="sub">方程组 <math><mi class="bm">A</mi><mi class="bm">c</mi><mo>=</mo><mi class="bm">b</mi></math> 无解时，解法方程 <math><msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">A</mi><mi class="bm">c</mi><mo>=</mo><msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">b</mi></math></span>
+  <span class="tag">L18 · 应用案例</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    实验测得 <math><mi>n</mi></math> 组数据 <math><mo>(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>,</mo><msub><mi>y</mi><mi>i</mi></msub><mo>)</mo></math>，想用一条直线 <math><mi>y</mi><mo>=</mo><msub><mi>c</mi><mn>0</mn></msub><mo>+</mo><msub><mi>c</mi><mn>1</mn></msub><mi>x</mi></math> 描述它们。
+    要求直线过每个点，就得到 <math><mi>n</mi></math> 个方程、<math><mn>2</mn></math> 个未知数的线性方程组 <math><mi class="bm">A</mi><mi class="bm">c</mi><mo>=</mo><mi class="bm">b</mi></math>；测量有误差，点一般不共线，这个方程组<b>无解</b>。
+    退而求其次：找使<b>残差平方和</b>最小的 <math><mi class="bm">c</mi></math>，
+    <div class="formula">
+      <math display="block"><mi>Q</mi><mo>=</mo><msup><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">‖</mo><mi class="bm">b</mi><mo>&#x2212;</mo><mi class="bm">A</mi><mi class="bm">c</mi><mo fence="true" form="postfix" lspace="0" rspace="0">‖</mo></mrow><mn>2</mn></msup>
+        <mo>=</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msup><mrow><mo>(</mo><msub><mi>y</mi><mi>i</mi></msub><mo>&#x2212;</mo><msub><mi>c</mi><mn>0</mn></msub><mo>&#x2212;</mo><msub><mi>c</mi><mn>1</mn></msub><msub><mi>x</mi><mi>i</mi></msub><mo>)</mo></mrow><mn>2</mn></msup>
+        <mspace width="1.2em"/><mo>⟺</mo><mspace width="1.2em"/>
+        <msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">A</mi><mi class="bm">c</mi><mo>=</mo><msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">b</mi></math>
+    </div>
+    这就是<b>最小二乘法</b>。几何上，<math><mi class="bm">A</mi><mi class="bm">c</mi></math> 是 <math><mi class="bm">b</mi></math> 在 <math><mi class="bm">A</mi></math> 的列向量所生成的向量空间上的<b>正交投影</b>，残差向量与 <math><mi class="bm">A</mi></math> 的每一列都正交（与 L12 施密特正交化里的投影是同一回事）。
+  </div>
+
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div class="layout">
+  <div class="col-left">
+    <div class="card">
+      <div id="canvasContainer"><canvas id="canvas"></canvas></div>
+      <div class="axcap" id="axCap"></div>
+      <div class="legend" id="legendBox">
+        <span><i class="dot" style="background:var(--pt)"></i>数据点</span>
+        <span><i style="background:var(--fit)"></i>最小二乘直线</span>
+        <span><i class="dash"></i>残差</span>
+        <span id="lgMan" style="display:none;"><i style="background:var(--man)"></i>你调的直线</span>
+      </div>
+      <div class="tip" id="canvasTip">点空白处添加数据点（最多 30 个），拖动可移动，双击某个点删除</div>
+    </div>
+    <div class="card" id="stepsCard">
+      <h2>计算过程</h2>
+      <div class="steps" id="stepsBox"></div>
+    </div>
+  </div>
+
+  <div class="col-right">
+    <div id="exploreSide">
+      <div class="card">
+        <h2>数据</h2>
+        <div class="plabel" style="margin-top:0;">实际场景：</div>
+        <div class="presets" id="presetBox"></div>
+        <div class="row">
+          <button id="btnUndo">删除最后一个点</button>
+          <button id="btnClear">清空</button>
+        </div>
+        <div class="verdict uniq" id="interpBox" style="display:none;"></div>
+      </div>
+      <div class="card">
+        <h2>比一比：自己调一条直线</h2>
+        <label class="chk"><input type="checkbox" id="manOn"> 显示我调的直线</label>
+        <div id="manBox" style="display:none;">
+          <div class="sl"><span><math><msub><mi>c</mi><mn>1</mn></msub></math>（斜率）</span><input type="range" id="manK"><span class="v" id="manKv"></span></div>
+          <div class="sl"><span><math><msub><mi>c</mi><mn>0</mn></msub></math>（截距）</span><input type="range" id="manB"><span class="v" id="manBv"></span></div>
+          <div class="bars" id="barsBox"></div>
+          <div class="row"><button id="btnSnap">对齐到最小二乘直线</button></div>
+          <div class="tip" style="text-align:left;">无论怎么调，紫色直线的残差平方和都不会小于最小二乘直线的。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="quizCard" style="display:none;">
+      <div class="quizhead">
+        <h2>练习 · 最小二乘</h2>
+        <span class="stats" id="quizStats"></span>
+        <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+      </div>
+      <div class="qbody" id="qBody"></div>
+      <div class="feedback" id="qFeedback"></div>
+      <div class="qbtns">
+        <button class="primary" id="qSubmit">提交</button>
+        <button id="qHint">提示</button>
+        <button id="qReveal">看解析</button>
+        <button id="qNext">下一题 ▸</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+/* ═══════════ 场景数据 ═══════════ */
+const SCENES=[
+  {key:"custom", name:"自定义", cap:"", exact:true, snap:[0.5,0.5],
+   pts:[[0,1],[1,2],[2,2],[3,4],[4,4.5]]},
+  {key:"spring", name:"弹簧伸长（胡克定律）", ax:{x:["F","N"],y:["L","cm"]}, noOrigin:true, exact:false, snap:[0.5,0.1],
+   cap:'横轴 <math><mi>x</mi></math>：拉力 <math><mi>F</mi></math>（N）　纵轴 <math><mi>y</mi></math>：弹簧长度 <math><mi>L</mi></math>（cm）',
+   pts:[[0,10.0],[1,10.9],[2,12.1],[3,13.0],[4,13.8],[5,15.1]],
+   interp:(c0,c1)=>`斜率 <math><msub><mi>c</mi><mn>1</mn></msub><mo>≈</mo><mn>${f3(c1)}</mn></math> cm/N：每增加 1 N 拉力，弹簧约伸长 ${f3(c1)} cm，劲度系数 <math><mi>k</mi><mo>=</mo><mn>1</mn><mo>/</mo><msub><mi>c</mi><mn>1</mn></msub><mo>≈</mo><mn>${f3(1/c1)}</mn></math> N/cm；截距 <math><msub><mi>c</mi><mn>0</mn></msub><mo>≈</mo><mn>${f3(c0)}</mn></math> cm 是弹簧的原长。`},
+  {key:"ohm", name:"伏安法测电阻", ax:{x:["I","A"],y:["U","V"]}, exact:false, snap:[0.05,0.01],
+   cap:'横轴 <math><mi>x</mi></math>：电流 <math><mi>I</mi></math>（A）　纵轴 <math><mi>y</mi></math>：电压 <math><mi>U</mi></math>（V）',
+   pts:[[0.1,0.52],[0.2,1.01],[0.3,1.48],[0.4,2.05],[0.5,2.49],[0.6,3.02]],
+   interp:(c0,c1)=>`由 <math><mi>U</mi><mo>=</mo><mi>R</mi><mi>I</mi></math>，斜率就是电阻：<math><mi>R</mi><mo>≈</mo><mn>${f3(c1)}</mn></math> Ω。理想情况下直线过原点，截距 <math><msub><mi>c</mi><mn>0</mn></msub><mo>≈</mo>${f3ml(c0)}</math> V 很小，反映的是测量误差。用多组数据拟合，比只用一组 <math><mi>U</mi><mo>/</mo><mi>I</mi></math> 更可靠。`},
+  {key:"temp", name:"气温随海拔变化", ax:{x:["h","km"],y:["T","°C"]}, noOrigin:true, exact:false, snap:[0.25,0.1],
+   cap:'横轴 <math><mi>x</mi></math>：海拔 <math><mi>h</mi></math>（km）　纵轴 <math><mi>y</mi></math>：气温 <math><mi>T</mi></math>（°C）',
+   pts:[[0,25.1],[0.5,21.8],[1,18.6],[1.5,15.4],[2,12.2],[2.5,9.3]],
+   interp:(c0,c1)=>`斜率 <math><msub><mi>c</mi><mn>1</mn></msub><mo>≈</mo>${f3ml(c1)}</math> °C/km：海拔每升高 1 km，气温约下降 ${f3(-c1)} °C；截距 <math><msub><mi>c</mi><mn>0</mn></msub><mo>≈</mo><mn>${f3(c0)}</mn></math> °C 是山脚（海拔 0）处的气温。由此可以估计任意海拔的气温。`},
+  {key:"outlier", name:"含一个异常点", cap:"", exact:true, snap:[0.5,0.5],
+   pts:[[0,1],[1,2],[2,2.5],[3,3.5],[4,4],[5,10]],
+   interp:()=>`最右边的点明显偏离其他点。因为残差是<b>平方</b>后再相加，大的残差影响特别大，整条直线被这一个点“拉”了过去。试着把它拖回其他点附近，看直线怎么变。实际处理数据时要先检查、剔除这类异常点。`}
+];
+function p4(v){ let t=v.toPrecision(4); if(t.includes("e")) t=(+t).toString(); return t; }
+function f3(v){ return p4(v).replace("-","−"); }
+function f3ml(v){ const t=p4(v); return t.startsWith("-")?`<mo form="prefix" lspace="0" rspace="0">&#x2212;</mo><mn>${t.slice(1)}</mn>`:`<mn>${t}</mn>`; }
+
+/* ═══════════ 数学 ═══════════ */
+function fit(pts){
+  const n=pts.length; let Sx=0,Sy=0,Sxx=0,Sxy=0;
+  pts.forEach(([x,y])=>{ Sx+=x; Sy+=y; Sxx+=x*x; Sxy+=x*y; });
+  const det=n*Sxx-Sx*Sx;
+  const r={n,Sx,Sy,Sxx,Sxy,det,ok:n>=2&&Math.abs(det)>1e-9*Math.max(1,n*Sxx)};
+  if(r.ok){ r.c1=(n*Sxy-Sx*Sy)/det; r.c0=(Sy*Sxx-Sx*Sxy)/det;
+    r.res=pts.map(([x,y])=>y-r.c0-r.c1*x); r.Q=r.res.reduce((s,e)=>s+e*e,0);
+    r.collinear = r.res.every(e=>Math.abs(e)<1e-9); }
+  return r;
+}
+const Qof=(pts,c0,c1)=>pts.reduce((s,[x,y])=>s+(y-c0-c1*x)**2,0);
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; }
+function ratOf(x){ for(let d=1;d<=2000;d++){ const n=Math.round(x*d); if(Math.abs(n/d-x)<1e-9*Math.max(1,Math.abs(x))){ const g=gcd(n,d)||1; return [n/g,d/g]; } } return null; }
+function trimNum(v){ let t=(Math.round(v*1e4)/1e4).toString(); if(t==="-0") t="0"; return t; }
+// 数值 → MathML 片段；exact=true 时尽量给最简分数；返回 {ml, approx}
+function valML(v,exact){
+  if(exact){ const r=ratOf(v); if(r&&r[1]<=100){ const [p,q]=r, neg=p<0, a=Math.abs(p);
+      return {ml:(neg?'<mo form="prefix" lspace="0" rspace="0">&#x2212;</mo>':"")+(q===1?`<mn>${a}</mn>`:`<mfrac><mn>${a}</mn><mn>${q}</mn></mfrac>`), approx:false}; } }
+  const isFinite4=Math.abs(Math.round(v*1e4)/1e4-v)<1e-9;
+  const t=isFinite4?trimNum(v):(+v.toPrecision(4)).toString();
+  return {ml: t.startsWith("-")?`<mo form="prefix" lspace="0" rspace="0">&#x2212;</mo><mn>${t.slice(1)}</mn>`:`<mn>${t}</mn>`, approx:!isFinite4};
+}
+const eqs=a=>a?"<mo>≈</mo>":"<mo>=</mo>";
+function mnum(v){ return valML(v,false).ml; }     // 数据与求和（有限小数，原样显示）
+function lineML(c0,c1,exact,yv,xv){  // y = c1 x + c0（可换成物理量名）
+  yv=yv||"y"; xv=xv||"x";
+  const k=valML(Math.abs(c1),exact), b=valML(Math.abs(c0),exact);
+  const ap=k.approx||b.approx; let s=`<mi>${yv}</mi>${eqs(ap)}`;
+  const kZero=Math.abs(c1)<1e-12, bZero=Math.abs(c0)<1e-12;
+  if(!kZero){ if(c1<0) s+="<mo>&#x2212;</mo>"; s+=(k.ml==="<mn>1</mn>"?"":k.ml)+`<mi>${xv}</mi>`; }
+  if(!bZero||kZero){ if(!kZero) s+= c0<0?"<mo>&#x2212;</mo>":"<mo>+</mo>"; else if(c0<0) s+="<mo>&#x2212;</mo>"; s+=b.ml; }
+  return s;
+}
+const ms=(a,b)=>`<msub><mi>${a}</mi><mn>${b}</mn></msub>`;
+function colML(arr){ return `<mrow><mo>(</mo><mtable>${arr.map(v=>`<mtr><mtd>${v}</mtd></mtr>`).join("")}</mtable><mo>)</mo></mrow>`; }
+function matML(rows){ return `<mrow><mo>(</mo><mtable>${rows.map(r=>`<mtr>${r.map(v=>`<mtd>${v}</mtd>`).join("")}</mtr>`).join("")}</mtable><mo>)</mo></mrow>`; }
+function truncRows(arr,mk){ // 行数多时中间用 ⋮
+  if(arr.length<=10) return arr.map(mk);
+  return [...arr.slice(0,5).map(mk), null, ...arr.slice(-2).map(mk)];
+}
+
+/* ═══════════ 画布 ═══════════ */
+const canvas=document.getElementById("canvas"), ctx=canvas.getContext("2d"), container=document.getElementById("canvasContainer");
+let W=600,H=420, view={x0:0,x1:5,y0:0,y1:5,tx:1,ty:1};
+let scene=SCENES[0], pts=SCENES[0].pts.map(p=>p.slice());
+let drag=-1, mode="explore", quiz=null;
+let man={on:false,c0:0,c1:1};
+const PAD={l:50,r:16,t:14,b:34};
+function niceStep(span){ const raw=span/6, p=Math.pow(10,Math.floor(Math.log10(raw))), m=raw/p; return (m<1.5?1:m<3.5?2:m<7.5?5:10)*p; }
+function fitView(P,withOrigin){
+  let xs=P.map(p=>p[0]), ys=P.map(p=>p[1]);
+  if(withOrigin){ xs.push(0); ys.push(0); }
+  if(!xs.length){ xs=[0,5]; ys=[0,5]; }
+  let xa=Math.min(...xs), xb=Math.max(...xs), ya=Math.min(...ys), yb=Math.max(...ys);
+  if(xb-xa<1e-9){ xa-=1; xb+=1; } if(yb-ya<1e-9){ ya-=1; yb+=1; }
+  const px=(xb-xa)*0.1, py=(yb-ya)*0.12;
+  const tx=niceStep(xb-xa+2*px), ty=niceStep(yb-ya+2*py);
+  return {x0:Math.floor((xa-px)/tx)*tx, x1:Math.ceil((xb+px)/tx)*tx, y0:Math.floor((ya-py)/ty)*ty, y1:Math.ceil((yb+py)/ty)*ty, tx, ty};
+}
+const X=x=>PAD.l+(x-view.x0)/(view.x1-view.x0)*(W-PAD.l-PAD.r);
+const Y=y=>H-PAD.b-(y-view.y0)/(view.y1-view.y0)*(H-PAD.t-PAD.b);
+const Xi=px=>view.x0+(px-PAD.l)/(W-PAD.l-PAD.r)*(view.x1-view.x0);
+const Yi=py=>view.y0+(H-PAD.b-py)/(H-PAD.t-PAD.b)*(view.y1-view.y0);
+function col(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function resize(){
+  W=Math.max(300,container.clientWidth); H=Math.round(Math.min(Math.max(W*0.66,280),440));
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr);
+  canvas.style.width=W+"px"; canvas.style.height=H+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0); redraw();
+}
+window.addEventListener("resize",resize);
+const CMFONT='"Cambria Math","STIX Two Math",serif';
+function toMath(str){ let o=""; for(const ch of str){ const c=ch.codePointAt(0); o+= (c>=0x61&&c<=0x7A)?String.fromCodePoint(c===0x68?0x210E:0x1D44E+c-0x61):(c>=0x41&&c<=0x5A)?String.fromCodePoint(0x1D434+c-0x41):ch; } return o; }
+function label(t,x,y,color,px,align){ ctx.save(); ctx.font=`${px||15}px ${CMFONT}`; ctx.textAlign=align||"left"; ctx.textBaseline="middle";
+  ctx.lineJoin="round"; ctx.lineWidth=3; ctx.strokeStyle="rgba(255,255,255,.92)"; ctx.strokeText(t,x,y); ctx.fillStyle=color; ctx.fillText(t,x,y); ctx.restore(); }
+function tickTxt(v,st){ const d=Math.max(0,-Math.floor(Math.log10(st)+1e-9)); return v.toFixed(d).replace("-","−"); }
+function drawFrame(){
+  ctx.clearRect(0,0,W,H);
+  const L=PAD.l,R=W-PAD.r,T=PAD.t,B=H-PAD.b;
+  ctx.fillStyle="#fff"; ctx.fillRect(L,T,R-L,B-T);
+  ctx.lineWidth=1; ctx.font='11px "Segoe UI",system-ui'; ctx.fillStyle="#718096";
+  for(let v=view.x0; v<=view.x1+1e-9; v+=view.tx){ const p=Math.round(X(v))+0.5; ctx.strokeStyle=Math.abs(v)<1e-9?"#a0aec0":"#e8eef5"; ctx.beginPath(); ctx.moveTo(p,T); ctx.lineTo(p,B); ctx.stroke();
+    ctx.textAlign="center"; ctx.textBaseline="top"; ctx.fillText(tickTxt(v,view.tx),p,B+5); }
+  for(let v=view.y0; v<=view.y1+1e-9; v+=view.ty){ const p=Math.round(Y(v))+0.5; ctx.strokeStyle=Math.abs(v)<1e-9?"#a0aec0":"#e8eef5"; ctx.beginPath(); ctx.moveTo(L,p); ctx.lineTo(R,p); ctx.stroke();
+    ctx.textAlign="right"; ctx.textBaseline="middle"; ctx.fillText(tickTxt(v,view.ty),L-6,p); }
+  ctx.strokeStyle="#94a3b8"; ctx.lineWidth=1.3; ctx.strokeRect(L+0.5,T+0.5,R-L-1,B-T-1);
+  const ax=(mode==="explore"&&scene.ax)?scene.ax:null;
+  label(ax?toMath(ax.x[0])+" / "+ax.x[1]:toMath("x"),R-4,B-12,"#4a5568",16,"right");
+  label(ax?toMath(ax.y[0])+" / "+ax.y[1]:toMath("y"),L+8,T+12,"#4a5568",16,"left");
+}
+function clipPlot(){ ctx.save(); ctx.beginPath(); ctx.rect(PAD.l,PAD.t,W-PAD.l-PAD.r,H-PAD.t-PAD.b); ctx.clip(); }
+function drawLine(c0,c1,color,w,dash){
+  clipPlot(); ctx.strokeStyle=color; ctx.lineWidth=w; if(dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(X(view.x0),Y(c0+c1*view.x0)); ctx.lineTo(X(view.x1),Y(c0+c1*view.x1)); ctx.stroke(); ctx.restore();
+}
+function drawResiduals(P,c0,c1,color,w,dash){
+  clipPlot(); ctx.strokeStyle=color; ctx.lineWidth=w; ctx.setLineDash(dash||[]);
+  P.forEach(([x,y])=>{ ctx.beginPath(); ctx.moveTo(X(x),Y(y)); ctx.lineTo(X(x),Y(c0+c1*x)); ctx.stroke(); });
+  ctx.restore();
+}
+function drawPoints(P,hl){
+  P.forEach(([x,y],i)=>{ ctx.beginPath(); ctx.arc(X(x),Y(y),i===hl?7:5.5,0,2*Math.PI);
+    ctx.fillStyle=col("--pt"); ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle="#fff"; ctx.stroke(); });
+}
+function redraw(){
+  if(mode==="practice"){ drawQuiz(); return; }
+  if(drag<0) view=fitView(pts, !scene.noOrigin);
+  drawFrame();
+  const f=fit(pts);
+  if(f.ok){
+    if(man.on){ drawResiduals(pts,man.c0,man.c1,col("--man"),1.4,[2,3]); drawLine(man.c0,man.c1,col("--man"),2,[7,5]); }
+    drawResiduals(pts,f.c0,f.c1,col("--res"),1.8,[5,4]);
+    drawLine(f.c0,f.c1,col("--fit"),2.6);
+  }
+  drawPoints(pts,drag);
+  renderSteps(f); renderInterp(f); renderBars(f);
+}
+
+/* ═══════════ 交互 ═══════════ */
+function evPos(e){ const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+function hit(p){ let best=-1,bd=14; pts.forEach(([x,y],i)=>{ const d=Math.hypot(X(x)-p.x,Y(y)-p.y); if(d<bd){bd=d;best=i;} }); return best; }
+const snapv=(v,s)=>Math.round(v/s)*s;
+function fixNum(v){ return Math.round(v*1e6)/1e6; }
+let lastTap={t:0,i:-1};
+canvas.addEventListener("pointerdown",e=>{
+  if(mode!=="explore") return;
+  const p=evPos(e); let i=hit(p);
+  const now=Date.now();
+  if(i>=0 && lastTap.i===i && now-lastTap.t<350){ pts.splice(i,1); lastTap={t:0,i:-1}; drag=-1; redraw(); return; }
+  lastTap={t:now,i};
+  if(i<0){
+    if(p.x<PAD.l||p.x>W-PAD.r||p.y<PAD.t||p.y>H-PAD.b) return;
+    if(pts.length>=30){ document.getElementById("canvasTip").textContent="最多 30 个点"; return; }
+    pts.push([fixNum(snapv(Xi(p.x),scene.snap[0])), fixNum(snapv(Yi(p.y),scene.snap[1]))]); i=pts.length-1; lastTap={t:now,i};
+  }
+  drag=i; canvas.setPointerCapture(e.pointerId); redraw();
+});
+canvas.addEventListener("pointermove",e=>{
+  if(drag<0) return; const p=evPos(e);
+  const x=Math.min(Math.max(Xi(p.x),view.x0),view.x1), y=Math.min(Math.max(Yi(p.y),view.y0),view.y1);
+  pts[drag]=[fixNum(snapv(x,scene.snap[0])), fixNum(snapv(y,scene.snap[1]))]; redraw();
+});
+const endDrag=()=>{ if(drag>=0){ drag=-1; redraw(); } };
+canvas.addEventListener("pointerup",endDrag); canvas.addEventListener("pointercancel",endDrag);
+
+function setScene(i){
+  scene=SCENES[i]; pts=scene.pts.map(p=>p.slice()); man.on=false; document.getElementById("manOn").checked=false; syncMan();
+  document.querySelectorAll("#presetBox button").forEach((b,j)=>b.classList.toggle("on",j===i));
+  document.getElementById("axCap").innerHTML=scene.cap; redraw();
+}
+document.getElementById("presetBox").innerHTML=SCENES.map((s,i)=>`<button data-i="${i}">${s.name}</button>`).join("");
+document.querySelectorAll("#presetBox button").forEach(b=>b.addEventListener("click",()=>setScene(+b.dataset.i)));
+document.getElementById("btnUndo").addEventListener("click",()=>{ pts.pop(); redraw(); });
+document.getElementById("btnClear").addEventListener("click",()=>{ pts=[]; redraw(); });
+
+/* 比一比 */
+function syncMan(){
+  document.getElementById("manBox").style.display=man.on?"":"none";
+  document.getElementById("lgMan").style.display=man.on?"":"none";
+}
+function setupSliders(f){
+  const k=document.getElementById("manK"), b=document.getElementById("manB");
+  const ks=Math.max(1,Math.abs(f.c1))*2, ys=Math.max(1,view.y1-view.y0);
+  const kst=niceStep(ks)/20, bst=niceStep(ys)/20;
+  k.min=snapv(f.c1-ks,kst); k.max=snapv(f.c1+ks,kst); k.step=kst;
+  b.min=snapv(f.c0-ys,bst); b.max=snapv(f.c0+ys,bst); b.step=bst;
+  man.c1=snapv(f.c1+ks*0.3,kst); man.c0=snapv(f.c0-ys*0.1,bst); k.value=man.c1; b.value=man.c0;
+  man.scale=null;
+}
+document.getElementById("manOn").addEventListener("change",e=>{
+  const f=fit(pts); if(e.target.checked&&!f.ok){ e.target.checked=false; return; }
+  man.on=e.target.checked; if(man.on) setupSliders(f); syncMan(); redraw();
+});
+document.getElementById("manK").addEventListener("input",e=>{ man.c1=+e.target.value; redraw(); });
+document.getElementById("manB").addEventListener("input",e=>{ man.c0=+e.target.value; redraw(); });
+document.getElementById("btnSnap").addEventListener("click",()=>{ const f=fit(pts); if(!f.ok) return; man.c0=f.c0; man.c1=f.c1;
+  document.getElementById("manK").value=f.c1; document.getElementById("manB").value=f.c0; redraw(); });
+function renderBars(f){
+  if(!man.on) return;
+  if(!f.ok){ document.getElementById("barsBox").innerHTML=""; return; }
+  document.getElementById("manKv").textContent=f3(man.c1); document.getElementById("manBv").textContent=f3(man.c0);
+  const Qm=Qof(pts,man.c0,man.c1);
+  // 刻度固定：只在打开对比或数据点改变时确定，拖滑块时不变 → 动的是紫色条，绿色条（最小值）不动
+  const sig=JSON.stringify(pts);
+  if(!man.scale||man.sig!==sig){ man.scale=Math.max(Qm*2, f.Q*5, 1e-9); man.sig=sig; }
+  const mx=man.scale;
+  const bar=(lab,v,c)=>{ const over=v>mx; return `<div class="bar"><span class="lab">${lab}</span><span class="trk"><span class="fill" style="display:block;width:${(Math.min(v,mx)/mx*100).toFixed(1)}%;background:${c}"></span></span><span class="num">${f3(v)}${over?" ▸":""}</span></div>`; };
+  const ratio=f.Q>1e-12?`，是最小值的 ${(Qm/f.Q).toFixed(2)} 倍`:"";
+  document.getElementById("barsBox").innerHTML="残差平方和 <math><mi>Q</mi></math>："+bar("我调的直线",Qm,col("--man"))+bar("最小二乘直线",f.Q,col("--fit"))
+    +`<div style="margin-top:4px;">你调的直线 <math><mi>Q</mi></math> = ${f3(Qm)}${ratio}${Math.abs(Qm-f.Q)<1e-9*Math.max(1,f.Q)?"（已经是最小值）":""}。</div>`;
+}
+
+/* ═══════════ 计算过程 ═══════════ */
+function renderInterp(f){
+  const box=document.getElementById("interpBox");
+  if(scene.interp&&f.ok){ box.style.display=""; box.innerHTML=scene.interp(f.c0,f.c1); } else box.style.display="none";
+}
+function stepsHTML(P,f,exact){
+  const n=P.length;
+  if(n===0) return `<div class="verdict inf">画布上还没有数据点：在空白处点几下添加。</div>`;
+  if(!f.ok){
+    if(n<2) return `<div class="verdict inf">至少需要 2 个点才能确定直线。</div>`;
+    return `<div class="verdict none">所有点的 <math><mi>x</mi></math> 坐标都相同：<math><mi class="bm">A</mi></math> 的两列线性相关，<math><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow><mo>=</mo><mn>0</mn></math>，法方程没有唯一解（这些点只能用竖直线 <math><mi>x</mi><mo>=</mo><mi>常数</mi></math> 描述，它不是 <math><mi>y</mi><mo>=</mo><msub><mi>c</mi><mn>0</mn></msub><mo>+</mo><msub><mi>c</mi><mn>1</mn></msub><mi>x</mi></math> 的形式）。</div>`;
+  }
+  const rowsA=truncRows(P,([x])=>[`<mn>1</mn>`,mnum(x)]).map(r=>r||[`<mo>⋮</mo>`,`<mo>⋮</mo>`]);
+  const rowsB=truncRows(P,([,y])=>mnum(y)).map(r=>r||`<mo>⋮</mo>`);
+  let h=`<div class="st">① 要求直线过每个点 ⇒ ${n} 个方程、2 个未知数</div>`
+   +`<div class="ctr"><math display="block"><msub><mi>c</mi><mn>0</mn></msub><mo>+</mo><msub><mi>c</mi><mn>1</mn></msub><msub><mi>x</mi><mi>i</mi></msub><mo>=</mo><msub><mi>y</mi><mi>i</mi></msub><mspace width="0.6em"/><mo stretchy="false">(</mo><mi>i</mi><mo>=</mo><mn>1</mn><mo>,</mo><mo>…</mo><mo>,</mo><mn>${n}</mn><mo stretchy="false">)</mo><mspace width="1.2em"/><mo>⟺</mo><mspace width="1.2em"/>`
+   +`<munder>${matML(rowsA)}<mi class="bm">A</mi></munder>`
+   +`<munder>${colML([ms("c",0),ms("c",1)])}<mi class="bm">c</mi></munder><mo>=</mo>`
+   +`<munder>${colML(rowsB)}<mi class="bm">b</mi></munder></math></div>`;
+  h+= f.collinear
+    ? `<div class="verdict uniq">这些点恰好共线：<math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo><mo>=</mo><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>,</mo><mi class="bm">b</mi><mo>)</mo><mo>=</mo><mn>2</mn></math>，方程组有解，残差全为 0。</div>`
+    : `<div class="tip" style="text-align:center;">点不共线：<math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo><mo>=</mo><mn>2</mn><mo>&lt;</mo><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>,</mo><mi class="bm">b</mi><mo>)</mo><mo>=</mo><mn>3</mn></math>，方程组<b>无解</b>，改求最小二乘解。</div>`;
+  h+=`<div class="st">② 法方程 <math><msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">A</mi><mi class="bm">c</mi><mo>=</mo><msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">b</mi></math></div>`
+   +`<div class="ctr"><math display="block">${matML([[`<mi>n</mi>`,`<mo>∑</mo><msub><mi>x</mi><mi>i</mi></msub>`],[`<mo>∑</mo><msub><mi>x</mi><mi>i</mi></msub>`,`<mo>∑</mo><msubsup><mi>x</mi><mi>i</mi><mn>2</mn></msubsup>`]])}${colML([ms("c",0),ms("c",1)])}<mo>=</mo>${colML([`<mo>∑</mo><msub><mi>y</mi><mi>i</mi></msub>`,`<mo>∑</mo><msub><mi>x</mi><mi>i</mi></msub><msub><mi>y</mi><mi>i</mi></msub>`])}`
+   +`<mspace width="0.8em"/><mo>⇒</mo><mspace width="0.8em"/>${matML([[mnum(n),mnum(f.Sx)],[mnum(f.Sx),mnum(f.Sxx)]])}${colML([ms("c",0),ms("c",1)])}<mo>=</mo>${colML([mnum(f.Sy),mnum(f.Sxy)])}</math></div>`;
+  const c0=valML(f.c0,exact), c1=valML(f.c1,exact), Q=valML(f.Q,exact);
+  const dt=valML(f.det,exact);
+  h+=`<div class="st">③ 解法方程</div>`
+   +`<div class="ctr"><math><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow>${eqs(dt.approx)}${dt.ml}<mo>≠</mo><mn>0</mn></math>，解唯一：`
+   +`<math displaystyle="true">${ms("c",0)}${eqs(c0.approx)}${c0.ml}<mo>,</mo><mspace width="1em"/>${ms("c",1)}${eqs(c1.approx)}${c1.ml}</math></div>`
+   +`<div class="ctr big">最小二乘直线：<math displaystyle="true">${lineML(f.c0,f.c1,exact)}</math></div>`
+   +(mode==="explore"&&scene.ax&&P===pts?`<div class="ctr">换成本场景的物理量，即 <math displaystyle="true">${lineML(f.c0,f.c1,exact,scene.ax.y[0],scene.ax.x[0])}</math>（<math><mi>${scene.ax.y[0]}</mi></math> 的单位为 ${scene.ax.y[1]}，<math><mi>${scene.ax.x[0]}</mi></math> 的单位为 ${scene.ax.x[1]}）</div>`:"")
+   +`<div class="ctr">最小残差平方和 <math displaystyle="true"><msub><mi>Q</mi><mi>min</mi></msub>${eqs(Q.approx)}${Q.ml}</math></div>`;
+  const s0=f.res.reduce((s,e)=>s+e,0), s1=f.res.reduce((s,e,i)=>s+e*P[i][0],0);
+  const z=v=>Math.abs(v)<1e-9?`<mn>0</mn>`:valML(v,exact).ml;
+  h+=`<div class="st">④ 几何意义：残差向量与 <math><mi class="bm">A</mi></math> 的列正交</div>`
+   +`<div class="ctr"><math display="block"><mi class="bm">r</mi><mo>=</mo><mi class="bm">b</mi><mo>&#x2212;</mo><mi class="bm">A</mi><mi class="bm">c</mi><mo>,</mo><mspace width="1em"/>`
+   +`<msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">r</mi><mo>=</mo>${colML([`<mo>∑</mo><msub><mi>r</mi><mi>i</mi></msub>`,`<mo>∑</mo><msub><mi>x</mi><mi>i</mi></msub><msub><mi>r</mi><mi>i</mi></msub>`])}<mo>=</mo>${colML([z(s0),z(s1)])}</math></div>`
+   +`<div class="tip" style="text-align:left;line-height:1.8;">法方程就是 <math><msup><mi class="bm">A</mi><mi>T</mi></msup><mo>(</mo><mi class="bm">b</mi><mo>&#x2212;</mo><mi class="bm">A</mi><mi class="bm">c</mi><mo>)</mo><mo>=</mo><mn mathvariant="bold">0</mn></math>：残差 <math><mi class="bm">r</mi></math> 垂直于 <math><mi class="bm">A</mi></math> 的列向量生成的向量空间，所以 <math><mi class="bm">A</mi><mi class="bm">c</mi></math> 是 <math><mi class="bm">b</mi></math> 在这个空间上的正交投影，离 <math><mi class="bm">b</mi></math> 最近。<math><mo>∑</mo><msub><mi>r</mi><mi>i</mi></msub><mo>=</mo><mn>0</mn></math> 还说明直线一定经过数据的平均点 <math><mo>(</mo><mover><mi>x</mi><mo>¯</mo></mover><mo>,</mo><mover><mi>y</mi><mo>¯</mo></mover><mo>)</mo></math>。</div>`;
+  return h;
+}
+function renderSteps(f){ document.getElementById("stepsBox").innerHTML=stepsHTML(pts,f,scene.exact); }
+
+/* ═══════════ 练习模式 ═══════════
+   题型：normal 写出法方程的系数 | solve 求最小二乘直线 | choice 四条直线里选最小二乘直线 */
+const QUIZKEY="la-least-squares-quiz";
+let streak=0, stats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){ if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return; stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats(); }
+function renderStats(){ const acc=stats.attempted?Math.round(stats.correct/stats.attempted*100):0;
+  document.getElementById("quizStats").innerHTML=`已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`; }
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function genPts(xsArr,ylo,yhi){ let P,f; do{ P=xsArr.map(x=>[x,ri(ylo,yhi)]); f=fit(P); }while(f.collinear); return P; }
+function genProblem(){
+  const r=Math.random();
+  if(r<0.33){
+    const n=ri(3,4); const xsA=shuffle([0,1,2,3,4,5]).slice(0,n).sort((a,b)=>a-b);
+    const P=genPts(xsA,0,6); return {kind:"normal",P,f:fit(P)};
+  }else if(r<0.67){
+    const sets=[[-1,0,1],[-2,-1,1,2],[-1,0,1,2],[0,1,2],[0,1,2,3],[1,2,3]];
+    const P=genPts(sets[ri(0,sets.length-1)],-2,6); return {kind:"solve",P,f:fit(P)};
+  }else{
+    let P,f,c; for(let t=0;t<200;t++){
+      P=genPts([0,1,2,3,4].slice(0,ri(4,5)),0,7); f=fit(P); c=choiceLines(P,f); if(c) break; }
+    return {kind:"choice",P,f,lines:c,selected:-1};
+  }
+}
+function choiceLines(P,f){
+  const L=[{c0:f.c0,c1:f.c1,ok:true,why:"最小二乘直线"}];
+  const a=P[0], b=P[P.length-1]; const k=(b[1]-a[1])/(b[0]-a[0]);
+  L.push({c0:a[1]-k*a[0],c1:k,why:"只用了第一个点和最后一个点连线"});
+  // 用 x 对 y 做回归（使水平方向距离平方和最小）
+  const n=P.length; let Sy=0,Syy=0,Sx=0,Sxy=0; P.forEach(([x,y])=>{Sx+=x;Sy+=y;Syy+=y*y;Sxy+=x*y;});
+  const d=n*Syy-Sy*Sy;
+  if(Math.abs(d)>1e-9){ const g1=(n*Sxy-Sx*Sy)/d, g0=(Sx-g1*Sy)/n; if(Math.abs(g1)>1e-6) L.push({c0:-g0/g1,c1:1/g1,why:"让各点到直线的<b>水平</b>距离平方和最小（把 x 当成因变量），不是最小二乘直线 y = c₀ + c₁x"}); }
+  const sh=Math.random()<0.5?1:-1;
+  L.push({c0:f.c0+sh,c1:f.c1,why:`与最小二乘直线平行但整体${sh>0?"上":"下"}移了 1，残差之和不为 0`});
+  if(L.length<4) return null;
+  for(let i=0;i<4;i++) for(let j=i+1;j<4;j++){ if(Math.abs(L[i].c1-L[j].c1)<0.08&&Math.abs(L[i].c0-L[j].c0)<0.25) return null; }
+  // 线要大致在画面里
+  if(L.some(l=>Math.abs(l.c1)>8)) return null;
+  L.forEach(l=>l.Q=Qof(P,l.c0,l.c1));
+  return shuffle(L.slice(0,4));
+}
+const LCOL=["#2b6cb0","#d69e2e","#6b46c1","#dd6b20"], LNAME=["①","②","③","④"];
+function ptsML(P){ return P.map(([x,y])=>`<math><mo>(</mo>${mnum(x)}<mo>,</mo>${mnum(y)}<mo>)</mo></math>`).join("，"); }
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody"), fb=document.getElementById("qFeedback");
+  q.done=false; q.revealed=false; fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  const head=`数据点：${ptsML(q.P)}。<br>`;
+  if(q.kind==="normal"){
+    const inp=id=>`<input class="qin" id="${id}" type="number">`;
+    body.innerHTML=head+`用直线 <math><mi>y</mi><mo>=</mo>${ms("c",0)}<mo>+</mo>${ms("c",1)}<mi>x</mi></math> 拟合，写出法方程 <math><msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">A</mi><mi class="bm">c</mi><mo>=</mo><msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">b</mi></math> 中的数：`
+     +`<div class="qgrid"><span class="qmat">${inp("q00")}${inp("q01")}${inp("q10")}${inp("q11")}</span><math>${colML([ms("c",0),ms("c",1)])}<mo>=</mo></math><span class="qvec">${inp("qb0")}${inp("qb1")}</span></div>`;
+  }else if(q.kind==="solve"){
+    body.innerHTML=head+`求最小二乘直线 <math><mi>y</mi><mo>=</mo>${ms("c",0)}<mo>+</mo>${ms("c",1)}<mi>x</mi></math>（可填整数、分数如 <b>7/3</b>，或保留两位小数）：`
+     +`<div class="qgrid"><math>${ms("c",0)}<mo>=</mo></math><input class="qin" id="qc0" type="text"><span style="width:14px"></span><math>${ms("c",1)}<mo>=</mo></math><input class="qin" id="qc1" type="text"></div>`;
+  }else{
+    body.innerHTML=head+`画布上的四条直线中，哪一条是这组数据的<b>最小二乘直线</b>？<div class="opts" id="qOpts">`
+     +q.lines.map((l,i)=>`<label data-i="${i}"><input type="radio" name="qopt" value="${i}"><span class="sw" style="background:${LCOL[i]}"></span><span>${LNAME[i]}　<math>${lineML(l.c0,l.c1,true)}</math></span></label>`).join("")+"</div>";
+    body.querySelectorAll("#qOpts label").forEach(l=>l.addEventListener("click",()=>{
+      body.querySelectorAll("#qOpts label").forEach(x=>x.classList.remove("sel")); l.classList.add("sel");
+      l.querySelector("input").checked=true; q.selected=+l.dataset.i; }));
+  }
+  body.querySelectorAll("input.qin").forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); }));
+  document.getElementById("legendBox").style.display=q.kind==="choice"?"none":"";
+  document.getElementById("stepsBox").innerHTML=`<div class="tip">提交答案或点“看解析”后，这里显示完整的计算过程。</div>`;
+  redraw(); renderStats();
+}
+function drawQuiz(){
+  const q=quiz; if(!q) return;
+  const all=q.P.slice();
+  view=fitView(all,true); drawFrame();
+  if(q.kind==="choice"){
+    q.lines.forEach((l,i)=>{ const hl=q.revealed&&l.ok; drawLine(l.c0,l.c1,LCOL[i],hl?3.4:2,hl?null:[8,5]);
+      let xl=view.x1-(view.x1-view.x0)*0.04, yl=l.c0+l.c1*xl;
+      if(yl>view.y1||yl<view.y0){ const yt=yl>view.y1?view.y1-(view.y1-view.y0)*0.05:view.y0+(view.y1-view.y0)*0.05; xl=(yt-l.c0)/l.c1; yl=yt; }
+      label(LNAME[i],X(xl),Y(yl)-10,LCOL[i],15,"center"); });
+    if(q.revealed){ const l=q.lines.find(t=>t.ok); drawResiduals(q.P,l.c0,l.c1,col("--res"),1.8,[5,4]); }
+  }else if(q.revealed){
+    drawResiduals(q.P,q.f.c0,q.f.c1,col("--res"),1.8,[5,4]); drawLine(q.f.c0,q.f.c1,col("--fit"),2.6);
+  }
+  drawPoints(q.P,-1);
+}
+function parseVal(s){
+  s=s.trim().replace(/−/g,"-"); if(!s) return NaN;
+  const m=s.match(/^(-?\d+(?:\.\d+)?)\s*(?:\/\s*(\d+(?:\.\d+)?))?$/); if(!m) return NaN;
+  const a=parseFloat(m[1]); if(m[2]===undefined) return a; const b=parseFloat(m[2]); return b===0?NaN:a/b;
+}
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return; const fb=document.getElementById("qFeedback");
+  if(q.kind==="normal"){
+    const ids=["q00","q01","q10","q11","qb0","qb1"], want=[q.f.n,q.f.Sx,q.f.Sx,q.f.Sxx,q.f.Sy,q.f.Sxy];
+    const v=ids.map(id=>document.getElementById(id).value.trim());
+    if(v.some(x=>x==="")){ fb.className="feedback no"; fb.textContent="6 个框都要填"; return; }
+    const wrong=ids.filter((id,i)=>+v[i]!==want[i]);
+    ids.forEach(id=>document.getElementById(id).style.borderColor=wrong.includes(id)?"#c53030":"");
+    if(!wrong.length) markCorrect();
+    else{ fb.className="feedback no"; fb.textContent=`标红的 ${wrong.length} 个数不对。提示：AᵀA 的左上角是点的个数 n。`; }
+  }else if(q.kind==="solve"){
+    const a=parseVal(document.getElementById("qc0").value), b=parseVal(document.getElementById("qc1").value);
+    if(Number.isNaN(a)||Number.isNaN(b)){ fb.className="feedback no"; fb.textContent="请填写 c₀ 和 c₁（整数、分数 a/b 或小数）"; return; }
+    const ok0=Math.abs(a-q.f.c0)<0.006, ok1=Math.abs(b-q.f.c1)<0.006;
+    if(ok0&&ok1) markCorrect();
+    else if(ok1){ fb.className="feedback no"; fb.textContent="斜率 c₁ 对了，截距 c₀ 不对。"; }
+    else if(ok0){ fb.className="feedback no"; fb.textContent="截距 c₀ 对了，斜率 c₁ 不对。"; }
+    else{ fb.className="feedback no"; fb.textContent="还不对，先列出法方程再解～（也可以点“看解析”）"; }
+  }else{
+    if(q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一条直线"; return; }
+    if(q.lines[q.selected].ok) markCorrect();
+    else{ fb.className="feedback no"; fb.innerHTML=`不对哦：${LNAME[q.selected]} 是${q.lines[q.selected].why}。`; }
+  }
+}
+function solHTML(){
+  const q=quiz, f=q.f;
+  if(q.kind==="choice"){
+    const rows=q.lines.map((l,i)=>`${LNAME[i]}：<math><mi>Q</mi>${eqs(valML(l.Q,true).approx)}${valML(l.Q,true).ml}</math>${l.ok?"（最小）":"，"+l.why}`).join("<br>");
+    return `<div class="sol">逐条算残差平方和 <math><mi>Q</mi><mo>=</mo><mo>∑</mo><msup><mrow><mo>(</mo><msub><mi>y</mi><mi>i</mi></msub><mo>&#x2212;</mo>${ms("c",0)}<mo>&#x2212;</mo>${ms("c",1)}<msub><mi>x</mi><mi>i</mi></msub><mo>)</mo></mrow><mn>2</mn></msup></math>：<br>${rows}</div>`;
+  }
+  if(q.kind==="normal")
+    return `<div class="sol"><math><msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">A</mi><mo>=</mo>${matML([[mnum(f.n),mnum(f.Sx)],[mnum(f.Sx),mnum(f.Sxx)]])}<mo>,</mo><mspace width="0.6em"/><msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">b</mi><mo>=</mo>${colML([mnum(f.Sy),mnum(f.Sxy)])}</math>。完整过程见左侧。</div>`;
+  return `<div class="sol">最小二乘直线 <math>${lineML(f.c0,f.c1,true)}</math>。完整过程见左侧。</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+function showFull(){ quiz.revealed=true; redraw(); document.getElementById("stepsBox").innerHTML=stepsHTML(quiz.P,quiz.f,true); }
+function markCorrect(){ const q=quiz; q.done=true; stats.attempted++; stats.correct++; streak++; saveStats(); showFull();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML(); lockQ(); renderStats(); }
+function onReveal(){ const q=quiz; if(!q||q.done) return; q.done=true; stats.attempted++; streak=0; saveStats(); showFull();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML(); lockQ(); renderStats(); }
+function onHint(){
+  const q=quiz; if(!q) return; const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="normal") fb.innerHTML=`提示：<math><mi class="bm">A</mi></math> 的第 <math><mi>i</mi></math> 行是 <math><mo>(</mo><mn>1</mn><mo>,</mo><msub><mi>x</mi><mi>i</mi></msub><mo>)</mo></math>，所以 <math><msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">A</mi><mo>=</mo>${matML([[`<mi>n</mi>`,`<mo>∑</mo><msub><mi>x</mi><mi>i</mi></msub>`],[`<mo>∑</mo><msub><mi>x</mi><mi>i</mi></msub>`,`<mo>∑</mo><msubsup><mi>x</mi><mi>i</mi><mn>2</mn></msubsup>`]])}</math>，<math><msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">b</mi><mo>=</mo>${colML([`<mo>∑</mo><msub><mi>y</mi><mi>i</mi></msub>`,`<mo>∑</mo><msub><mi>x</mi><mi>i</mi></msub><msub><mi>y</mi><mi>i</mi></msub>`])}</math>。`;
+  else if(q.kind==="solve") fb.innerHTML=`提示：先算 <math><mi>n</mi><mo>,</mo><mo>∑</mo><msub><mi>x</mi><mi>i</mi></msub><mo>,</mo><mo>∑</mo><msubsup><mi>x</mi><mi>i</mi><mn>2</mn></msubsup><mo>,</mo><mo>∑</mo><msub><mi>y</mi><mi>i</mi></msub><mo>,</mo><mo>∑</mo><msub><mi>x</mi><mi>i</mi></msub><msub><mi>y</mi><mi>i</mi></msub></math>，列出法方程（二元一次方程组）再解。若 <math><mo>∑</mo><msub><mi>x</mi><mi>i</mi></msub><mo>=</mo><mn>0</mn></math>，两个方程互不相干，特别好解。`;
+  else fb.innerHTML=`提示：最小二乘直线一定经过平均点 <math><mo>(</mo><mover><mi>x</mi><mo>¯</mo></mover><mo>,</mo><mover><mi>y</mi><mo>¯</mo></mover><mo>)</mo></math>，且残差平方和最小；也可以逐条算 <math><mi>Q</mi></math> 比较。`;
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+function setMode(m){
+  mode=m;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("exploreSide").style.display=m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display=m==="practice"?"":"none";
+  document.getElementById("canvasTip").style.display=m==="explore"?"":"none";
+  document.getElementById("axCap").style.display=m==="explore"?"":"none";
+  document.getElementById("legendBox").style.display="";
+  if(m==="practice"){ man.on=false; document.getElementById("manOn").checked=false; syncMan(); quiz=genProblem(); renderProblem(); }
+  else { quiz=null; redraw(); }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
+setScene(0); resize();
+</script>
+
+<script>
+/* ── 排版：标点不单独成行、不在行首；左括号不留在行尾 ── */
+(function(){
+  const CLOSE=/^[，。、；：）)！？」》,.;:!?…]+/, OPEN=/[（(「《]+$/;
+  function wrapOf(m){
+    if(m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr")) return m.parentNode;
+    const s=document.createElement("span"); s.className="nobr"; s.style.whiteSpace="nowrap";
+    m.parentNode.insertBefore(s,m); s.appendChild(m); return s;
+  }
+  function glue(root){
+    (root.querySelectorAll?root:document).querySelectorAll("math").forEach(m=>{
+      if(m.closest("math")!==m || m.getAttribute("display")==="block") return;
+      const host=m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let nx=host.nextSibling;
+      if(nx && nx.nodeType===3){ const k=nx.data.match(CLOSE); if(k){ const w=wrapOf(m);
+          w.appendChild(document.createTextNode(k[0])); nx.data=nx.data.slice(k[0].length); } }
+      const h2=m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let pv=h2.previousSibling;
+      if(pv && pv.nodeType===3){ const k=pv.data.match(OPEN); if(k){ const w=wrapOf(m);
+          w.insertBefore(document.createTextNode(k[0]),w.firstChild); pv.data=pv.data.slice(0,pv.data.length-k[0].length); } }
+    });
+  }
+  let busy=false;
+  const ob=new MutationObserver(()=>{ if(busy) return; busy=true; ob.disconnect(); glue(document.body); ob.observe(document.body,{childList:true,subtree:true}); busy=false; });
+  glue(document.body); ob.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-least-squares";          // ← 计数键：与编号 L# 解耦的稳定标识，永不改动
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
