@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>主成分分析（PCA） · L25 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1; --red:#c53030;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --pt:#2b6cb0; --p1:#2f855a; --p2:#dd6b20; --u:#6b46c1; --err:#e53e3e; --ell:#94a3b8;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;overflow-x:auto;overflow-y:hidden;}
+  .layout>div{min-width:0;}
+  .readout{overflow-x:auto;}
+  .formula math{font-size:1.12em;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  #canvasContainer{width:100%;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       background:#fbfdff;touch-action:none;}
+  canvas{display:block;}
+  #canvas{cursor:crosshair;}
+  .axcap{font-size:13px;color:var(--sub);text-align:center;margin-top:6px;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:8px;justify-content:center;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:16px;height:4px;border-radius:2px;display:inline-block;}
+  .legend i.dot{width:10px;height:10px;border-radius:50%;}
+  .legend i.dash{background:repeating-linear-gradient(90deg,var(--err) 0 4px,transparent 4px 7px);}
+  .legend i.ell{height:10px;width:16px;border:1.5px dashed var(--ell);border-radius:50%;background:none;}
+  .tip{font-size:12.5px;color:var(--sub);margin-top:6px;text-align:center;}
+  button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+  .presets button{font-size:12.5px;padding:5px 10px;}
+  .presets button.on{border-color:var(--blue);background:#eef4fb;}
+  .plabel{font-size:12.5px;color:var(--sub);margin:12px 0 2px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+  .steps{font-size:14px;line-height:2;}
+  .steps .st{margin:12px 0 2px;font-weight:600;color:var(--sub);font-size:14px;}
+  .steps .ctr{text-align:center;overflow-x:auto;overflow-y:hidden;padding:2px 0;line-height:2.4;}
+  .steps math{font-size:1.05em;}
+  .steps .tip{font-size:14px;color:var(--ink);text-align:left;}
+  .verdict{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:14px;line-height:1.9;}
+  .verdict.uniq{background:#e6fffa;color:#234e52;border:1px solid #b2f5ea;}
+  .verdict.inf{background:#fffaf0;color:#744210;border:1px solid #f6e05e;}
+  .verdict.none{background:#fff5f5;color:#822727;border:1px solid #feb2b2;}
+  .sl{display:grid;grid-template-columns:40px 1fr 54px;gap:8px;align-items:center;margin:6px 0;font-size:14px;}
+  .sl input[type=range]{width:100%;accent-color:var(--u);}
+  .sl .v{font-variant-numeric:tabular-nums;text-align:right;}
+  .readout{font-size:14px;line-height:2;margin-top:6px;}
+  #fcanvas{width:100%;border:1px solid var(--line);border-radius:8px;margin-top:8px;background:#fff;}
+  label.chk{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;margin-top:6px;}
+  label.chk input{accent-color:var(--u);width:16px;height:16px;}
+  /* 练习 */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody input.qin{width:70px;font-size:15px;padding:4px 6px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .qgrid{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;flex-wrap:wrap;}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid var(--line);
+       border-radius:8px;cursor:pointer;font-size:14px;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .opts input{accent-color:var(--blue);}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:13.5px;margin-top:6px;line-height:1.9;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,350px);gap:16px;align-items:start;}
+  @media(max-width:860px){ .layout{grid-template-columns:minmax(0,1fr);} .col-right{order:-1;} }
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>主成分分析（PCA）</h1>
+  <span class="sub">协方差矩阵 <math><mi class="bm">C</mi></math> 正交对角化 <math><mi class="bm">C</mi><mo>=</mo><mi class="bm">P</mi><mi class="bm">Λ</mi><msup><mi class="bm">P</mi><mi>T</mi></msup></math> · 二次型在单位圆上的最大值</span>
+  <span class="tag">L25 · 应用案例</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    一组二维数据 <math><msub><mi class="bm">x</mi><mi>i</mi></msub><mo>=</mo><msup><mrow><mo>(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>,</mo><msub><mi>y</mi><mi>i</mi></msub><mo>)</mo></mrow><mi>T</mi></msup></math>（<math><mi>i</mi><mo>=</mo><mn>1</mn><mo>,</mo><mo>…</mo><mo>,</mo><mi>n</mi></math>），先减去平均点 <math><mover><mi class="bm">x</mi><mo>¯</mo></mover></math>（中心化），再求<b>协方差矩阵</b>（按线性代数的写法，系数取 <math><mfrac><mn>1</mn><mi>n</mi></mfrac></math>）：
+    <div class="formula">
+      <math display="block"><mi class="bm">C</mi><mo>=</mo><mfrac><mn>1</mn><mi>n</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mo>(</mo><msub><mi class="bm">x</mi><mi>i</mi></msub><mo>&#x2212;</mo><mover><mi class="bm">x</mi><mo>¯</mo></mover><mo>)</mo><msup><mrow><mo>(</mo><msub><mi class="bm">x</mi><mi>i</mi></msub><mo>&#x2212;</mo><mover><mi class="bm">x</mi><mo>¯</mo></mover><mo>)</mo></mrow><mi>T</mi></msup>
+        <mo>,</mo><mspace width="1.2em"/><mi class="bm">C</mi><mo>=</mo><mi class="bm">P</mi><mi class="bm">Λ</mi><msup><mi class="bm">P</mi><mi>T</mi></msup><mo>,</mo><mspace width="0.6em"/><mi class="bm">Λ</mi><mo>=</mo><mrow><mo>(</mo><mtable><mtr><mtd><msub><mi>λ</mi><mn>1</mn></msub></mtd><mtd><mn>0</mn></mtd></mtr><mtr><mtd><mn>0</mn></mtd><mtd><msub><mi>λ</mi><mn>2</mn></msub></mtd></mtr></mtable><mo>)</mo></mrow></math>
+    </div>
+    （统计学中由样本估计总体协方差时用无偏估计，系数为 <math><mfrac><mn>1</mn><mrow><mi>n</mi><mo>&#x2212;</mo><mn>1</mn></mrow></mfrac></math>；两者只差一个倍数，主成分方向和信息比例不变。）<br>
+    <math><mi class="bm">C</mi></math> 是实对称矩阵，可以用正交矩阵 <math><mi class="bm">P</mi><mo>=</mo><mo>(</mo><msub><mi class="bm">p</mi><mn>1</mn></msub><mo>,</mo><msub><mi class="bm">p</mi><mn>2</mn></msub><mo>)</mo></math> 对角化（<math><msub><mi>λ</mi><mn>1</mn></msub><mo>≥</mo><msub><mi>λ</mi><mn>2</mn></msub><mo>≥</mo><mn>0</mn></math>）。
+    数据沿单位向量 <math><mi class="bm">u</mi></math> 方向投影后的方差是二次型 <math><mi>f</mi><mo>=</mo><msup><mi class="bm">u</mi><mi>T</mi></msup><mi class="bm">C</mi><mi class="bm">u</mi></math>，它在单位圆上的<b>最大值是 <math><msub><mi>λ</mi><mn>1</mn></msub></math>，在 <math><mi class="bm">u</mi><mo>=</mo><msub><mi class="bm">p</mi><mn>1</mn></msub></math> 处取到</b>：<math><msub><mi class="bm">p</mi><mn>1</mn></msub></math> 就是<b>第一主成分</b>方向，数据在这个方向上“分得最开”。只保留它（二维降到一维），保留的信息比例为 <math><mfrac><msub><mi>λ</mi><mn>1</mn></msub><mrow><msub><mi>λ</mi><mn>1</mn></msub><mo>+</mo><msub><mi>λ</mi><mn>2</mn></msub></mrow></mfrac></math>。
+  </div>
+
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div class="layout">
+  <div class="col-left">
+    <div class="card">
+      <div id="canvasContainer"><canvas id="canvas"></canvas></div>
+      <div class="axcap" id="axCap"></div>
+      <div class="legend" id="legendBox">
+        <span id="lgDot"><i class="dot" style="background:var(--pt)"></i>数据点</span>
+        <span><i style="background:var(--p1)"></i>第一主成分 <math><msub><mi class="bm">p</mi><mn>1</mn></msub></math></span>
+        <span><i style="background:var(--p2)"></i>第二主成分 <math><msub><mi class="bm">p</mi><mn>2</mn></msub></math></span>
+        <span><i class="ell"></i>数据椭圆</span>
+        <span id="lgU"><i style="background:var(--u)"></i>方向 <math><mi class="bm">u</mi></math></span>
+        <span id="lgErr"><i class="dash"></i>投影误差</span>
+      </div>
+      <div class="tip">数据椭圆以平均点（黑点）为中心、半轴为 <math><mn>2</mn><msqrt><msub><mi>λ</mi><mn>1</mn></msub></msqrt></math>、<math><mn>2</mn><msqrt><msub><mi>λ</mi><mn>2</mn></msub></msqrt></math>；箭头标出主成分方向 <math><msub><mi class="bm">p</mi><mn>1</mn></msub></math>、<math><msub><mi class="bm">p</mi><mn>2</mn></msub></math>（<math><msub><mi class="bm">p</mi><mi>i</mi></msub></math> 是单位向量，图上画成与半轴同长）。</div>
+      <div class="tip" id="canvasTip">点空白处添加数据点（最多 30 个），拖动可移动，双击某个点删除</div>
+    </div>
+    <div class="card" id="stepsCard">
+      <h2>计算过程</h2>
+      <div class="steps" id="stepsBox"></div>
+    </div>
+  </div>
+
+  <div class="col-right">
+    <div id="exploreSide">
+      <div class="card">
+        <h2>数据</h2>
+        <div class="plabel" style="margin-top:0;">实际场景：</div>
+        <div class="presets" id="presetBox"></div>
+        <div class="row">
+          <button id="btnUndo">删除最后一个点</button>
+          <button id="btnClear">清空</button>
+        </div>
+        <div class="verdict uniq" id="interpBox" style="display:none;"></div>
+      </div>
+      <div class="card">
+        <h2>转动方向 <math><mi class="bm">u</mi></math>，看投影方差</h2>
+        <div class="sl"><span><math><mi>θ</mi></math></span><input type="range" id="thSl" min="0" max="179" step="1" value="20"><span class="v" id="thV"></span></div>
+        <div class="row" style="margin-top:2px;">
+          <button id="btnToP1">转到 <math><msub><mi class="bm">p</mi><mn>1</mn></msub></math></button>
+          <button id="btnToP2">转到 <math><msub><mi class="bm">p</mi><mn>2</mn></msub></math></button>
+        </div>
+        <label class="chk"><input type="checkbox" id="projOn" checked> 显示各点到方向 <math><mi class="bm">u</mi></math> 的投影（降维）</label>
+        <div class="readout" id="uBox"></div>
+        <canvas id="fcanvas"></canvas>
+        <div class="tip" style="text-align:left;">上图：投影方差 <math><mi>f</mi><mo>(</mo><mi>θ</mi><mo>)</mo><mo>=</mo><msup><mi class="bm">u</mi><mi>T</mi></msup><mi class="bm">C</mi><mi class="bm">u</mi></math> 随方向角 <math><mi>θ</mi></math> 的变化，最高点是 <math><msub><mi>λ</mi><mn>1</mn></msub></math>、最低点是 <math><msub><mi>λ</mi><mn>2</mn></msub></math>。</div>
+      </div>
+    </div>
+
+    <div class="card" id="quizCard" style="display:none;">
+      <div class="quizhead">
+        <h2>练习 · 主成分分析</h2>
+        <span class="stats" id="quizStats"></span>
+        <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+      </div>
+      <div class="qbody" id="qBody"></div>
+      <div class="feedback" id="qFeedback"></div>
+      <div class="qbtns">
+        <button class="primary" id="qSubmit">提交</button>
+        <button id="qHint">提示</button>
+        <button id="qReveal">看解析</button>
+        <button id="qNext">下一题 ▸</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+/* ═══════════ 场景数据 ═══════════ */
+const SCENES=[
+  {key:"custom", name:"自定义", cap:"", snap:[0.5,0.5],
+   pts:[[1,1],[2,1.5],[3,3.5],[4,3],[5,4.5],[6,5.5],[2.5,3],[4.5,3.5]]},
+  {key:"body", name:"身高与体重", snap:[1,1], ax:{x:["h","cm"],y:["m","kg"]},
+   cap:'横轴 <math><mi>x</mi></math>：身高 <math><mi>h</mi></math>（cm）　纵轴 <math><mi>y</mi></math>：体重 <math><mi>m</mi></math>（kg）',
+   pts:[[160,52],[165,58],[170,61],[172,66],[175,68],[180,74],[168,57],[178,70],[163,56],[174,63]],
+   interp:e=>`第一主成分 <math><msub><mi class="bm">p</mi><mn>1</mn></msub>${vecE(e.p1)}</math>：身高、体重同增同减，可以理解为“体型大小”，它解释了 ${pct(e)} 的变化；第二主成分大致对应“偏胖还是偏瘦”。注意身高、体重单位不同，换单位（如身高用 m）主方向会改变，实际中常先把各变量标准化（属于统计学内容，超出本课程范围）。`},
+  {key:"score", name:"两门课成绩", snap:[1,1], ax:{x:["s","分"],y:["t","分"]},
+   cap:'横轴 <math><mi>x</mi></math>：高等数学成绩 <math><mi>s</mi></math>（分）　纵轴 <math><mi>y</mi></math>：线性代数成绩 <math><mi>t</mi></math>（分）',
+   pts:[[62,58],[70,75],[75,72],[80,85],[85,80],[90,92],[68,64],[95,90],[78,70],[88,86]],
+   interp:e=>`第一主成分 <math><msub><mi class="bm">p</mi><mn>1</mn></msub>${vecE(e.p1)}</math> 两个分量同号且接近：两门课同高同低，可理解为“总体学习水平”，解释了 ${pct(e)} 的变化；第二主成分 <math><msub><mi class="bm">p</mi><mn>2</mn></msub></math> 两个分量异号，表示“偏科”（一门高、一门低）。按第一主成分排名，相当于给两门成绩加权求和。`},
+  {key:"line", name:"几乎共线的数据", cap:"", snap:[0.5,0.5],
+   pts:[[0,0.5],[1,1.5],[2,2.5],[3,4],[4,4.5],[5,5.5],[6,7]],
+   interp:e=>`<math><msub><mi>λ</mi><mn>2</mn></msub></math> 很小，数据几乎落在一条直线上：每个点只用它沿 <math><msub><mi class="bm">p</mi><mn>1</mn></msub></math> 的坐标（一个数）来记录，二维降到一维，保留了 ${pct(e)} 的信息。`},
+  {key:"round", name:"近似圆形（主方向不稳定）", cap:"", snap:[0.5,0.5],
+   pts:[[3,0],[2,2],[0,3],[-2,2],[-3,0],[-2,-2],[0,-3],[2,-2.5]],
+   interp:e=>`<math><msub><mi>λ</mi><mn>1</mn></msub><mo>≈</mo><msub><mi>λ</mi><mn>2</mn></msub></math>：任何方向的投影方差都差不多（右侧曲线几乎是平的），主方向不确定。试着把一个点稍微拖动，<math><msub><mi class="bm">p</mi><mn>1</mn></msub></math> 的方向会大幅跳动。这时只保留第一主成分会丢掉约一半信息（现在保留 ${pct(e)}），不适合降维。`}
+];
+
+/* ═══════════ 数学 ═══════════ */
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; }
+function ratOf(x){ for(let d=1;d<=100;d++){ const n=Math.round(x*d); if(Math.abs(n/d-x)<1e-9*Math.max(1,Math.abs(x))){ const g=gcd(n,d)||1; return [n/g,d/g]; } } return null; }
+function p4(v){ let t=v.toPrecision(4); if(t.includes("e")) t=(+t).toString(); return t; }
+const NEG='<mo form="prefix" lspace="0" rspace="0">&#x2212;</mo>';
+// 数值 → {ml, approx}：≤4 位的有限小数直接写；否则分母 ≤12 的写分数，否则四位有效数字并标 ≈
+function valML(v){
+  if(Math.abs(v)<1e-12) return {ml:"<mn>0</mn>",approx:false};
+  const d3=Math.round(v*10000)/10000;
+  if(Math.abs(d3-v)<1e-9){ const t=(+d3.toFixed(4)).toString(); return {ml:t.startsWith("-")?NEG+`<mn>${t.slice(1)}</mn>`:`<mn>${t}</mn>`, approx:false}; } // 有限小数直接写
+  const r=ratOf(v);
+  if(r&&r[1]<=12){ const [p,q]=r, a=Math.abs(p); return {ml:(p<0?NEG:"")+(q===1?`<mn>${a}</mn>`:`<mfrac><mn>${a}</mn><mn>${q}</mn></mfrac>`), approx:false}; }
+  const t=p4(v); return {ml:t.startsWith("-")?NEG+`<mn>${t.slice(1)}</mn>`:`<mn>${t}</mn>`, approx:true};
+}
+function trim4(v){ // 近似值：整数照写，否则 4 位有效数字（保留末尾 0，各数精度一致）
+  if(Math.abs(v)<1e-12) return "0"; if(Number.isInteger(v)) return ""+v;
+  let t=v.toPrecision(4); if(t.includes("e")) t=v.toFixed(Math.min(8,3-Math.floor(Math.log10(Math.abs(v))))); return t; }
+const mnT=t=>t.startsWith("-")?NEG+`<mn>${t.slice(1)}</mn>`:`<mn>${t}</mn>`;
+// 单个近似数：≤4 位小数的有限小数照写（用 =），否则 4 位有效数字（用 ≈）
+function numA(v){ if(Math.abs(v)<1e-12) return {ml:"<mn>0</mn>",approx:false};
+  const d=Math.round(v*1e4)/1e4; if(Math.abs(d-v)<1e-9) return {ml:mnT((+d.toFixed(4)).toString()),approx:false};
+  return {ml:mnT(trim4(v)),approx:true}; }
+// 一组数：都能精确写（有限小数或小分母分数）就精确写；否则整组统一用 4 位有效数字
+function grp(vals){ const ex=vals.map(valML); if(!ex.some(e=>e.approx)) return {mls:ex.map(e=>e.ml),approx:false};
+  const t=vals.map(v=>trim4(v)); return {mls:t.map(mnT), approx:vals.some((v,i)=>Math.abs(+t[i]-v)>1e-9)}; }
+function decML(v){ return mnT(trim4(v)); }
+const eqA=v=>{ const r=numA(v); return eqs(r.approx)+r.ml; };
+const eqs=a=>a?"<mo>≈</mo>":"<mo>=</mo>";
+function colML(arr){ return `<mrow><mo>(</mo><mtable displaystyle="true">${arr.map(v=>`<mtr><mtd>${v}</mtd></mtr>`).join("")}</mtable><mo>)</mo></mrow>`; }
+function matML(rows){ return `<mrow><mo>(</mo><mtable displaystyle="true">${rows.map(r=>`<mtr>${r.map(v=>`<mtd>${v}</mtd>`).join("")}</mtr>`).join("")}</mtable><mo>)</mo></mrow>`; }
+function vec3(p){ const g=grp(p); return `<mrow><mo>(</mo>${g.mls[0]}<mo>,</mo>${g.mls[1]}<msup><mo>)</mo><mi>T</mi></msup></mrow>`; }
+function vecE(p){ return eqs(grp(p).approx)+vec3(p); }   // 带 = 或 ≈ 的向量
+const coefML=ml=>ml==="<mn>1</mn>"?"":ml;
+function pctEq(e){ const v=e.l1/(e.l1+e.l2)*100; return (Math.abs(Math.round(v*10)/10-v)<1e-9?"<mo>=</mo>":"<mo>≈</mo>"); }
+function pct(e){ return (e.l1+e.l2>1e-12? (e.l1/(e.l1+e.l2)*100).toFixed(1):"100")+"%"; }
+function canonDir(p){ // 方向规范化：与方向角 θ∈[0°,180°) 一致 → y 分量 > 0；y≈0 时 x > 0
+  let [a,b]=p; const n=Math.hypot(a,b); a/=n; b/=n;
+  if(b<-1e-12||(Math.abs(b)<=1e-12&&a<0)){ a=-a; b=-b; } return [a,b];
+}
+function eig2(a,b,c){ // 实对称 [[a,b],[b,c]] → λ1≥λ2 与单位特征向量
+  const tr=a+c, dt=a*c-b*b, disc=Math.sqrt(Math.max(0,(a-c)*(a-c)+4*b*b));
+  const l1=(tr+disc)/2, l2=(tr-disc)/2;
+  let p1;
+  if(Math.abs(b)>1e-12) p1=[b,l1-a]; else p1= a>=c?[1,0]:[0,1];
+  p1=canonDir(p1); const p2=canonDir([-p1[1],p1[0]]);
+  return {l1,l2,p1,p2,tr,dt,disc};
+}
+function stats2(P){
+  const n=P.length; if(!n) return {n:0};
+  let mx=0,my=0; P.forEach(([x,y])=>{mx+=x;my+=y;}); mx/=n; my/=n;
+  let a=0,b=0,c=0; P.forEach(([x,y])=>{ const dx=x-mx, dy=y-my; a+=dx*dx; b+=dx*dy; c+=dy*dy; });
+  a/=n; b/=n; c/=n;
+  const r={n,mx,my,a,b,c};
+  r.ok = n>=2 && a+c>1e-12;
+  if(r.ok) Object.assign(r,eig2(a,b,c));
+  return r;
+}
+const fOf=(s,th)=>{ const u=[Math.cos(th),Math.sin(th)]; return s.a*u[0]*u[0]+2*s.b*u[0]*u[1]+s.c*u[1]*u[1]; };
+const angOf=p=>{ let t=Math.atan2(p[1],p[0]); if(t<0) t+=Math.PI; if(t>=Math.PI-1e-9) t-=Math.PI; return t; };
+
+/* ═══════════ 主画布（等比例坐标）═══════════ */
+const canvas=document.getElementById("canvas"), ctx=canvas.getContext("2d"), container=document.getElementById("canvasContainer");
+let W=600,H=420, view={x0:0,x1:5,y0:0,y1:5,tx:1,ty:1};
+let scene=SCENES[0], pts=SCENES[0].pts.map(p=>p.slice());
+let drag=-1, mode="explore", quiz=null;
+let theta=20*Math.PI/180, projOn=true;
+const PAD={l:50,r:16,t:14,b:34};
+function niceStep(span){ const raw=span/6, p=Math.pow(10,Math.floor(Math.log10(raw))), m=raw/p; return (m<1.5?1:m<3.5?2:m<7.5?5:10)*p; }
+function fitView(P,ext){ // ext: 额外需要包含的点（椭圆外沿等）
+  let xs=P.map(p=>p[0]).concat(ext.map(p=>p[0])), ys=P.map(p=>p[1]).concat(ext.map(p=>p[1]));
+  if(!xs.length){ xs=[-3,3]; ys=[-3,3]; }
+  let xa=Math.min(...xs), xb=Math.max(...xs), ya=Math.min(...ys), yb=Math.max(...ys);
+  let sx=Math.max(xb-xa,1e-6), sy=Math.max(yb-ya,1e-6);
+  if(sx<1e-3&&sy<1e-3){ sx=sy=2; }
+  sx*=1.15; sy*=1.15;
+  const pw=W-PAD.l-PAD.r, ph=H-PAD.t-PAD.b;
+  const k=Math.max(sx/pw, sy/ph);           // 每像素多少单位（两轴相同 → 等比例）
+  const cx=(xa+xb)/2, cy=(ya+yb)/2;
+  const v={x0:cx-k*pw/2, x1:cx+k*pw/2, y0:cy-k*ph/2, y1:cy+k*ph/2};
+  v.tx=niceStep(v.x1-v.x0); v.ty=niceStep(v.y1-v.y0); return v;
+}
+const X=x=>PAD.l+(x-view.x0)/(view.x1-view.x0)*(W-PAD.l-PAD.r);
+const Y=y=>H-PAD.b-(y-view.y0)/(view.y1-view.y0)*(H-PAD.t-PAD.b);
+const Xi=px=>view.x0+(px-PAD.l)/(W-PAD.l-PAD.r)*(view.x1-view.x0);
+const Yi=py=>view.y0+(H-PAD.b-py)/(H-PAD.t-PAD.b)*(view.y1-view.y0);
+function col(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function resize(){
+  W=Math.max(300,container.clientWidth); H=Math.round(Math.min(Math.max(W*0.72,280),460));
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr);
+  canvas.style.width=W+"px"; canvas.style.height=H+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  resizeF(); redraw();
+}
+window.addEventListener("resize",resize);
+const CMFONT='"Cambria Math","STIX Two Math",serif';
+function toMath(str,bold){ let o=""; for(const ch of str){ const c=ch.codePointAt(0);
+  if(c>=0x61&&c<=0x7A) o+=String.fromCodePoint(bold?0x1D482+c-0x61:(c===0x68?0x210E:0x1D44E+c-0x61));
+  else if(c>=0x41&&c<=0x5A) o+=String.fromCodePoint((bold?0x1D468:0x1D434)+c-0x41);
+  else o+=ch; } return o; }
+function label(t,x,y,color,px,align,c2){ const g=c2||ctx; g.save(); g.font=`${px||15}px ${CMFONT}`; g.textAlign=align||"left"; g.textBaseline="middle";
+  g.lineJoin="round"; g.lineWidth=3; g.strokeStyle="rgba(255,255,255,.92)"; g.strokeText(t,x,y); g.fillStyle=color; g.fillText(t,x,y); g.restore(); }
+function vecLabel(letter,idx,x,y,color){ // 粗斜体字母 + 正体小号下标
+  label(toMath(letter,true),x,y,color,17,"left");
+  ctx.save(); ctx.font=`17px ${CMFONT}`; const w=ctx.measureText(toMath(letter,true)).width; ctx.restore();
+  label(idx,x+w+1,y+5,color,12,"left");
+}
+function tickTxt(v,st){ const d=Math.max(0,-Math.floor(Math.log10(st)+1e-9)); const t=v.toFixed(d); return (t==="-0"?"0":t).replace("-","−"); }
+function drawFrame(){
+  ctx.clearRect(0,0,W,H);
+  const L=PAD.l,R=W-PAD.r,T=PAD.t,B=H-PAD.b;
+  ctx.fillStyle="#fff"; ctx.fillRect(L,T,R-L,B-T);
+  ctx.lineWidth=1; ctx.font='11px "Segoe UI",system-ui'; ctx.fillStyle="#718096";
+  for(let v=Math.ceil(view.x0/view.tx-1e-9)*view.tx; v<=view.x1+1e-9; v+=view.tx){ const p=Math.round(X(v))+0.5; ctx.strokeStyle=Math.abs(v)<1e-9?"#a0aec0":"#e8eef5"; ctx.beginPath(); ctx.moveTo(p,T); ctx.lineTo(p,B); ctx.stroke();
+    ctx.textAlign="center"; ctx.textBaseline="top"; ctx.fillText(tickTxt(v,view.tx),p,B+5); }
+  for(let v=Math.ceil(view.y0/view.ty-1e-9)*view.ty; v<=view.y1+1e-9; v+=view.ty){ const p=Math.round(Y(v))+0.5; ctx.strokeStyle=Math.abs(v)<1e-9?"#a0aec0":"#e8eef5"; ctx.beginPath(); ctx.moveTo(L,p); ctx.lineTo(R,p); ctx.stroke();
+    ctx.textAlign="right"; ctx.textBaseline="middle"; ctx.fillText(tickTxt(v,view.ty),L-6,p); }
+  ctx.strokeStyle="#94a3b8"; ctx.lineWidth=1.3; ctx.strokeRect(L+0.5,T+0.5,R-L-1,B-T-1);
+  const ax=(mode==="explore"&&scene.ax)?scene.ax:null;
+  label(ax?toMath(ax.x[0])+" / "+ax.x[1]:toMath("x"),R-4,B-12,"#4a5568",16,"right");
+  label(ax?toMath(ax.y[0])+" / "+ax.y[1]:toMath("y"),L+8,T+12,"#4a5568",16,"left");
+}
+function clipPlot(){ ctx.save(); ctx.beginPath(); ctx.rect(PAD.l,PAD.t,W-PAD.l-PAD.r,H-PAD.t-PAD.b); ctx.clip(); }
+function seg(a,b,color,w,dash){ clipPlot(); ctx.strokeStyle=color; ctx.lineWidth=w; ctx.setLineDash(dash||[]); ctx.beginPath(); ctx.moveTo(X(a[0]),Y(a[1])); ctx.lineTo(X(b[0]),Y(b[1])); ctx.stroke(); ctx.restore(); }
+function arrow(from,to,color,w){
+  const p0={x:X(from[0]),y:Y(from[1])}, p1={x:X(to[0]),y:Y(to[1])};
+  const dx=p1.x-p0.x, dy=p1.y-p0.y, len=Math.hypot(dx,dy); if(len<3) return;
+  const ang=Math.atan2(dy,dx), head=Math.min(13,Math.max(8,len*0.25)), hw=head*0.42;
+  clipPlot(); ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=w; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x-Math.cos(ang)*head*0.85,p1.y-Math.sin(ang)*head*0.85); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(p1.x,p1.y);
+  ctx.lineTo(p1.x-head*Math.cos(ang)+hw*Math.sin(ang), p1.y-head*Math.sin(ang)-hw*Math.cos(ang));
+  ctx.lineTo(p1.x-head*Math.cos(ang)-hw*Math.sin(ang), p1.y-head*Math.sin(ang)+hw*Math.cos(ang));
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+function ellipse(cx,cy,s,k){ // 半轴 k√λ 沿特征方向
+  clipPlot(); ctx.strokeStyle=col("--ell"); ctx.lineWidth=1.6; ctx.setLineDash([6,4]); ctx.beginPath();
+  for(let i=0;i<=120;i++){ const t=i/120*2*Math.PI, a=k*Math.sqrt(Math.max(s.l1,0))*Math.cos(t), b=k*Math.sqrt(Math.max(s.l2,0))*Math.sin(t);
+    const x=cx+a*s.p1[0]+b*s.p2[0], y=cy+a*s.p1[1]+b*s.p2[1]; i?ctx.lineTo(X(x),Y(y)):ctx.moveTo(X(x),Y(y)); }
+  ctx.stroke(); ctx.restore();
+}
+function drawPoints(P,hl){
+  P.forEach(([x,y],i)=>{ ctx.beginPath(); ctx.arc(X(x),Y(y),i===hl?7:5.5,0,2*Math.PI);
+    ctx.fillStyle=col("--pt"); ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle="#fff"; ctx.stroke(); });
+}
+function axesExt(s){ if(!s.ok) return []; const k=2.2, a=k*Math.sqrt(s.l1), b=k*Math.sqrt(Math.max(s.l2,0));
+  return [[s.mx+a*s.p1[0],s.my+a*s.p1[1]],[s.mx-a*s.p1[0],s.my-a*s.p1[1]],[s.mx+b*s.p2[0],s.my+b*s.p2[1]],[s.mx-b*s.p2[0],s.my-b*s.p2[1]]]; }
+function drawPCA(s,showU,P){
+  const m=[s.mx,s.my];
+  ellipse(s.mx,s.my,s,2);
+  if(showU){
+    const u=[Math.cos(theta),Math.sin(theta)], Lx=(view.x1-view.x0)*2;
+    seg([m[0]-Lx*u[0],m[1]-Lx*u[1]],[m[0]+Lx*u[0],m[1]+Lx*u[1]],col("--u"),1.8,[8,5]);
+    if(projOn){
+      P.forEach(([x,y])=>{ const t=(x-m[0])*u[0]+(y-m[1])*u[1], q=[m[0]+t*u[0],m[1]+t*u[1]];
+        seg([x,y],q,col("--err"),1.5,[4,3]);
+        clipPlot(); ctx.beginPath(); ctx.arc(X(q[0]),Y(q[1]),4,0,2*Math.PI); ctx.lineWidth=1.8; ctx.strokeStyle=col("--u"); ctx.fillStyle="#fff"; ctx.fill(); ctx.stroke(); ctx.restore(); });
+    }
+  }
+  const a=2*Math.sqrt(s.l1), b=2*Math.sqrt(Math.max(s.l2,0));
+  const e1=[m[0]+a*s.p1[0],m[1]+a*s.p1[1]], e2=[m[0]+b*s.p2[0],m[1]+b*s.p2[1]];
+  const showP2=b/(view.x1-view.x0)*(W-PAD.l-PAD.r)>6;
+  arrow(m,e1,col("--p1"),3); if(showP2) arrow(m,e2,col("--p2"),3);
+  vecLabel("p","1",X(e1[0])+6,Y(e1[1])-10,col("--p1"));
+  if(showP2) vecLabel("p","2",X(e2[0])+6,Y(e2[1])-10,col("--p2"));
+  ctx.beginPath(); ctx.arc(X(m[0]),Y(m[1]),4,0,2*Math.PI); ctx.fillStyle="#1a202c"; ctx.fill();
+}
+function redraw(){
+  if(mode==="practice"){ drawQuiz(); return; }
+  const s=stats2(pts);
+  if(drag<0) view=fitView(pts,axesExt(s));
+  drawFrame();
+  if(s.ok) drawPCA(s,true,pts);
+  drawPoints(pts,drag);
+  renderSteps(s); renderInterp(s); renderU(s); drawF(s);
+}
+
+/* ═══════════ 方向 u 与投影方差曲线 ═══════════ */
+const fcv=document.getElementById("fcanvas"), fctx=fcv.getContext("2d"); let FW=300,FH=150;
+function resizeF(){ FW=Math.max(220,fcv.clientWidth||300); FH=150; const dpr=Math.min(2,window.devicePixelRatio||1);
+  fcv.width=Math.round(FW*dpr); fcv.height=Math.round(FH*dpr); fcv.style.height=FH+"px"; fctx.setTransform(dpr,0,0,dpr,0,0); }
+function drawF(s){
+  fctx.clearRect(0,0,FW,FH); if(!s.ok) return;
+  const L=34,R=FW-10,T=12,B=FH-24, top=s.l1*1.1||1;
+  const XX=t=>L+t/Math.PI*(R-L), YY=v=>B-v/top*(B-T);
+  fctx.strokeStyle="#cbd5e1"; fctx.lineWidth=1; fctx.strokeRect(L+0.5,T+0.5,R-L-1,B-T-1);
+  fctx.font='11px "Segoe UI",system-ui'; fctx.fillStyle="#718096"; fctx.textAlign="center"; fctx.textBaseline="top";
+  [0,45,90,135,180].forEach(d=>fctx.fillText(d+"°",XX(d/180*Math.PI),B+4));
+  // λ1、λ2 水平参考线
+  [[s.l1,col("--p1")],[s.l2,col("--p2")]].forEach(([v,c])=>{ fctx.strokeStyle=c; fctx.setLineDash([4,3]); fctx.beginPath(); fctx.moveTo(L,YY(v)); fctx.lineTo(R,YY(v)); fctx.stroke(); fctx.setLineDash([]); });
+  const gap=YY(s.l2)-YY(s.l1), off=gap<14?(14-gap)/2:0;
+  label(toMath("λ")+"₁",L-4,YY(s.l1)-off,col("--p1"),13,"right",fctx);
+  label(toMath("λ")+"₂",L-4,YY(s.l2)+off,col("--p2"),13,"right",fctx);
+  fctx.strokeStyle=col("--u"); fctx.lineWidth=2; fctx.beginPath();
+  for(let i=0;i<=180;i++){ const t=i/180*Math.PI, v=fOf(s,t); i?fctx.lineTo(XX(t),YY(v)):fctx.moveTo(XX(t),YY(v)); } fctx.stroke();
+  const v=fOf(s,theta); fctx.beginPath(); fctx.arc(XX(theta),YY(v),5,0,2*Math.PI); fctx.fillStyle=col("--u"); fctx.fill();
+}
+function renderU(s){
+  document.getElementById("thV").textContent=Math.round(theta*180/Math.PI)+"°";
+  ["btnToP1","btnToP2"].forEach(id=>document.getElementById(id).disabled=!s.ok);
+  const box=document.getElementById("uBox"); if(!s.ok){ box.innerHTML='<span style="color:var(--sub)">至少需要 2 个不重合的点才能求主成分。</span>'; return; }
+  const u=[Math.cos(theta),Math.sin(theta)], f=fOf(s,theta), err=s.tr-f;
+  box.innerHTML=`<math><mi class="bm">u</mi><mo>=</mo><mo>(</mo><mi>cos</mi><mi>θ</mi><mo>,</mo><mi>sin</mi><mi>θ</mi><msup><mo>)</mo><mi>T</mi></msup>${vecE(u)}</math><br>`
+    +`投影方差 <math><msup><mi class="bm">u</mi><mi>T</mi></msup><mi class="bm">C</mi><mi class="bm">u</mi>${eqA(f)}</math>（最大 <math><msub><mi>λ</mi><mn>1</mn></msub>${eqA(s.l1)}</math>，最小 <math><msub><mi>λ</mi><mn>2</mn></msub>${eqA(s.l2)}</math>）<br>`
+    +`平均投影误差平方 <math>${eqA(Math.max(err,0))}</math>，两者之和恒为 <math><mi>tr</mi><mi class="bm">C</mi><mo>=</mo><msub><mi>λ</mi><mn>1</mn></msub><mo>+</mo><msub><mi>λ</mi><mn>2</mn></msub>${eqA(s.tr)}</math>：投影方差最大的方向，误差也最小。`;
+}
+document.getElementById("thSl").addEventListener("input",e=>{ theta=+e.target.value*Math.PI/180; redraw(); });
+function setTheta(t){ theta=t; document.getElementById("thSl").value=Math.round(t*180/Math.PI)%180; redraw(); }
+document.getElementById("btnToP1").addEventListener("click",()=>{ const s=stats2(pts); if(s.ok) setTheta(angOf(s.p1)); });
+document.getElementById("btnToP2").addEventListener("click",()=>{ const s=stats2(pts); if(s.ok) setTheta(angOf(s.p2)); });
+document.getElementById("projOn").addEventListener("change",e=>{ projOn=e.target.checked; document.getElementById("lgErr").style.display=projOn?"":"none"; redraw(); });
+
+/* ═══════════ 交互（同 L18）═══════════ */
+function evPos(e){ const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+function hit(p){ let best=-1,bd=14; pts.forEach(([x,y],i)=>{ const d=Math.hypot(X(x)-p.x,Y(y)-p.y); if(d<bd){bd=d;best=i;} }); return best; }
+const snapv=(v,s)=>Math.round(v/s)*s;
+function fixNum(v){ return Math.round(v*1e6)/1e6; }
+let lastTap={t:0,i:-1};
+canvas.addEventListener("pointerdown",e=>{
+  if(mode!=="explore") return;
+  const p=evPos(e); let i=hit(p); const now=Date.now();
+  if(i>=0 && lastTap.i===i && now-lastTap.t<350){ pts.splice(i,1); lastTap={t:0,i:-1}; drag=-1; redraw(); return; }
+  lastTap={t:now,i};
+  if(i<0){
+    if(p.x<PAD.l||p.x>W-PAD.r||p.y<PAD.t||p.y>H-PAD.b) return;
+    if(pts.length>=30){ document.getElementById("canvasTip").textContent="最多 30 个点"; return; }
+    pts.push([fixNum(snapv(Xi(p.x),scene.snap[0])), fixNum(snapv(Yi(p.y),scene.snap[1]))]); i=pts.length-1; lastTap={t:now,i};
+  }
+  drag=i; canvas.setPointerCapture(e.pointerId); redraw();
+});
+canvas.addEventListener("pointermove",e=>{
+  if(drag<0) return; const p=evPos(e);
+  const x=Math.min(Math.max(Xi(p.x),view.x0),view.x1), y=Math.min(Math.max(Yi(p.y),view.y0),view.y1);
+  pts[drag]=[fixNum(snapv(x,scene.snap[0])), fixNum(snapv(y,scene.snap[1]))]; redraw();
+});
+const endDrag=()=>{ if(drag>=0){ drag=-1; redraw(); } };
+canvas.addEventListener("pointerup",endDrag); canvas.addEventListener("pointercancel",endDrag);
+function setScene(i){
+  scene=SCENES[i]; pts=scene.pts.map(p=>p.slice());
+  document.querySelectorAll("#presetBox button").forEach((b,j)=>b.classList.toggle("on",j===i));
+  document.getElementById("axCap").innerHTML=scene.cap;
+  const s=stats2(pts); if(s.ok){ theta=(angOf(s.p1)+35*Math.PI/180)%Math.PI; document.getElementById("thSl").value=Math.round(theta*180/Math.PI); }
+  redraw();
+}
+document.getElementById("presetBox").innerHTML=SCENES.map((s,i)=>`<button data-i="${i}">${s.name}</button>`).join("");
+document.querySelectorAll("#presetBox button").forEach(b=>b.addEventListener("click",()=>setScene(+b.dataset.i)));
+document.getElementById("btnUndo").addEventListener("click",()=>{ pts.pop(); redraw(); });
+document.getElementById("btnClear").addEventListener("click",()=>{ pts=[]; redraw(); });
+
+/* ═══════════ 计算过程 ═══════════ */
+function renderInterp(s){
+  const box=document.getElementById("interpBox");
+  if(scene.interp&&s.ok){ box.style.display=""; box.innerHTML=scene.interp(s); } else box.style.display="none";
+}
+const ms=(a,b)=>`<msub><mi>${a}</mi><mn>${b}</mn></msub>`;
+const lam=i=>`<msub><mi>λ</mi><mn>${i}</mn></msub>`, pv=i=>`<msub><mi class="bm">p</mi><mn>${i}</mn></msub>`;
+function stepsHTML(s,P,inExplore,skipCov){
+  let k=0; const N=()=>"①②③④⑤⑥"[k++];
+  if(!s.n) return `<div class="verdict inf">画布上还没有数据点：在空白处点几下添加。</div>`;
+  if(!s.ok) return `<div class="verdict inf">${s.n<2?"至少需要 2 个点。":"所有点重合，协方差矩阵为零矩阵，没有主方向。"}</div>`;
+  const MX=grp([s.mx,s.my]), CG=grp([s.a,s.b,s.c]); const [A,B,Cc]=CG.mls.map(ml=>({ml}));
+  let h=skipCov?"":`<div class="st">${N()} 中心化，求协方差矩阵（${s.n} 个点）</div>`
+   +(skipCov?"":`<div class="ctr"><math displaystyle="true"><mover><mi class="bm">x</mi><mo>¯</mo></mover>${eqs(MX.approx)}${colML(MX.mls)}</math>，`
+   +`<math displaystyle="true"><mi class="bm">C</mi><mo>=</mo><mfrac><mn>1</mn><mi>n</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mo>(</mo><msub><mi class="bm">x</mi><mi>i</mi></msub><mo>&#x2212;</mo><mover><mi class="bm">x</mi><mo>¯</mo></mover><mo>)</mo><msup><mrow><mo>(</mo><msub><mi class="bm">x</mi><mi>i</mi></msub><mo>&#x2212;</mo><mover><mi class="bm">x</mi><mo>¯</mo></mover><mo>)</mo></mrow><mi>T</mi></msup></math> <math displaystyle="true">${eqs(CG.approx)}${matML([[A.ml,B.ml],[B.ml,Cc.ml]])}</math></div>`);
+  const TD=grp([s.tr,s.dt]), tr={ml:TD.mls[0]}, dt={ml:TD.mls[1]}, LG=grp([s.l1,s.l2]);
+  h+=`<div class="st">${N()} ${skipCov?`协方差矩阵 <math><mi class="bm">C</mi><mo>=</mo>${matML([[A.ml,B.ml],[B.ml,Cc.ml]])}</math> 的`:""}特征方程</div>`
+   +`<div class="ctr"><math displaystyle="true"><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">C</mi><mo>&#x2212;</mo><mi>λ</mi><mi class="bm">E</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow>${eqs(TD.approx)}<msup><mi>λ</mi><mn>2</mn></msup><mo>&#x2212;</mo>${coefML(tr.ml)}<mi>λ</mi>${Math.abs(s.dt)<1e-12?"":`<mo>+</mo>${dt.ml}`}<mo>=</mo><mn>0</mn></math>`
+   +`　⇒　<math displaystyle="true">${lam(1)}${eqs(LG.approx)}${LG.mls[0]}<mo>,</mo><mspace width="0.8em"/>${lam(2)}${eqs(LG.approx)}${LG.mls[1]}</math></div>`;
+  const PG=grp([s.p1[0],s.p2[0],s.p1[1],s.p2[1]]);
+  h+=`<div class="st">${N()} 正交对角化（单位特征向量）</div>`
+   +`<div class="ctr"><math>${pv(1)}${vecE(s.p1)}</math>，<math>${pv(2)}${vecE(s.p2)}</math><br>`
+   +`<math displaystyle="true"><mi class="bm">P</mi><mo>=</mo><mo>(</mo>${pv(1)}<mo>,</mo>${pv(2)}<mo>)</mo>${eqs(PG.approx)}${matML([[PG.mls[0],PG.mls[1]],[PG.mls[2],PG.mls[3]]])}</math>，<math displaystyle="true"><msup><mi class="bm">P</mi><mi>T</mi></msup><mi class="bm">C</mi><mi class="bm">P</mi><mo>=</mo><mi class="bm">Λ</mi>${eqs(LG.approx)}${matML([[LG.mls[0],`<mn>0</mn>`],[`<mn>0</mn>`,LG.mls[1]]])}</math></div>`;
+  h+=`<div class="st">${N()} 二次型 <math><mi>f</mi><mo>=</mo><msup><mi class="bm">u</mi><mi>T</mi></msup><mi class="bm">C</mi><mi class="bm">u</mi></math> 在单位圆上的最大值、最小值</div>`
+   +`<div class="tip">令 <math><mi class="bm">u</mi><mo>=</mo><mi class="bm">P</mi><mi class="bm">v</mi></math>（正交变换，<math><mi class="bm">v</mi></math> 也是单位向量），<math><mi>f</mi><mo>=</mo>${lam(1)}<msubsup><mi>v</mi><mn>1</mn><mn>2</mn></msubsup><mo>+</mo>${lam(2)}<msubsup><mi>v</mi><mn>2</mn><mn>2</mn></msubsup></math>（标准形）。因为 <math><msubsup><mi>v</mi><mn>1</mn><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>v</mi><mn>2</mn><mn>2</mn></msubsup><mo>=</mo><mn>1</mn></math>，所以 <math>${lam(2)}<mo>≤</mo><mi>f</mi><mo>≤</mo>${lam(1)}</math>：最大值 <math>${lam(1)}</math> 在 <math><mi class="bm">u</mi><mo>=</mo>${pv(1)}</math> 处取到，最小值 <math>${lam(2)}</math> 在 <math><mi class="bm">u</mi><mo>=</mo>${pv(2)}</math> 处取到。</div>`
+   +`<div class="ctr">第一主成分保留的信息比例 <math displaystyle="true"><mfrac>${lam(1)}<mrow>${lam(1)}<mo>+</mo>${lam(2)}</mrow></mfrac>${pctEq(s)}</math> <b>${pct(s)}</b></div>`;
+  if(s.l2<1e-9*Math.max(1,s.l1)) h+=`<div class="verdict uniq"><math>${lam(2)}<mo>=</mo><mn>0</mn></math>：所有点都在过平均点、沿 <math>${pv(1)}</math> 方向的一条直线上，降到一维不丢失任何信息。</div>`;
+  else if(s.disc<1e-9*Math.max(1,s.tr)) h+=`<div class="verdict inf"><math>${lam(1)}<mo>=</mo>${lam(2)}</math>：<math><mi class="bm">C</mi><mo>=</mo>${lam(1)}<mi class="bm">E</mi></math>，任何单位向量都是特征向量，各方向投影方差完全相同，没有特定的主方向（上面的 <math>${pv(1)}</math>、<math>${pv(2)}</math> 只是取了其中一组）。</div>`;
+  else if(s.disc<0.15*s.tr) h+=`<div class="verdict inf"><math>${lam(1)}<mo>≈</mo>${lam(2)}</math>：各方向投影方差相差不大，主方向很不稳定，移动一个点方向就可能大变；这种数据不适合用一个主成分来概括。</div>`;
+  h+=`<div class="st">${N()} 降维：用一个数代替一个点</div>`
+   +`<div class="tip">第 <math><mi>i</mi></math> 个点用它在 <math>${pv(1)}</math> 方向的坐标 <math><msub><mi>t</mi><mi>i</mi></msub><mo>=</mo><msubsup><mi class="bm">p</mi><mn>1</mn><mi>T</mi></msubsup><mo>(</mo><msub><mi class="bm">x</mi><mi>i</mi></msub><mo>&#x2212;</mo><mover><mi class="bm">x</mi><mo>¯</mo></mover><mo>)</mo></math> 表示，丢掉的平均误差平方恰好是 <math>${lam(2)}</math>${inExplore?"（右侧把方向转到 <math><msub><mi class=\"bm\">p</mi><mn>1</mn></msub></math> 就能看到）":""}。`
+   +`与 L18 最小二乘对比：最小二乘让各点到直线的<b>竖直</b>距离平方和最小（<math><mi>y</mi></math> 是因变量）；过平均点、沿 <math>${pv(1)}</math> 方向的直线让各点到直线的<b>垂直</b>距离平方和最小（<math><mi>x</mi></math>、<math><mi>y</mi></math> 地位平等），一般两条线不一样。</div>`;
+  return h;
+}
+function renderSteps(s){ document.getElementById("stepsBox").innerHTML=stepsHTML(s,pts,true); }
+
+/* ═══════════ 练习模式 ═══════════
+   题型：cov 求协方差矩阵的某个元素 | eig 求 2×2 对称矩阵的特征值 | dir 选第一主成分方向 | ratio 求信息比例 */
+const QUIZKEY="la-pca-quiz";
+let streak=0, qstats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:qstats.attempted,correct:qstats.correct,streak:streak})); }catch(e){} }
+function resetStats(){ if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return; qstats={attempted:0,correct:0}; streak=0; saveStats(); renderStats(); }
+function renderStats(){ const acc=qstats.attempted?Math.round(qstats.correct/qstats.attempted*100):0;
+  document.getElementById("quizStats").innerHTML=`已答 <b>${qstats.attempted}</b> · 答对 <b>${qstats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`; }
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+const DIRS=[[1,0],[0,1],[1,1],[1,-1],[1,2],[2,1],[1,-2],[2,-1]];
+function genSym(){ // 整数特征值的 2×2 对称阵：C = λ2 E + (λ1−λ2) v vᵀ/|v|²
+  for(;;){ const v=DIRS[ri(0,DIRS.length-1)], n2=v[0]*v[0]+v[1]*v[1];
+    const l2=ri(1,4), d=n2*ri(1,n2===1?6:(n2===2?3:1)); const l1=l2+d;
+    const k=d/n2; const a=l2+k*v[0]*v[0], b=k*v[0]*v[1], c=l2+k*v[1]*v[1];
+    if(Math.abs(b)<1e-9&&Math.random()<0.7) continue;   // 少出对角阵
+    return {a,b,c,l1,l2,v}; } }
+function genProblem(){
+  const r=Math.random();
+  if(r<0.3){
+    let P; for(;;){ const n=ri(3,4); P=[]; for(let i=0;i<n;i++) P.push([ri(0,6),ri(0,6)]);
+      const sx=P.reduce((s,p)=>s+p[0],0), sy=P.reduce((s,p)=>s+p[1],0);
+      const s=stats2(P); if(sx%n===0&&sy%n===0&&s.ok&&s.l2>1e-9&&new Set(P.map(p=>p+"")).size===n) break; }
+    const s=stats2(P); const which=ri(0,2); const ans=[s.a,s.b,s.c][which];
+    return {kind:"cov",P,s,which,ans};
+  }else if(r<0.55){
+    const m=genSym(); return {kind:"eig",m,s:eig2(m.a,m.b,m.c)};
+  }else if(r<0.8){
+    let m; do{ m=genSym(); }while(m.v[0]===1&&m.v[1]===0 || m.v[0]===0&&m.v[1]===1 || m.l1===m.l2);
+    const s=eig2(m.a,m.b,m.c); const right=m.v, perp=[-m.v[1],m.v[0]];
+    const pool=DIRS.filter(d=>d[0]*right[1]-d[1]*right[0]!==0 && d[0]*perp[1]-d[1]*perp[0]!==0);
+    const opts=shuffle([{d:right,ok:true},{d:perp,ok:false,why:"这是第二主成分方向（对应较小的特征值），投影方差最小"},...shuffle(pool).slice(0,2).map(d=>({d,ok:false,why:"它不是 C 的特征向量（代入 Cu 不与 u 共线）"}))]);
+    return {kind:"dir",m,s,opts,selected:-1};
+  }else{
+    const sums=[4,5,8,10,20,25,40,50]; let l1,l2;
+    do{ const t=sums[ri(0,sums.length-1)]; l1=ri(Math.ceil(t/2)+0,t); l2=t-l1; }while(l2<0||l1<=l2);
+    return {kind:"ratio",l1,l2,ans:l1/(l1+l2)*100};
+  }
+}
+const symML=m=>matML([[valML(m.a).ml,valML(m.b).ml],[valML(m.b).ml,valML(m.c).ml]]);
+const dirML=d=>`<mrow><mo>(</mo>${valML(d[0]).ml}<mo>,</mo>${valML(d[1]).ml}<msup><mo>)</mo><mi>T</mi></msup></mrow>`;
+function parseVal(s){
+  s=s.trim().replace(/−/g,"-").replace(/%$/,""); if(!s) return NaN;
+  const m=s.match(/^(-?\d+(?:\.\d+)?)\s*(?:\/\s*(\d+(?:\.\d+)?))?$/); if(!m) return NaN;
+  const a=parseFloat(m[1]); if(m[2]===undefined) return a; const b=parseFloat(m[2]); return b===0?NaN:a/b;
+}
+const ENTRY=[`<msub><mi>c</mi><mn>11</mn></msub>`,`<msub><mi>c</mi><mn>12</mn></msub>`,`<msub><mi>c</mi><mn>22</mn></msub>`];
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody"), fb=document.getElementById("qFeedback");
+  q.done=false; q.revealed=false; fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  if(q.kind==="cov"){
+    body.innerHTML=`数据点：${q.P.map(([x,y])=>`<math><mo>(</mo><mn>${x}</mn><mo>,</mo><mn>${y}</mn><mo>)</mo></math>`).join("，")}。<br>`
+      +`求协方差矩阵 <math><mi class="bm">C</mi><mo>=</mo>${matML([[ENTRY[0],ENTRY[1]],[ENTRY[1],ENTRY[2]]])}</math>（用 <math><mfrac><mn>1</mn><mi>n</mi></mfrac></math>）中的 <math>${ENTRY[q.which]}</math>（可填分数如 <b>8/3</b>）：`
+      +`<div class="qgrid"><math>${ENTRY[q.which]}<mo>=</mo></math><input class="qin" id="qA" type="text"></div>`;
+  }else if(q.kind==="eig"){
+    body.innerHTML=`协方差矩阵 <math><mi class="bm">C</mi><mo>=</mo>${symML(q.m)}</math>，求它的两个特征值（<math>${lam(1)}<mo>≥</mo>${lam(2)}</math>）：`
+      +`<div class="qgrid"><math>${lam(1)}<mo>=</mo></math><input class="qin" id="qL1" type="text"><span style="width:14px"></span><math>${lam(2)}<mo>=</mo></math><input class="qin" id="qL2" type="text"></div>`;
+  }else if(q.kind==="dir"){
+    body.innerHTML=`协方差矩阵 <math><mi class="bm">C</mi><mo>=</mo>${symML(q.m)}</math>，下面哪个方向是<b>第一主成分</b>方向（投影方差最大）？<div class="opts" id="qOpts">`
+      +q.opts.map((o,i)=>`<label data-i="${i}"><input type="radio" name="qopt" value="${i}"><span><math>${dirML(o.d)}</math></span></label>`).join("")+"</div>";
+    body.querySelectorAll("#qOpts label").forEach(l=>l.addEventListener("click",()=>{
+      body.querySelectorAll("#qOpts label").forEach(x=>x.classList.remove("sel")); l.classList.add("sel");
+      l.querySelector("input").checked=true; q.selected=+l.dataset.i; }));
+  }else{
+    body.innerHTML=`某组数据的协方差矩阵特征值为 <math>${lam(1)}<mo>=</mo><mn>${q.l1}</mn><mo>,</mo>${lam(2)}<mo>=</mo><mn>${q.l2}</mn></math>。只保留第一主成分（降为一维），保留了百分之多少的信息？`
+      +`<div class="qgrid"><input class="qin" id="qR" type="text"><span>%</span></div>`;
+  }
+  body.querySelectorAll("input.qin").forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); }));
+  document.getElementById("lgDot").style.display=q.kind==="cov"?"":"none";
+  document.getElementById("stepsBox").innerHTML=`<div class="tip">提交答案或点“看解析”后，这里显示完整的计算过程。</div>`;
+  redraw(); renderStats();
+}
+function quizEig(){ const q=quiz; if(q.kind==="cov") return q.s; if(q.kind==="ratio") return null;
+  return Object.assign({mx:0,my:0,ok:true,n:0,a:q.m.a,b:q.m.b,c:q.m.c},q.s); }
+function drawQuiz(){
+  const q=quiz; if(!q) return;
+  if(q.kind==="cov"){ const s=q.s; view=fitView(q.P,q.revealed&&s.ok?axesExt(s):[]); drawFrame(); if(q.revealed&&s.ok) drawPCA(s,false,q.P); drawPoints(q.P,-1); return; }
+  if(q.kind==="ratio"){ const s=Object.assign({mx:0,my:0},eig2(q.l1,0,q.l2)); s.p1=[1,0]; s.p2=[0,1]; view=fitView([],axesExt(Object.assign({ok:true},s))); drawFrame(); if(q.revealed) drawPCA(s,false,[]); return; }
+  const s=quizEig(); view=fitView([],axesExt(s)); drawFrame(); if(q.revealed) drawPCA(s,false,[]);
+}
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return; const fb=document.getElementById("qFeedback");
+  const no=t=>{ fb.className="feedback no"; fb.innerHTML=t; };
+  if(q.kind==="cov"){
+    const v=parseVal(document.getElementById("qA").value); if(Number.isNaN(v)) return no("请填一个数（整数、分数 a/b 或小数）");
+    if(Math.abs(v-q.ans)<0.006) markCorrect();
+    else{ const raw=q.ans*q.P.length; if(Math.abs(v-raw)<1e-6) no("求和对了，别忘了再除以点的个数 n。"); else no("还不对～ 先求平均值，各坐标减去平均值后再相乘求和、除以 n。"); }
+  }else if(q.kind==="eig"){
+    const a=parseVal(document.getElementById("qL1").value), b=parseVal(document.getElementById("qL2").value);
+    if(Number.isNaN(a)||Number.isNaN(b)) return no("请把两个特征值都填上");
+    const ok=Math.abs(a-q.s.l1)<0.006&&Math.abs(b-q.s.l2)<0.006, sw=Math.abs(b-q.s.l1)<0.006&&Math.abs(a-q.s.l2)<0.006;
+    if(ok) markCorrect(); else if(sw) no("两个值都对，但要按 λ₁ ≥ λ₂ 的顺序填。"); else no("还不对：解特征方程 λ² − (c₁₁+c₂₂)λ + |C| = 0。");
+  }else if(q.kind==="dir"){
+    if(q.selected<0) return no("请先选择一个选项");
+    if(q.opts[q.selected].ok) markCorrect(); else no(`不对哦：${q.opts[q.selected].why}。`);
+  }else{
+    const v=parseVal(document.getElementById("qR").value); if(Number.isNaN(v)) return no("请填一个百分数（如 80）");
+    if(Math.abs(v-q.ans)<0.6) markCorrect(); else if(Math.abs(v-q.ans/100)<0.006) no("这是比例，题目要的是百分数（乘以 100）。"); else no("还不对：保留比例 = λ₁ / (λ₁ + λ₂)。");
+  }
+}
+function solHTML(){
+  const q=quiz;
+  if(q.kind==="cov"){ const s=q.s, v=valML(q.ans);
+    return `<div class="sol">平均点 <math><mo>(</mo>${valML(s.mx).ml}<mo>,</mo>${valML(s.my).ml}<mo>)</mo></math>，<math><mi class="bm">C</mi><mo>=</mo>${matML([[valML(s.a).ml,valML(s.b).ml],[valML(s.b).ml,valML(s.c).ml]])}</math>，所以 <math>${ENTRY[q.which]}${eqs(v.approx)}${v.ml}</math>。完整过程见左侧。</div>`; }
+  if(q.kind==="eig"||q.kind==="dir"){ const m=q.m, s=q.s;
+    const tr=m.a+m.c, dt=m.a*m.c-m.b*m.b;
+    let t=`<div class="sol"><math><msup><mi>λ</mi><mn>2</mn></msup><mo>&#x2212;</mo>${coefML(valML(tr).ml)}<mi>λ</mi>${dt===0?"":`<mo>+</mo>${valML(dt).ml}`}<mo>=</mo><mn>0</mn></math>，<math>${lam(1)}<mo>=</mo>${valML(s.l1).ml}<mo>,</mo><mspace width="0.5em"/>${lam(2)}<mo>=</mo>${valML(s.l2).ml}</math>。`;
+    t+=`对应 <math>${lam(1)}</math> 的特征向量是 <math>${dirML(m.v)}</math> 的倍数，它就是第一主成分方向`;
+    return t+`（左侧画出了数据椭圆与两个主方向）。</div>`; }
+  return `<div class="sol"><math displaystyle="true"><mfrac><mn>${q.l1}</mn><mrow><mn>${q.l1}</mn><mo>+</mo><mn>${q.l2}</mn></mrow></mfrac><mo>=</mo>${valML(q.l1/(q.l1+q.l2)).ml}</math>，即保留了 <b>${(+q.ans.toFixed(2))}%</b> 的信息，丢掉的 <math>${lam(2)}</math> 部分是各点到第一主成分轴的平均误差平方。</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+function showFull(){
+  const q=quiz; q.revealed=true; redraw();
+  if(q.kind==="dir") document.querySelectorAll("#qOpts label").forEach((l,i)=>{ if(q.opts[i].ok){ l.style.borderColor="var(--green)"; l.style.background="#f0fff4"; l.insertAdjacentHTML("beforeend","<b style='color:var(--green);margin-left:auto;'>✓ 第一主成分</b>"); } });
+  const box=document.getElementById("stepsBox");
+  if(q.kind==="cov") box.innerHTML=stepsHTML(q.s,q.P,false);
+  else if(q.kind==="ratio") box.innerHTML=`<div class="tip">保留比例只和两个特征值有关：<math displaystyle="true"><mfrac>${lam(1)}<mrow>${lam(1)}<mo>+</mo>${lam(2)}</mrow></mfrac></math>。<math>${lam(1)}<mo>+</mo>${lam(2)}<mo>=</mo><mi>tr</mi><mi class="bm">C</mi></math> 是数据在两个坐标方向上方差的总和，<math>${lam(1)}</math> 是其中能被第一主成分“解释”的部分。左图画出了半轴为 <math><mn>2</mn><msqrt>${lam(1)}</msqrt></math>、<math><mn>2</mn><msqrt>${lam(2)}</msqrt></math> 的数据椭圆。</div>`;
+  else { const s=quizEig(); box.innerHTML=stepsHTML(Object.assign({},s,{n:1,ok:true,mx:0,my:0}),[],false,true); }
+}
+function markCorrect(){ const q=quiz; q.done=true; qstats.attempted++; qstats.correct++; streak++; saveStats(); showFull();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML(); lockQ(); renderStats(); }
+function onReveal(){ const q=quiz; if(!q||q.done) return; q.done=true; qstats.attempted++; streak=0; saveStats(); showFull();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML(); lockQ(); renderStats(); }
+function onHint(){
+  const q=quiz; if(!q) return; const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="cov") fb.innerHTML=`提示：<math>${ENTRY[0]}</math> 是 <math><mi>x</mi></math> 的方差，<math>${ENTRY[2]}</math> 是 <math><mi>y</mi></math> 的方差，<math>${ENTRY[1]}</math> 是 <math><mfrac><mn>1</mn><mi>n</mi></mfrac><mo>∑</mo><mo>(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>&#x2212;</mo><mover><mi>x</mi><mo>¯</mo></mover><mo>)</mo><mo>(</mo><msub><mi>y</mi><mi>i</mi></msub><mo>&#x2212;</mo><mover><mi>y</mi><mo>¯</mo></mover><mo>)</mo></math>。`;
+  else if(q.kind==="eig") fb.innerHTML=`提示：2 阶矩阵的特征方程 <math><msup><mi>λ</mi><mn>2</mn></msup><mo>&#x2212;</mo><mo>(</mo>${ENTRY[0]}<mo>+</mo>${ENTRY[2]}<mo>)</mo><mi>λ</mi><mo>+</mo><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">C</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow><mo>=</mo><mn>0</mn></math>；两根之和等于对角元之和，之积等于行列式。`;
+  else if(q.kind==="dir") fb.innerHTML=`提示：逐个算 <math><mi class="bm">C</mi><mi class="bm">u</mi></math>，看哪个 <math><mi class="bm">u</mi></math> 满足 <math><mi class="bm">C</mi><mi class="bm">u</mi><mo>=</mo>${lam(1)}<mi class="bm">u</mi></math>（与 <math><mi class="bm">u</mi></math> 共线且倍数最大）。`;
+  else fb.innerHTML=`提示：信息比例 = 第一主成分方向上的方差 ÷ 总方差 = <math><mfrac>${lam(1)}<mrow>${lam(1)}<mo>+</mo>${lam(2)}</mrow></mfrac></math>。`;
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+function setMode(m){
+  mode=m;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("exploreSide").style.display=m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display=m==="practice"?"":"none";
+  document.getElementById("canvasTip").style.display=m==="explore"?"":"none";
+  document.getElementById("axCap").style.display=m==="explore"?"":"none";
+  document.getElementById("lgU").style.display=m==="explore"?"":"none";
+  document.getElementById("lgDot").style.display="";
+  document.getElementById("lgErr").style.display=(m==="explore"&&projOn)?"":"none";
+  if(m==="practice"){ quiz=genProblem(); renderProblem(); }
+  else { quiz=null; redraw(); }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
+resizeF(); setScene(0); resize();
+</script>
+<script>
+/* ── 排版：标点不单独成行、不在行首；左括号不留在行尾 ── */
+(function(){
+  const CLOSE=/^[，。、；：）)！？」》,.;:!?…]+/, OPEN=/[（(「《]+$/;
+  function wrapOf(m){
+    if(m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr")) return m.parentNode;
+    const s=document.createElement("span"); s.className="nobr"; s.style.whiteSpace="nowrap";
+    m.parentNode.insertBefore(s,m); s.appendChild(m); return s;
+  }
+  function glue(root){
+    (root.querySelectorAll?root:document).querySelectorAll("math").forEach(m=>{
+      if(m.closest("math")!==m || m.getAttribute("display")==="block") return;
+      const host=m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let nx=host.nextSibling;
+      if(nx && nx.nodeType===3){ const k=nx.data.match(CLOSE); if(k){ const w=wrapOf(m);
+          w.appendChild(document.createTextNode(k[0])); nx.data=nx.data.slice(k[0].length); } }
+      const h2=m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let pv=h2.previousSibling;
+      if(pv && pv.nodeType===3){ const k=pv.data.match(OPEN); if(k){ const w=wrapOf(m);
+          w.insertBefore(document.createTextNode(k[0]),w.firstChild); pv.data=pv.data.slice(0,pv.data.length-k[0].length); } }
+    });
+  }
+  let busy=false;
+  const ob=new MutationObserver(()=>{ if(busy) return; busy=true; ob.disconnect(); glue(document.body); ob.observe(document.body,{childList:true,subtree:true}); busy=false; });
+  glue(document.body); ob.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-pca";          // ← 计数键：与编号 L# 解耦的稳定标识，永不改动
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

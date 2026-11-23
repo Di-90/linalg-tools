@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>种群年龄结构预测 · L23 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1; --red:#c53030;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --g1:#2b6cb0; --g2:#2f855a; --g3:#d69e2e; --g4:#6b46c1;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.12em;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:1040px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  .cvbox{width:100%;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fbfdff;}
+  canvas{display:block;}
+  button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  button.on{border-color:var(--blue);background:#eef4fb;}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+  .presets button{font-size:12.5px;padding:5px 10px;text-align:left;}
+  .plabel{font-size:13px;color:var(--sub);margin:12px 0 4px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:14px;}
+  .gen{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:14px;flex-wrap:wrap;}
+  .gen input[type=range]{flex:1;min-width:140px;accent-color:var(--blue);}
+  .readout{font-size:14px;line-height:2;text-align:center;margin-top:6px;}
+  .sl{display:grid;grid-template-columns:96px 1fr 46px;gap:8px;align-items:center;margin:4px 0;font-size:14px;}
+  .sl input[type=range]{width:100%;accent-color:var(--blue);}
+  .sl .v{font-variant-numeric:tabular-nums;text-align:right;font-family:"Cambria Math","STIX Two Math",serif;}
+  .x0row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 10px;font-size:14px;}
+  .x0i{display:flex;align-items:center;gap:6px;white-space:nowrap;}
+  .x0row input{width:64px;font-size:14px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;text-align:center;}
+  .x0row input:focus{outline:none;border-color:var(--blue);}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--sub);margin-top:8px;justify-content:center;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:16px;height:4px;border-radius:2px;display:inline-block;}
+  .legend i.box{width:12px;height:12px;border-radius:2px;}
+  .legend i.dash{background:repeating-linear-gradient(90deg,#4a5568 0 4px,transparent 4px 7px);}
+  .twocol{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;}
+  @media(max-width:620px){ .twocol{grid-template-columns:minmax(0,1fr);} }
+  .rtwrap{overflow-x:auto;}
+  .cap{font-size:13px;color:var(--sub);text-align:center;margin:4px 0 6px;}
+  label.chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--sub);cursor:pointer;}
+  .steps{font-size:14px;line-height:2;}
+  .steps .st{margin:12px 0 2px;font-weight:600;color:var(--sub);font-size:14px;}
+  .steps .ctr{text-align:center;overflow-x:auto;overflow-y:hidden;padding:2px 0;line-height:2.4;}
+  .steps math{font-size:1.05em;}
+  .verdict{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:14px;line-height:1.9;}
+  .verdict.uniq{background:#e6fffa;color:#234e52;border:1px solid #b2f5ea;}
+  .verdict.inf{background:#fffaf0;color:#744210;border:1px solid #f6e05e;}
+  .verdict.none{background:#fff5f5;color:#822727;border:1px solid #feb2b2;}
+  table.rt{border-collapse:collapse;margin:6px auto 0;font-size:13.5px;}
+  table.rt td,table.rt th{border:1px solid var(--line);padding:2px 10px;text-align:center;font-variant-numeric:tabular-nums;}
+  table.rt th{background:#f8fafc;color:var(--sub);font-weight:600;}
+  details.lim summary{cursor:pointer;font-weight:600;color:var(--blue);font-size:14px;}
+  details.lim[open] summary{margin-bottom:6px;}
+  details.lim ul{margin:4px 0 0;padding-left:20px;font-size:14px;line-height:1.9;}
+  .note{font-size:13px;color:#4a5568;background:#fffbea;border:1px solid #f6e05e;border-radius:8px;padding:8px 10px;margin-top:10px;line-height:1.8;}
+  .tip{font-size:14px;color:var(--ink);line-height:1.8;margin-top:6px;}
+  .placeholder{color:#a0aec0;font-size:14px;text-align:center;padding:30px 10px;}
+  /* 练习 */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody .qm{text-align:center;margin:4px 0;}
+  .qbody input.qin{width:80px;font-size:15px;padding:4px 6px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .qgrid{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;flex-wrap:wrap;}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid var(--line);
+       border-radius:8px;cursor:pointer;font-size:14px;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .opts input{accent-color:var(--blue);}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:14px;margin-top:6px;line-height:1.9;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,340px);gap:16px;align-items:start;}
+  @media(max-width:880px){ .layout{grid-template-columns:minmax(0,1fr);} .col-right{order:-1;} }
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>种群年龄结构预测</h1>
+  <span class="sub">Leslie 矩阵 <math><msub><mi class="bm">x</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mi class="bm">L</mi><msub><mi class="bm">x</mi><mi>k</mi></msub></math> · 主特征值决定增长率</span>
+  <span class="tag">L23 · 应用案例</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    把种群按年龄分成 <math><mi>n</mi></math> 组，<math><msub><mi class="bm">x</mi><mi>k</mi></msub></math> 表示第 <math><mi>k</mi></math> 代（第 <math><mi>k</mi></math> 个时段）各组的个体数。每组的<b>繁殖率</b>为 <math><msub><mi>b</mi><mi>i</mi></msub></math>（平均每个个体产下的、能活到下一时段的后代数），第 <math><mi>i</mi></math> 组活到第 <math><mi>i</mi><mo>+</mo><mn>1</mn></math> 组的<b>存活率</b>为 <math><msub><mi>s</mi><mi>i</mi></msub></math>，则
+    <div class="formula">
+      <math display="block"><msub><mi class="bm">x</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mi class="bm">L</mi><msub><mi class="bm">x</mi><mi>k</mi></msub><mo>,</mo><mspace width="1em"/>
+        <mi class="bm">L</mi><mo>=</mo><mrow><mo>(</mo><mtable>
+          <mtr><mtd><msub><mi>b</mi><mn>1</mn></msub></mtd><mtd><msub><mi>b</mi><mn>2</mn></msub></mtd><mtd><mo>⋯</mo></mtd><mtd><msub><mi>b</mi><mi>n</mi></msub></mtd></mtr>
+          <mtr><mtd><msub><mi>s</mi><mn>1</mn></msub></mtd><mtd><mn>0</mn></mtd><mtd><mo>⋯</mo></mtd><mtd><mn>0</mn></mtd></mtr>
+          <mtr><mtd><mo>⋮</mo></mtd><mtd><mo>⋱</mo></mtd><mtd><mo>⋱</mo></mtd><mtd><mo>⋮</mo></mtd></mtr>
+          <mtr><mtd><mn>0</mn></mtd><mtd><mo>⋯</mo></mtd><mtd><msub><mi>s</mi><mrow><mi>n</mi><mo>&#x2212;</mo><mn>1</mn></mrow></msub></mtd><mtd><mn>0</mn></mtd></mtr>
+        </mtable><mo>)</mo></mrow><mo>,</mo><mspace width="1em"/>
+        <msub><mi class="bm">x</mi><mi>k</mi></msub><mo>=</mo><msup><mi class="bm">L</mi><mi>k</mi></msup><msub><mi class="bm">x</mi><mn>0</mn></msub></math>
+    </div>
+    只要有个体能活到繁殖年龄并繁殖，<math><mi class="bm">L</mi></math> 就有唯一的正特征值 <math><msub><mi>λ</mi><mn>1</mn></msub></math>（<b>主特征值</b>），它的绝对值不小于其他特征值（这一结论的证明超出本课程范围）。<math><mi>k</mi></math> 很大时 <math><msub><mi class="bm">x</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>≈</mo><msub><mi>λ</mi><mn>1</mn></msub><msub><mi class="bm">x</mi><mi>k</mi></msub></math>：
+    种群每代按 <math><msub><mi>λ</mi><mn>1</mn></msub></math> 倍增长（<math><msub><mi>λ</mi><mn>1</mn></msub><mo>&gt;</mo><mn>1</mn></math> 增长、<math><mo>=</mo><mn>1</mn></math> 稳定、<math><mo>&lt;</mo><mn>1</mn></math> 衰退），各年龄组的比例趋于对应的<b>特征向量</b>，与初始数量无关。
+  </div>
+
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div class="layout">
+  <div class="col-left">
+    <div id="quizLeftPh" class="card" style="display:none;"><div class="placeholder">提交答案或点“看解析”后，这里用本题的矩阵演示种群的变化</div></div>
+    <div id="leftMain">
+      <div class="card">
+        <h2>各年龄组所占比例（第 <span id="kLbl">0</span> 代）</h2>
+        <div class="cvbox" id="cbBar"><canvas id="cvBar"></canvas></div>
+        <div class="legend"><span><i class="box" style="background:var(--g1)"></i>当前比例</span><span><i class="dash"></i>稳定年龄结构（特征向量）</span></div>
+        <div class="gen">
+          <button class="primary" id="btnPlay">▶ 播放</button>
+          <span>代数 <math><mi>k</mi></math></span>
+          <input type="range" id="kSl" min="0" max="30" step="1" value="0">
+          <button id="btnK0">回到第 0 代</button>
+        </div>
+        <div class="readout" id="kReadout"></div>
+      </div>
+      <div class="card">
+        <div class="twocol">
+          <div>
+            <div class="cap">种群总数 <math><msub><mi>N</mi><mi>k</mi></msub></math> 随代数变化　<label class="chk"><input type="checkbox" id="logOn">对数坐标（增长很快时可勾选）</label></div>
+            <div class="cvbox" id="cbTot"><canvas id="cvTot"></canvas></div>
+            <div class="legend"><span><i style="background:#1a202c"></i>总数</span><span><i class="dash"></i>按 <math><msub><mi>λ</mi><mn>1</mn></msub></math> 倍增长的参考线</span></div>
+          </div>
+          <div>
+            <div class="cap">各年龄组比例随代数变化</div>
+            <div class="cvbox" id="cbPr"><canvas id="cvPr"></canvas></div>
+            <div class="legend" id="prLegend"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>特征值与结论</h2>
+        <div class="steps" id="stepsBox"></div>
+      </div>
+      <details class="card lim">
+        <summary>模型局限（点击展开）</summary>
+        <ul>
+          <li><b>寿命被截断：</b>Leslie 模型假定活过最后一个年龄组的个体全部死亡。寿命长的物种（如鸥类等大中型鸟类，可活十几年以上）只分 3～4 组会明显低估增长率，要么分很多组，要么把成年个体合为一组并允许它留在该组（阶段结构模型，超出本课程范围）。</li>
+          <li><b>参数固定不变：</b>繁殖率、存活率被当作常数，不考虑食物、栖息地容量和种群密度的影响。所以 <math><msub><mi>λ</mi><mn>1</mn></msub></math> &gt; 1 时模型给出无限的指数增长，现实中种群增长到一定程度会放缓。</li>
+          <li><b>只按年龄分组：</b>通常只统计雌性个体，不区分个体差异，也不考虑迁入、迁出。</li>
+          <li><b>可能周期振荡：</b>如果能繁殖的年龄组组号有大于 1 的公因数（例如只有第 3 组繁殖），<math><msup><mi class="bm">L</mi><mi>k</mi></msup><msub><mi class="bm">x</mi><mn>0</mn></msub></math> 不趋于一个固定方向，各组比例周期性变化，逐代倍数来回跳，但每个周期的平均增长率仍为 <math><msub><mi>λ</mi><mn>1</mn></msub></math>（超出本课程范围）。</li>
+          <li><b>不含随机性：</b>小种群的出生、死亡有很大偶然性，确定性模型只反映平均趋势。</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+
+  <div class="col-right">
+    <div id="exploreSide">
+      <div class="card">
+        <h2>参数</h2>
+        <div class="plabel" style="margin-top:0;">例子：</div>
+        <div class="presets" id="presetBox"></div>
+        <div class="row">年龄组数：<button id="n3">3 组</button><button id="n4">4 组</button></div>
+        <div class="plabel">繁殖率 <math><msub><mi>b</mi><mi>i</mi></msub></math></div>
+        <div id="bBox"></div>
+        <div class="plabel">存活率 <math><msub><mi>s</mi><mi>i</mi></msub></math></div>
+        <div id="sBox"></div>
+        <div class="plabel">初始数量 <math><msub><mi class="bm">x</mi><mn>0</mn></msub></math></div>
+        <div class="x0row" id="x0Box"></div>
+        <div class="note" id="presetNote" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="card" id="quizCard" style="display:none;">
+      <div class="quizhead">
+        <h2>练习 · Leslie 模型</h2>
+        <span class="stats" id="quizStats"></span>
+        <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+      </div>
+      <div class="qbody" id="qBody"></div>
+      <div class="feedback" id="qFeedback"></div>
+      <div class="qbtns">
+        <button class="primary" id="qSubmit">提交</button>
+        <button id="qHint">提示</button>
+        <button id="qReveal">看解析</button>
+        <button id="qNext">下一题 ▸</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+/* ═══════════ 预设（均为示意参数，不是实测数据）═══════════ */
+const PRESETS=[
+  {name:"特征值为 1.5 的示例", b:[0,4,3], s:[0.5,0.25], x0:[100,100,100], groups:["第1组","第2组","第3组"],
+   note:`示例：特征方程 <math><msup><mi>λ</mi><mn>3</mn></msup><mo>&#x2212;</mo><mn>2</mn><mi>λ</mi><mo>&#x2212;</mo><mn>0.375</mn><mo>=</mo><mn>0</mn></math> 的正根恰为 <math><msub><mi>λ</mi><mn>1</mn></msub><mo>=</mo><mn>1.5</mn></math>，稳定年龄结构为 <math><msup><mrow><mo>(</mo><mn>1</mn><mo>,</mo><mfrac><mn>1</mn><mn>3</mn></mfrac><mo>,</mo><mfrac><mn>1</mn><mn>18</mn></mfrac><mo>)</mo></mrow><mi>T</mi></msup></math> 的倍数。另外两个特征值约为 <math><mo form="prefix" lspace="0" rspace="0">&#x2212;</mo><mn>1.309</mn></math> 和 <math><mo form="prefix" lspace="0" rspace="0">&#x2212;</mo><mn>0.191</mn></math>，前者绝对值和 1.5 很接近，所以比例来回摆动、收敛得比较慢，30 代时倍数约 1.48（收敛快慢与其他特征值的关系超出本课程范围）。`},
+  {name:"快速繁殖的小型动物", b:[0.6,2.4,1.8], s:[0.5,0.3], x0:[200,0,0], groups:["幼体","1 龄","2 龄"],
+   note:`示意数据（类似田鼠、兔类）：繁殖早、繁殖多，但存活率低、寿命短，在食物充足时种群增长很快。`},
+  {name:"小型鸣禽（如麻雀）", b:[0,1.8,2.2,2.2], s:[0.3,0.5,0.4], x0:[100,50,30,20], groups:["0–1 岁","1–2 岁","2–3 岁","3–4 岁"],
+   note:`示意数据：出生当年不繁殖；1 岁起每个个体每年平均留下约 2 只能活到下一年的雏鸟；第一年存活率只有 0.3，成鸟每年存活约一半。 <math><msub><mi>λ</mi><mn>1</mn></msub></math> ≈ 1，种群大致稳定。试着把 <math><msub><mi>s</mi><mn>1</mn></msub></math> 调小（如严冬使幼鸟大量死亡），看种群怎样转为衰退。寿命更长的鸟类（如鸥类）见下方“模型局限”。`},
+  {name:"衰退中的濒危种群", b:[0,1.2,1.6], s:[0.4,0.6], x0:[60,40,50], groups:["幼体","亚成体","成体"],
+   note:`示意数据：幼体存活率太低（如栖息地被破坏），一个新生个体一生平均留下的后代不足 1 个，种群逐代减少。试着调大 <math><msub><mi>s</mi><mn>1</mn></msub></math>，看要多大才能让 <math><msub><mi>λ</mi><mn>1</mn></msub></math> 超过 1。`},
+  {name:"年龄结构振荡", b:[0,0,6], s:[0.5,0.5], x0:[100,0,0], groups:["第1组","第2组","第3组"],
+   note:`只有最后一组繁殖（类似一生只在最后阶段繁殖一次的物种）：各组比例周期性变化、不收敛到稳定结构，总数也按 3 代一个周期跳动，原因见下方“模型局限”。`}
+];
+const K=30;
+const GC=["--g1","--g2","--g3","--g4"];
+let P=null;              // 当前参数 {b,s,x0,groups}
+let expP=null, mode="explore", quiz=null, kCur=0, playT=null;
+
+/* ═══════════ 数学 ═══════════ */
+// 特征多项式 λⁿ − c₁λⁿ⁻¹ − … − cₙ，cⱼ = bⱼ·s₁⋯sⱼ₋₁
+function coefs(b,s){ const c=[]; let l=1; for(let j=0;j<b.length;j++){ c.push(b[j]*l); if(j<s.length) l*=s[j]; } return c; }
+function charF(c,lam){ const n=c.length; let v=Math.pow(lam,n); c.forEach((cj,j)=>v-=cj*Math.pow(lam,n-1-j)); return v; }
+function domEig(b,s){
+  const c=coefs(b,s); if(c.every(x=>x<=0)) return 0;
+  let lo=0, hi=Math.max(1,c.reduce((a,x)=>a+x,0));
+  for(let it=0;it<200;it++){ const m=(lo+hi)/2; if(charF(c,m)>0) hi=m; else lo=m; }
+  return (lo+hi)/2;
+}
+function lamEq(v){ return Math.abs(v-Math.round(v*1e4)/1e4)<1e-9?"<mo>=</mo>":"<mo>≈</mo>"; }
+function stableVec(s,lam,n){ const v=[1]; for(let i=1;i<n;i++) v.push(v[i-1]*s[i-1]/lam); return v; }
+function step(b,s,x){ const n=x.length, y=Array(n).fill(0); y[0]=b.reduce((a,bi,i)=>a+bi*x[i],0); for(let i=1;i<n;i++) y[i]=s[i-1]*x[i-1]; return y; }
+function simulate(p){ const xs=[p.x0.slice()]; for(let k=0;k<K;k++) xs.push(step(p.b,p.s,xs[k])); return xs; }
+function gcd(a,b){ while(b){ [a,b]=[b,a%b]; } return a; }
+function periodic(p){ const c=coefs(p.b,p.s); let g=0; c.forEach((x,j)=>{ if(x>0) g=gcd(g,j+1); }); return g>1; }
+const sum=a=>a.reduce((x,y)=>x+y,0);
+
+/* ═══════════ 格式 ═══════════ */
+const NEG='<mo form="prefix" lspace="0" rspace="0">&#x2212;</mo>';
+function tn(v,d){ d=d===undefined?4:d; let t=(Math.round(v*Math.pow(10,d))/Math.pow(10,d)).toString(); if(t==="-0") t="0"; return t; }
+function mnum(v,d){ const t=tn(v,d); return t.startsWith("-")?NEG+`<mn>${t.slice(1)}</mn>`:`<mn>${t}</mn>`; }
+const SUP="⁰¹²³⁴⁵⁶⁷⁸⁹";
+function bigTxt(v){ if(v<1e5) return v>=100?Math.round(v).toString():tn(v,1);
+  const e=Math.floor(Math.log10(v)), m=v/Math.pow(10,e); return tn(m,2)+"×10"+String(e).split("").map(c=>SUP[+c]).join(""); }
+function bigML(v){ if(v<1e5) return `<mn>${v>=100?Math.round(v):tn(v,1)}</mn>`;
+  const e=Math.floor(Math.log10(v)), m=v/Math.pow(10,e); return `<mn>${tn(m,2)}</mn><mo>×</mo><msup><mn>10</mn><mn>${e}</mn></msup>`; }
+const sb=(a,i)=>`<msub><mi>${a}</mi><mn>${i}</mn></msub>`;
+const lam1=`<msub><mi>λ</mi><mn>1</mn></msub>`;
+function matML(rows){ return `<mrow><mo>(</mo><mtable>${rows.map(r=>`<mtr>${r.map(v=>`<mtd>${v}</mtd>`).join("")}</mtr>`).join("")}</mtable><mo>)</mo></mrow>`; }
+function colML(a){ return matML(a.map(v=>[v])); }
+function LML(b,s){ const n=b.length; const rows=[b.map(v=>mnum(v))];
+  for(let i=1;i<n;i++){ const r=[]; for(let j=0;j<n;j++) r.push(j===i-1?mnum(s[i-1]):`<mn>0</mn>`); rows.push(r); } return matML(rows); }
+const lp=(e)=>e===0?"":e===1?`<mi>λ</mi>`:`<msup><mi>λ</mi><mn>${e}</mn></msup>`;
+function charML(c){       // λⁿ − c₁λⁿ⁻¹ − … = 0（省略 0 项）
+  const n=c.length; let s=lp(n);
+  c.forEach((cj,j)=>{ if(Math.abs(cj)<1e-12) return; const e=n-1-j; s+=`<mo>&#x2212;</mo>`+(Math.abs(cj-1)<1e-12&&e>0?"":mnum(cj,6))+lp(e); });
+  return s+`<mo>=</mo><mn>0</mn>`;
+}
+function charSym(n){       // 一般形式
+  let s=lp(n)+`<mo>&#x2212;</mo>${sb("b",1)}${lp(n-1)}`;
+  let l=""; for(let j=2;j<=n;j++){ l+=sb("s",j-1); s+=`<mo>&#x2212;</mo>${sb("b",j)}${l}${lp(n-j)}`; }
+  return s+`<mo>=</mo><mn>0</mn>`;
+}
+function eqDiv(n){ let s=`<mn>1</mn><mo>=</mo><mfrac>${sb("b",1)}<mi>λ</mi></mfrac>`, l=""; for(let j=2;j<=n;j++){ l+=sb("s",j-1); s+=`<mo>+</mo><mfrac><mrow>${sb("b",j)}${l}</mrow><msup><mi>λ</mi><mn>${j}</mn></msup></mfrac>`; } return s; }
+function r0Sym(n){ let s=sb("b",1), l=""; for(let j=2;j<=n;j++){ l+=sb("s",j-1); s+=`<mo>+</mo>${sb("b",j)}${l}`; } return s; }
+
+/* ═══════════ 画布 ═══════════ */
+function col(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+const CMFONT='"Cambria Math","STIX Two Math",serif';
+function toMath(str){ let o=""; for(const ch of str){ const c=ch.codePointAt(0); o+= (c>=0x61&&c<=0x7A)?String.fromCodePoint(c===0x68?0x210E:0x1D44E+c-0x61):(c>=0x41&&c<=0x5A)?String.fromCodePoint(0x1D434+c-0x41):ch; } return o; }
+function setup(id,box,ratio,maxH){
+  const cv=document.getElementById(id), c=cv.getContext("2d"), bx=document.getElementById(box);
+  const W=Math.max(240,bx.clientWidth), H=Math.round(Math.min(Math.max(W*ratio,200),maxH));
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); cv.style.width=W+"px"; cv.style.height=H+"px";
+  c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,W,H); return {c,W,H};
+}
+function txt(c,t,x,y,color,px,align,base,font){ c.save(); c.font=`${px||12}px ${font||'"Segoe UI","Microsoft YaHei",system-ui'}`; c.fillStyle=color; c.textAlign=align||"left"; c.textBaseline=base||"middle"; c.fillText(t,x,y); c.restore(); }
+function niceStep(span,cnt){ const raw=span/(cnt||5), p=Math.pow(10,Math.floor(Math.log10(raw))), m=raw/p; return (m<1.5?1:m<3.5?2:m<7.5?5:10)*p; }
+
+function drawBar(p,xs,k){
+  const {c,W,H}=setup("cvBar","cbBar",0.42,280);
+  const n=p.b.length, L=46,R=W-12,T=26,B=H-30;
+  const x=xs[k], N=sum(x), pr=x.map(v=>N>0?v/N:0);
+  const lam=domEig(p.b,p.s), sv=lam>0?stableVec(p.s,lam,n):null, sp=sv?sv.map(v=>v/sum(sv)):null;
+  c.strokeStyle="#e8eef5"; c.lineWidth=1;
+  for(let v=0;v<=1.0001;v+=0.2){ const y=Math.round(B-(B-T)*v)+0.5; c.beginPath(); c.moveTo(L,y); c.lineTo(R,y); c.stroke(); txt(c,Math.round(v*100)+"%",L-6,y,"#718096",11,"right"); }
+  const gw=(R-L)/n, bw=Math.min(70,gw*0.55);
+  for(let i=0;i<n;i++){
+    const cx=L+gw*(i+0.5), h=(B-T)*pr[i];
+    c.fillStyle=col(GC[i]); c.globalAlpha=0.85; c.fillRect(cx-bw/2,B-h,bw,h); c.globalAlpha=1;
+    if(sp){ const hs=(B-T)*sp[i]; c.save(); c.setLineDash([5,4]); c.strokeStyle="#2d3748"; c.lineWidth=1.6; c.strokeRect(cx-bw/2-4,B-hs,bw+8,hs); c.restore(); }
+    const top=Math.max(h, sp?(B-T)*sp[i]:0);
+    if(N>0) txt(c,(pr[i]*100).toFixed(1)+"%",cx,B-top-10,col(GC[i]),12,"center");
+    txt(c,p.groups[i],cx,B+14,"#4a5568",12.5,"center");
+  }
+  c.strokeStyle="#94a3b8"; c.lineWidth=1.3; c.beginPath(); c.moveTo(L,B+0.5); c.lineTo(R,B+0.5); c.stroke();
+  if(!(N>0)) txt(c,"这一代种群已灭绝（各组都是 0），比例无意义",(L+R)/2,(T+B)/2,"#c53030",14,"center");
+}
+function drawTot(p,xs,k,lam){
+  const {c,W,H}=setup("cvTot","cbTot",0.72,260);
+  const L=50,R=W-10,T=12,B=H-26, Ns=xs.map(sum), log=document.getElementById("logOn").checked;
+  const X=i=>L+(R-L)*i/K;
+  let Y, ticks=[];
+  if(log){
+    const pos=Ns.filter(v=>v>0); let lo=Math.floor(Math.log10(Math.min(...pos))), hi=Math.ceil(Math.log10(Math.max(...pos))); if(hi===lo) hi=lo+1;
+    Y=v=>v>0?B-(B-T)*(Math.log10(v)-lo)/(hi-lo):B+5; const st=Math.max(1,Math.ceil((hi-lo)/5));
+    for(let e=lo;e<=hi;e+=st) ticks.push([Math.pow(10,e), e===0?"1":e===1?"10":"10"+String(e).replace("-","⁻").split("").map(ch=>SUP[+ch]??ch).join("")]);
+  }else{
+    const mx=Math.max(...Ns)*1.08||1, st=niceStep(mx,4); Y=v=>B-(B-T)*v/(Math.ceil(mx/st)*st);
+    for(let v=0;v<=Math.ceil(mx/st)*st+1e-9;v+=st) ticks.push([v,bigTxt(v)]);
+  }
+  c.strokeStyle="#e8eef5"; c.lineWidth=1;
+  ticks.forEach(([v,t])=>{ const y=Math.round(Y(v))+0.5; c.beginPath(); c.moveTo(L,y); c.lineTo(R,y); c.stroke(); txt(c,t,L-5,y,"#718096",10.5,"right"); });
+  for(let i=0;i<=K;i+=10){ txt(c,String(i),X(i),B+12,"#718096",10.5,"center"); }
+  c.save(); c.beginPath(); c.rect(L,T,R-L,B-T); c.clip();
+  if(lam>0&&Ns[K]>0){ const a=Ns[K]/Math.pow(lam,K); c.setLineDash([5,4]); c.strokeStyle="#718096"; c.lineWidth=1.4; c.beginPath();
+    for(let i=0;i<=K;i++){ const y=Y(a*Math.pow(lam,i)); i?c.lineTo(X(i),y):c.moveTo(X(i),y); } c.stroke(); c.setLineDash([]); }
+  c.strokeStyle="#1a202c"; c.lineWidth=2; c.beginPath(); { let on=false; Ns.forEach((v,i)=>{ if(log&&!(v>0)){ on=false; return; } on?c.lineTo(X(i),Y(v)):c.moveTo(X(i),Y(v)); on=true; }); } c.stroke();
+  Ns.forEach((v,i)=>{ if(log&&!(v>0)) return; c.beginPath(); c.arc(X(i),Y(v),i===k?4.5:2,0,7); c.fillStyle=i===k?"#c53030":"#1a202c"; c.fill(); });
+  c.restore();
+  c.strokeStyle="rgba(197,48,48,.35)"; c.lineWidth=1; c.beginPath(); c.moveTo(X(k)+0.5,T); c.lineTo(X(k)+0.5,B); c.stroke();
+  c.strokeStyle="#94a3b8"; c.lineWidth=1.3; c.strokeRect(L+0.5,T+0.5,R-L-1,B-T-1);
+  txt(c,toMath("k"),R-4,B-10,"#4a5568",14,"right","middle",CMFONT);
+}
+function drawPr(p,xs,k,sp){
+  const {c,W,H}=setup("cvPr","cbPr",0.72,260);
+  const n=p.b.length, L=40,R=W-10,T=12,B=H-26, X=i=>L+(R-L)*i/K, Y=v=>B-(B-T)*v;
+  c.strokeStyle="#e8eef5"; c.lineWidth=1;
+  for(let v=0;v<=1.0001;v+=0.25){ const y=Math.round(Y(v))+0.5; c.beginPath(); c.moveTo(L,y); c.lineTo(R,y); c.stroke(); txt(c,Math.round(v*100)+"%",L-5,y,"#718096",10.5,"right"); }
+  for(let i=0;i<=K;i+=10) txt(c,String(i),X(i),B+12,"#718096",10.5,"center");
+  for(let g=0;g<n;g++){
+    const cl=col(GC[g]);
+    if(sp){ c.save(); c.setLineDash([5,4]); c.strokeStyle=cl; c.globalAlpha=0.7; c.lineWidth=1.3; c.beginPath(); c.moveTo(L,Y(sp[g])); c.lineTo(R,Y(sp[g])); c.stroke(); c.restore(); }
+    c.strokeStyle=cl; c.lineWidth=2; c.beginPath();
+    let on=false; xs.forEach((x,i)=>{ const N=sum(x); if(!(N>0)){ on=false; return; } const v=x[g]/N; on?c.lineTo(X(i),Y(v)):c.moveTo(X(i),Y(v)); on=true; }); c.stroke();
+  }
+  c.strokeStyle="rgba(197,48,48,.35)"; c.lineWidth=1; c.beginPath(); c.moveTo(X(k)+0.5,T); c.lineTo(X(k)+0.5,B); c.stroke();
+  c.strokeStyle="#94a3b8"; c.lineWidth=1.3; c.strokeRect(L+0.5,T+0.5,R-L-1,B-T-1);
+  txt(c,toMath("k"),R-4,B-10,"#4a5568",14,"right","middle",CMFONT);
+  document.getElementById("prLegend").innerHTML=p.groups.map((g,i)=>`<span><i style="background:var(${GC[i]})"></i>${g}</span>`).join("")+`<span><i class="dash"></i>稳定比例</span>`;
+}
+
+/* ═══════════ 渲染 ═══════════ */
+function render(){
+  const p=P, n=p.b.length, xs=simulate(p), lam=domEig(p.b,p.s);
+  const sv=lam>0?stableVec(p.s,lam,n):null, sp=sv?sv.map(v=>v/sum(sv)):null;
+  kCur=Math.min(kCur,K); document.getElementById("kSl").value=kCur; document.getElementById("kLbl").textContent=kCur;
+  drawBar(p,xs,kCur); drawTot(p,xs,kCur,lam); drawPr(p,xs,kCur,sp);
+  const xk=xs[kCur];
+  document.getElementById("kReadout").innerHTML=`<math><msub><mi class="bm">x</mi><mn>${kCur}</mn></msub><mo>=</mo>${colML(xk.map(bigML))}</math>，总数 <math><msub><mi>N</mi><mn>${kCur}</mn></msub><mo>=</mo>${bigML(sum(xk))}</math>`
+    +(kCur>0&&sum(xs[kCur-1])>0?`，<math><msub><mi>N</mi><mn>${kCur}</mn></msub><mo>/</mo><msub><mi>N</mi><mn>${kCur-1}</mn></msub>${lamEq(sum(xk)/sum(xs[kCur-1]))}<mn>${tn(sum(xk)/sum(xs[kCur-1]),4)}</mn></math>`:"");
+  document.getElementById("stepsBox").innerHTML=stepsHTML(p,xs,lam,sv,sp);
+}
+function stepsHTML(p,xs,lam,sv,sp){
+  const n=p.b.length, c=coefs(p.b,p.s), R0=sum(c);
+  let h=`<div class="st">① Leslie 矩阵</div><div class="ctr"><math><mi class="bm">L</mi><mo>=</mo>${LML(p.b,p.s)}</math></div>`;
+  h+=`<div class="st">② 特征方程 <math><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi>λ</mi><mi class="bm">E</mi><mo>&#x2212;</mo><mi class="bm">L</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow><mo>=</mo><mn>0</mn></math>（按第 1 行展开）</div>`
+    +`<div class="ctr"><math>${charSym(n)}</math></div><div class="ctr"><math>${charML(c)}</math></div>`;
+  if(!(lam>0)){
+    return h+`<div class="verdict none">所有繁殖率（或能活到繁殖年龄的存活率）为 0，没有新个体出生，种群最多 ${n} 代后灭绝。</div>`;
+  }
+  h+=`<div class="ctr">它唯一的正根（主特征值）<math>${lam1}${lamEq(lam)}<mn>${tn(lam,4)}</mn></math></div>`;
+  const per=periodic(p);
+  const vML=colML(sv.map(v=>mnum(v,4)));
+  h+=`<div class="st">③ ${per?"属于 <math>"+lam1+"</math> 的特征向量（这时各组比例<b>不会</b>趋于它）":"稳定年龄结构 = 属于 <math>"+lam1+"</math> 的特征向量"}</div>`
+    +`<div class="ctr"><math displaystyle="true"><msub><mi class="bm">ξ</mi><mn>1</mn></msub><mo>=</mo>${colML(sv.map((v,i)=>i===0?`<mn>1</mn>`:`<mstyle displaystyle="true"><mfrac><mrow>${Array.from({length:i},(_,j)=>sb("s",j+1)).join("")}</mrow>${i===1?`<msub><mi>λ</mi><mn>1</mn></msub>`:`<msubsup><mi>λ</mi><mn>1</mn><mn>${i}</mn></msubsup>`}</mfrac></mstyle>`))}<mo>≈</mo>${vML}</math>`
+    +`</div><div class="ctr">各组比例 <math><mo>≈</mo><mo>(</mo>${sp.map(v=>`<mn>${(v*100).toFixed(1)}%</mn>`).join("<mo>,</mo>")}<mo>)</mo></math></div>`
+    +`<div class="tip" style="text-align:center;">可验证 <math><mi class="bm">L</mi><msub><mi class="bm">ξ</mi><mn>1</mn></msub><mo>=</mo>${lam1}<msub><mi class="bm">ξ</mi><mn>1</mn></msub></math>：新生个体数恰好等于 <math>${lam1}</math> 乘第 1 组，每组存活到下一组也恰好是 <math>${lam1}</math> 倍。</div>`;
+  const ks=[0,1,2,4,9,19,29];
+  h+=`<div class="st">④ 逐代增长倍数 <math><msub><mi>N</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>/</mo><msub><mi>N</mi><mi>k</mi></msub></math> ${per?"（周期跳动，不趋于 <math>"+lam1+"</math>）":"趋于 <math>"+lam1+"</math>"}</div>`
+    +`<div class="rtwrap"><table class="rt"><tr><th><math><mi>k</mi></math></th>${ks.map(k=>`<td>${k}</td>`).join("")}<th><math>${lam1}</math></th></tr>`
+    +`<tr><th>倍数</th>${ks.map(k=>{ const a=sum(xs[k]),b=sum(xs[k+1]); return `<td>${a>0?tn(b/a,4):"—"}</td>`; }).join("")}<th>${tn(lam,4)}</th></tr></table></div>`;
+  const cls=Math.abs(lam-1)<5e-4?"inf":lam>1?"uniq":"none";
+  const word=Math.abs(lam-1)<5e-4?`<math>${lam1}<mo>=</mo><mn>1</mn></math>：长期看种群<b>保持稳定</b>，总数趋于一个常数。`
+    :lam>1?`<math>${lam1}<mo>&gt;</mo><mn>1</mn></math>：长期看种群<b>增长</b>，${per?"平均":""}每代约为上一代的 ${tn(lam,3)} 倍（增长 ${tn((lam-1)*100,1)}%）。`
+    :`<math>${lam1}<mo>&lt;</mo><mn>1</mn></math>：长期看种群<b>衰退</b>，${per?"平均":""}每代约减少 ${tn((1-lam)*100,1)}%，最终趋于灭绝。`;
+  h+=`<div class="verdict ${cls}">${word}<br>净繁殖率 <math><msub><mi>R</mi><mn>0</mn></msub><mo>=</mo>${r0Sym(n)}<mo>=</mo><mn>${tn(R0,4)}</mn></math>（一个新生个体一生平均留下的后代数）。为什么 <math>${lam1}<mo>&gt;</mo><mn>1</mn><mo>⟺</mo><msub><mi>R</mi><mn>0</mn></msub><mo>&gt;</mo><mn>1</mn></math>：特征方程两边除以 <math><msup><mi>λ</mi><mi>n</mi></msup></math> 得 <math>${eqDiv(n)}</math>，右边的函数 <math><mi>g</mi><mo>(</mo><mi>λ</mi><mo>)</mo></math> 在 <math><mi>λ</mi><mo>&gt;</mo><mn>0</mn></math> 时单调减少，且 <math><mi>g</mi><mo>(</mo><mn>1</mn><mo>)</mo><mo>=</mo><msub><mi>R</mi><mn>0</mn></msub></math>；<math>${lam1}</math> 是 <math><mi>g</mi><mo>(</mo><mi>λ</mi><mo>)</mo><mo>=</mo><mn>1</mn></math> 的解，所以 <math><msub><mi>R</mi><mn>0</mn></msub><mo>&gt;</mo><mn>1</mn></math> 时它在 1 的右边，<math><msub><mi>R</mi><mn>0</mn></msub><mo>&lt;</mo><mn>1</mn></math> 时在 1 的左边。</div>`;
+  if(per) h+=`<div class="note">这组参数下年龄比例<b>周期振荡</b>，不趋于稳定结构，逐代倍数也来回跳，原因见下方“模型局限”。</div>`;
+  else h+=`<div class="tip" style="text-align:left;">为什么会趋于特征向量：把 <math><msub><mi class="bm">x</mi><mn>0</mn></msub></math> 按特征向量分解，<math><msup><mi class="bm">L</mi><mi>k</mi></msup><msub><mi class="bm">x</mi><mn>0</mn></msub></math> 中每个分量乘上对应特征值的 <math><mi>k</mi></math> 次方；<math>${lam1}</math> 的绝对值最大，<math><mi>k</mi></math> 增大后它那一项占绝对优势（对角化 <math><msup><mi class="bm">L</mi><mi>k</mi></msup><mo>=</mo><mi class="bm">P</mi><msup><mi class="bm">Λ</mi><mi>k</mi></msup><msup><mi class="bm">P</mi><mrow><mo>&#x2212;</mo><mn>1</mn></mrow></msup></math> 的思路；<math><mi class="bm">L</mi></math> 不一定能对角化，严格证明超出本课程范围）。</div>`;
+  return h;
+}
+
+/* ═══════════ 控件 ═══════════ */
+function buildControls(){
+  const p=expP, n=p.b.length;
+  document.getElementById("n3").classList.toggle("on",n===3); document.getElementById("n4").classList.toggle("on",n===4);
+  document.getElementById("bBox").innerHTML=p.b.map((v,i)=>`<div class="sl"><span><math>${sb("b",i+1)}</math> ${p.groups[i]}</span><input type="range" min="0" max="6" step="0.05" value="${v}" data-k="b" data-i="${i}"><span class="v" id="vb${i}">${tn(v,2)}</span></div>`).join("");
+  document.getElementById("sBox").innerHTML=p.s.map((v,i)=>`<div class="sl"><span><math>${sb("s",i+1)}</math> ${i+1}→${i+2} 组</span><input type="range" min="0" max="1" step="0.05" value="${v}" data-k="s" data-i="${i}"><span class="v" id="vs${i}">${tn(v,2)}</span></div>`).join("");
+  document.getElementById("x0Box").innerHTML=p.x0.map((v,i)=>`<label class="x0i"><span>${p.groups[i]}</span><input type="number" min="0" step="10" value="${v}" data-i="${i}"></label>`).join("");
+  document.querySelectorAll("#bBox input,#sBox input").forEach(el=>el.addEventListener("input",()=>{
+    const i=+el.dataset.i, v=+el.value; expP[el.dataset.k][i]=v; document.getElementById("v"+el.dataset.k+i).textContent=tn(v,2); render(); }));
+  document.querySelectorAll("#x0Box input").forEach(el=>el.addEventListener("input",()=>{
+    const v=parseFloat(el.value); expP.x0[+el.dataset.i]=Number.isFinite(v)&&v>=0?v:0; render(); }));
+}
+function loadPreset(i){
+  const q=PRESETS[i]; expP={b:q.b.slice(),s:q.s.slice(),x0:q.x0.slice(),groups:q.groups.slice()}; P=expP; kCur=0; stopPlay();
+  document.querySelectorAll("#presetBox button").forEach((b,j)=>b.classList.toggle("on",j===i));
+  const nt=document.getElementById("presetNote"); nt.style.display=""; nt.innerHTML=q.note;
+  buildControls(); render();
+}
+function setN(n){
+  const p=expP; if(p.b.length===n) return;
+  if(n===4){ p.b.push(0.3); p.s.push(0.5); p.x0.push(0); }
+  else{ p.b.pop(); p.s.pop(); p.x0.pop(); }
+  p.groups=Array.from({length:n},(_,i)=>`第${i+1}组`);
+  document.querySelectorAll("#presetBox button").forEach(b=>b.classList.remove("on")); document.getElementById("presetNote").style.display="none";
+  buildControls(); render();
+}
+document.getElementById("presetBox").innerHTML=PRESETS.map((q,i)=>`<button data-i="${i}">${q.name}</button>`).join("");
+document.querySelectorAll("#presetBox button").forEach(b=>b.addEventListener("click",()=>loadPreset(+b.dataset.i)));
+document.getElementById("n3").addEventListener("click",()=>setN(3));
+document.getElementById("n4").addEventListener("click",()=>setN(4));
+document.getElementById("kSl").addEventListener("input",e=>{ kCur=+e.target.value; stopPlay(); render(); });
+document.getElementById("btnK0").addEventListener("click",()=>{ kCur=0; stopPlay(); render(); });
+document.getElementById("logOn").addEventListener("change",render);
+function stopPlay(){ if(playT){ clearInterval(playT); playT=null; } document.getElementById("btnPlay").textContent="▶ 播放"; }
+document.getElementById("btnPlay").addEventListener("click",()=>{
+  if(playT){ stopPlay(); return; }
+  if(kCur>=K) kCur=0;
+  document.getElementById("btnPlay").textContent="❚❚ 暂停";
+  playT=setInterval(()=>{ if(kCur>=K){ stopPlay(); return; } kCur++; render(); },350);
+});
+window.addEventListener("resize",()=>{ if(P) render(); });
+
+/* ═══════════ 练习模式 ═══════════
+   题型：step 算一代 x₁=Lx₀ 的某个分量 | eig 求主特征值 | trend 判断长期增长/稳定/衰退 */
+const QUIZKEY="la-leslie-quiz";
+let streak=0, stats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){ if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return; stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats(); }
+function renderStats(){ const acc=stats.attempted?Math.round(stats.correct/stats.attempted*100):0;
+  document.getElementById("quizStats").innerHTML=`已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`; }
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const G3=["第1组","第2组","第3组"], G2=["第1组","第2组"];
+function genProblem(){ let q; do{ q=genProblem0(); }while(periodic(q)); return q; }
+function genProblem0(){
+  const r=Math.random();
+  if(r<0.34){
+    let b; do{ b=[pick([0,0,0.5,1]),pick([0.5,1,1.5,2,3]),pick([0,1,2,2.5])]; }while(sum(b)===0);
+    const s=[pick([0.2,0.25,0.4,0.5,0.6,0.75,0.8]),pick([0.25,0.4,0.5,0.75,0.8])];
+    const x0=[ri(1,10)*20,ri(1,10)*20,ri(1,10)*20], i=ri(0,2);
+    const x1=step(b,s,x0); return {kind:"step",b,s,x0,i,ans:x1[i],groups:G3};
+  }else if(r<0.67){
+    if(Math.random()<0.5){   // 2×2：λ² − b₁λ − b₂s₁ = 0，构造两个实根 r₁>0>r₂
+      for(;;){ const r1=pick([1,1.5,2,2.5,3]), r2=pick([-0.5,-1,-1.5]), b1=r1+r2, pr=-r1*r2, s1=pick([0.5,0.25,0.75]);
+        const b2=pr/s1; if(b1<=0||Math.abs(b2*100-Math.round(b2*100))>1e-9||b2>8) continue;
+        return {kind:"eig",b:[b1,b2],s:[s1],ans:r1,r2,groups:G2,x0:[100,100]}; }
+    }else{                    // 3×3：b₁=0，λ³ = b₂s₁λ + b₃s₁s₂
+      for(;;){ const lam=pick([1,1.5,2]), s1=pick([0.5,0.25,0.75]), s2=pick([0.5,0.25,0.8]), b2=pick([1,2,3,4]);
+        const b3=(Math.pow(lam,3)-b2*s1*lam)/(s1*s2); if(!(b3>0)||Math.abs(b3*4-Math.round(b3*4))>1e-9||b3>16) continue;
+        const b=[0,b2,b3], s=[s1,s2]; if(Math.abs(domEig(b,s)-lam)>1e-6) continue;
+        return {kind:"eig",b,s,ans:lam,groups:G3,x0:[100,100,100]}; }
+    }
+  }else{
+    for(;;){
+      const s=[pick([0.2,0.3,0.4,0.5,0.6,0.7,0.8]),pick([0.3,0.4,0.5,0.6,0.7,0.8,0.9])];
+      let b=[pick([0,0,0.1,0.2,0.3,0.5]),pick([0.2,0.4,0.5,0.8,1,1.2,1.5,2]),pick([0,0.5,1,1.5,2,2.5,3])];
+      if(Math.random()<0.2){ const b3=(1-b[0]-b[1]*s[0])/(s[0]*s[1]); if(!(b3>0)||Math.abs(b3*100-Math.round(b3*100))>1e-9) continue; b[2]=Math.round(b3*100)/100; }
+      const R0=sum(coefs(b,s)); if(Math.abs(R0-1)>1e-9&&Math.abs(R0-1)<0.1) continue;
+      if(b[2]===0&&b[1]===0) continue;
+      if(b[0]===0&&b[2]===0) continue;   // 只有第 2 组繁殖会周期振荡，练习里避开
+      const lam=domEig(b,s), ansIdx=Math.abs(R0-1)<1e-9?1:lam>1?0:2;
+      return {kind:"trend",b,s,R0,lam,ansIdx,selected:-1,groups:G3,x0:[100,100,100]};
+    }
+  }
+}
+function parseVal(s){
+  s=s.trim().replace(/−/g,"-"); if(!s) return NaN;
+  const m=s.match(/^(-?\d+(?:\.\d+)?)\s*(?:\/\s*(\d+(?:\.\d+)?))?$/); if(!m) return NaN;
+  const a=parseFloat(m[1]); if(m[2]===undefined) return a; const b=parseFloat(m[2]); return b===0?NaN:a/b;
+}
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody"), fb=document.getElementById("qFeedback");
+  q.done=false; fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  const Lm=`<div class="qm"><math><mi class="bm">L</mi><mo>=</mo>${LML(q.b,q.s)}</math></div>`;
+  if(q.kind==="step"){
+    body.innerHTML=`某种群分 3 个年龄组，Leslie 矩阵与当前各组数量为${Lm}<div class="qm"><math><msub><mi class="bm">x</mi><mn>0</mn></msub><mo>=</mo>${colML(q.x0.map(v=>mnum(v)))}</math></div>`
+      +`下一代 <math><msub><mi class="bm">x</mi><mn>1</mn></msub><mo>=</mo><mi class="bm">L</mi><msub><mi class="bm">x</mi><mn>0</mn></msub></math> 中<b>第 ${q.i+1} 组</b>的数量是：<div class="qgrid"><input class="qin" id="qA" type="text"></div>`;
+  }else if(q.kind==="eig"){
+    body.innerHTML=`求下面 Leslie 矩阵的主特征值 <math>${lam1}</math>（唯一的正特征值，可填分数或小数）：${Lm}<div class="qgrid"><math>${lam1}<mo>=</mo></math><input class="qin" id="qA" type="text"></div>`;
+  }else{
+    const opts=[`长期<b>增长</b>（<math>${lam1}<mo>&gt;</mo><mn>1</mn></math>）`,`长期<b>保持稳定</b>（<math>${lam1}<mo>=</mo><mn>1</mn></math>）`,`长期<b>衰退</b>（<math>${lam1}<mo>&lt;</mo><mn>1</mn></math>）`];
+    body.innerHTML=`某种群的 Leslie 矩阵为${Lm}长期来看，这个种群会：<div class="opts" id="qOpts">`
+      +opts.map((t,i)=>`<label data-i="${i}"><input type="radio" name="qopt" value="${i}"><span>${t}</span></label>`).join("")+"</div>";
+    body.querySelectorAll("#qOpts label").forEach(l=>l.addEventListener("click",()=>{
+      body.querySelectorAll("#qOpts label").forEach(x=>x.classList.remove("sel")); l.classList.add("sel");
+      l.querySelector("input").checked=true; q.selected=+l.dataset.i; }));
+  }
+  const inp=document.getElementById("qA"); if(inp) inp.addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); });
+  document.getElementById("leftMain").style.display="none"; document.getElementById("quizLeftPh").style.display="";
+  renderStats();
+}
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return; const fb=document.getElementById("qFeedback");
+  if(q.kind==="step"||q.kind==="eig"){
+    const v=parseVal(document.getElementById("qA").value);
+    if(Number.isNaN(v)){ fb.className="feedback no"; fb.textContent="请填一个数（可以是分数 a/b 或小数）"; return; }
+    if(Math.abs(v-q.ans)<0.005) markCorrect();
+    else if(q.kind==="step"){ fb.className="feedback no"; fb.textContent=q.i===0?"还不对：第 1 组是新出生的个体，等于 L 的第 1 行与 x₀ 的内积。":"还不对：第 i+1 组来自上一代第 i 组的存活者，等于 sᵢ 乘上一代第 i 组的数量。"; }
+    else if(q.r2!==undefined&&Math.abs(v-q.r2)<0.005){ fb.className="feedback no"; fb.textContent="这是特征方程的负根；主特征值要取唯一的正根。"; }
+    else{ fb.className="feedback no"; fb.textContent="还不对，先写出特征方程 |λE − L| = 0 再求正根～（也可以点“看解析”）"; }
+  }else{
+    if(q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个选项"; return; }
+    if(q.selected===q.ansIdx) markCorrect();
+    else{ fb.className="feedback no"; fb.textContent="不对哦：算一下净繁殖率 R₀ = b₁ + b₂s₁ + b₃s₁s₂，和 1 比较。"; }
+  }
+}
+function solHTML(){
+  const q=quiz;
+  if(q.kind==="step"){
+    if(q.i===0) return `<div class="sol">第 1 组 = 各组产下的新生个体之和 <math>${q.b.map((bi,j)=>`${mnum(bi)}<mo>×</mo>${mnum(q.x0[j])}`).join("<mo>+</mo>")}<mo>=</mo>${mnum(q.ans)}</math>。左侧停在第 1 代，可以对照。</div>`;
+    return `<div class="sol">第 ${q.i+1} 组 = 上一代第 ${q.i} 组的存活者 = <math>${sb("s",q.i)}</math> × 第 ${q.i} 组数量 <math><mo>=</mo>${mnum(q.s[q.i-1])}<mo>×</mo>${mnum(q.x0[q.i-1])}<mo>=</mo>${mnum(q.ans)}</math>。左侧停在第 1 代，可以对照。</div>`;
+  }
+  if(q.kind==="eig"){
+    const c=coefs(q.b,q.s);
+    if(q.b.length===2) return `<div class="sol">特征方程 <math>${charML(c)}</math>，即 <math><mo>(</mo><mi>λ</mi><mo>&#x2212;</mo>${mnum(q.ans)}<mo>)</mo><mo>(</mo><mi>λ</mi><mo>+</mo>${mnum(-q.r2)}<mo>)</mo><mo>=</mo><mn>0</mn></math>，正根 <math>${lam1}<mo>=</mo>${mnum(q.ans)}</math>。左侧停在第 1 代，可以对照。</div>`;
+    return `<div class="sol">特征方程 <math>${charML(c)}</math>。代入 <math><mi>λ</mi><mo>=</mo>${mnum(q.ans)}</math> 左边恰为 0；方程两边除以 <math><msup><mi>λ</mi><mn>3</mn></msup></math> 得 <math>${eqDiv(3)}</math>，右边随 <math><mi>λ</mi></math> 增大而减小，所以正根只有一个， <math>${lam1}<mo>=</mo>${mnum(q.ans)}</math>。</div>`;
+  }
+  const word=q.ansIdx===0?"增长":q.ansIdx===1?"保持稳定":"衰退";
+  return `<div class="sol">净繁殖率<div style="text-align:center;"><math><msub><mi>R</mi><mn>0</mn></msub><mo>=</mo>${sb("b",1)}<mo>+</mo>${sb("b",2)}${sb("s",1)}<mo>+</mo>${sb("b",3)}${sb("s",1)}${sb("s",2)}</math><br><math><mo>=</mo>${mnum(q.b[0])}<mo>+</mo>${mnum(q.b[1])}<mo>×</mo>${mnum(q.s[0])}<mo>+</mo>${mnum(q.b[2])}<mo>×</mo>${mnum(q.s[0])}<mo>×</mo>${mnum(q.s[1])}<mo>=</mo>${mnum(q.R0)}</math></div>`
+    +`${q.ansIdx===1?"等于":q.ansIdx===0?"大于":"小于"} 1，所以 <math>${lam1}${q.ansIdx===1?"<mo>=</mo><mn>1</mn>":`${lamEq(q.lam)}<mn>${tn(q.lam,4)}</mn>`}</math>，种群长期${word}。左侧是用这个矩阵、取每组初始 100 个个体演示的结果。</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+function showQuizSim(){
+  const q=quiz; P={b:q.b.slice(),s:q.s.slice(),x0:(q.x0||Array(q.b.length).fill(100)).slice(),groups:q.groups.slice()}; kCur=q.kind==="step"?1:K;
+  document.getElementById("leftMain").style.display=""; document.getElementById("quizLeftPh").style.display="none"; render();
+}
+function markCorrect(){ const q=quiz; q.done=true; stats.attempted++; stats.correct++; streak++; saveStats(); showQuizSim();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML(); lockQ(); renderStats(); }
+function onReveal(){ const q=quiz; if(!q||q.done) return; q.done=true; stats.attempted++; streak=0; saveStats(); showQuizSim();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML(); lockQ(); renderStats(); }
+function onHint(){
+  const q=quiz; if(!q) return; const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="step") fb.innerHTML=`提示：<math><msub><mi class="bm">x</mi><mn>1</mn></msub></math> 的第 1 个分量 = <math><mi class="bm">L</mi></math> 第 1 行与 <math><msub><mi class="bm">x</mi><mn>0</mn></msub></math> 对应相乘再相加（新生个体）；第 <math><mi>i</mi><mo>+</mo><mn>1</mn></math> 个分量 = <math><msub><mi>s</mi><mi>i</mi></msub></math> 乘 <math><msub><mi class="bm">x</mi><mn>0</mn></msub></math> 的第 <math><mi>i</mi></math> 个分量（存活者）。`;
+  else if(q.kind==="eig") fb.innerHTML=`提示：特征方程为 <math>${charSym(q.b.length)}</math>，代入数字后求正根；${q.b.length===2?"二次方程可用求根公式或因式分解":"可以试试 1、1.5、2 这类简单的数"}。`;
+  else fb.innerHTML=`提示：不用解三次方程——<math>${lam1}<mo>&gt;</mo><mn>1</mn><mo>⟺</mo><msub><mi>R</mi><mn>0</mn></msub><mo>&gt;</mo><mn>1</mn></math>，其中 <math><msub><mi>R</mi><mn>0</mn></msub><mo>=</mo>${r0Sym(3)}</math>。`;
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+function setMode(m){
+  mode=m; stopPlay();
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("exploreSide").style.display=m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display=m==="practice"?"":"none";
+  if(m==="practice"){ quiz=genProblem(); renderProblem(); }
+  else{ quiz=null; P=expP; document.getElementById("leftMain").style.display=""; document.getElementById("quizLeftPh").style.display="none"; render(); }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
+loadPreset(0);
+</script>
+
+<script>
+/* ── 排版：标点不单独成行、不在行首；左括号不留在行尾 ── */
+(function(){
+  const CLOSE=/^[，。、；：）)！？」》,.;:!?…]+/, OPEN=/[（(「《]+$/;
+  function wrapOf(m){
+    if(m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr")) return m.parentNode;
+    const s=document.createElement("span"); s.className="nobr"; s.style.whiteSpace="nowrap";
+    m.parentNode.insertBefore(s,m); s.appendChild(m); return s;
+  }
+  function glue(root){
+    (root.querySelectorAll?root:document).querySelectorAll("math").forEach(m=>{
+      if(m.closest("math")!==m || m.getAttribute("display")==="block") return;
+      const host=m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let nx=host.nextSibling;
+      if(nx && nx.nodeType===3){ const k=nx.data.match(CLOSE); if(k){ const w=wrapOf(m);
+          w.appendChild(document.createTextNode(k[0])); nx.data=nx.data.slice(k[0].length); } }
+      const h2=m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let pv=h2.previousSibling;
+      if(pv && pv.nodeType===3){ const k=pv.data.match(OPEN); if(k){ const w=wrapOf(m);
+          w.insertBefore(document.createTextNode(k[0]),w.firstChild); pv.data=pv.data.slice(0,pv.data.length-k[0].length); } }
+    });
+  }
+  let busy=false;
+  const ob=new MutationObserver(()=>{ if(busy) return; busy=true; ob.disconnect(); glue(document.body); ob.observe(document.body,{childList:true,subtree:true}); busy=false; });
+  glue(document.body); ob.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-leslie";          // ← 计数键：与编号 L# 解耦的稳定标识，永不改动
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

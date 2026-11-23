@@ -154,6 +154,12 @@
 
   <div class="sect">应用案例 · 线性代数在实际问题中的用法</div>
   <div class="grid">
+    <a class="card" href="./L19_测地块面积.html">
+      <span class="tag">L19 · 第一章</span>
+      <h3>测地块面积 · 鞋带公式</h3>
+      <p>在图上依次点出地块顶点（可上传地图作底图并设比例尺），每条边与公共顶点构成的三角形面积是一个二阶行列式的一半，求和即多边形面积；顺、逆时针决定符号，凹多边形里正负项相互抵消。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
     <a class="card" href="./L7_机械臂齐次变换.html">
       <span class="tag">L7 · 第二章</span>
       <h3>机械臂 · 齐次变换连乘</h3>
@@ -166,16 +172,52 @@
       <p>用密钥矩阵模 26 做加解密：涉及矩阵乘法、行列式、模逆与可逆性判定，是矩阵运算的一个有趣应用。</p>
       <div class="foot">▶ 打开使用</div>
     </a>
+    <a class="card" href="./L20_邻接矩阵与通路计数.html">
+      <span class="tag">L20 · 第二章</span>
+      <h3>邻接矩阵与通路计数</h3>
+      <p>用邻接矩阵 <math><mi class="bm">A</mi></math> 表示地铁换乘、航线、社交关注等网络，<math><msup><mi class="bm">A</mi><mi>k</mi></msup></math> 的 <math><mo>(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo>)</mo></math> 元就是从 <math><mi>i</mi></math> 到 <math><mi>j</mi></math> 恰好走 <math><mi>k</mi></math> 步的通路条数；矩阵乘法的每一项对应一个中转站，通路可逐条列出并在图上高亮。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
     <a class="card" href="./L17_化学方程式配平.html">
-      <span class="tag">L17 · 第三章</span>
+      <span class="tag">L17 · 第四章</span>
       <h3>化学方程式配平</h3>
       <p>输入反应式，按元素原子守恒列出齐次方程组 <math><mi class="bm">A</mi><mi class="bm">x</mi><mo>=</mo><mn mathvariant="bold">0</mn></math>，化为行最简形求基础解系，得到最小正整数系数；基础解系含 0 个向量说明漏写了物质，含 2 个及以上说明配平不唯一。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
+    <a class="card" href="./L21_交通流量与电路网络.html">
+      <span class="tag">L21 · 第四章</span>
+      <h3>交通流量与电路网络</h3>
+      <p>路网每个路口“驶入 = 驶出”列非齐次方程组：无穷多解时自由未知量就是可自由调配的路段，再加流量非负约束求可行区间；总驶入 ≠ 总驶出时无解。电路部分用基尔霍夫定律求各支路电流，负值表示实际方向相反。</p>
       <div class="foot">▶ 打开使用</div>
     </a>
     <a class="card" href="./L18_最小二乘拟合直线.html">
       <span class="tag">L18 · 第四章</span>
       <h3>最小二乘拟合直线</h3>
       <p>拖动实验数据点（弹簧伸长、伏安法测电阻、气温随海拔等），方程组 <math><mi class="bm">A</mi><mi class="bm">c</mi><mo>=</mo><mi class="bm">b</mi></math> 无解时解法方程 <math><msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">A</mi><mi class="bm">c</mi><mo>=</mo><msup><mi class="bm">A</mi><mi>T</mi></msup><mi class="bm">b</mi></math> 得最佳直线；可自己调一条直线比较残差平方和，看残差与 <math><mi class="bm">A</mi></math> 的列正交。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
+    <a class="card" href="./L22_马尔可夫链人口迁移.html">
+      <span class="tag">L22 · 第五章</span>
+      <h3>马尔可夫链 · 人口迁移</h3>
+      <p>城乡人口迁移、天气、共享单车站点间的流动：<math><msub><mi class="bm">x</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mi class="bm">A</mi><msub><mi class="bm">x</mi><mi>k</mi></msub></math>，长期分布趋于特征值 1 对应的特征向量，与初始分布无关；用对角化写出 <math><msup><mi class="bm">A</mi><mi>k</mi></msup></math>，另一个特征值决定收敛快慢。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
+    <a class="card" href="./L23_种群年龄结构预测.html">
+      <span class="tag">L23 · 第五章</span>
+      <h3>种群年龄结构预测 · Leslie 模型</h3>
+      <p>调各年龄组的繁殖率与存活率，逐代看年龄结构变化：长期增长率等于主特征值 <math><msub><mi>λ</mi><mn>1</mn></msub></math>（大于 1 增长、小于 1 衰退），稳定的年龄结构就是对应的特征向量，与初始数量无关。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
+    <a class="card" href="./L24_PageRank网页排序.html">
+      <span class="tag">L24 · 第五章</span>
+      <h3>PageRank 网页排序</h3>
+      <p>网页之间的链接写成链接矩阵，网页排名是 <math><mi class="bm">A</mi><mi class="bm">x</mi><mo>=</mo><mi class="bm">x</mi></math> 的解，即特征值 1 的特征向量；演示幂法迭代、悬挂网页和阻尼系数，看清“被重要网页链接”为何比“被很多网页链接”更重要。</p>
+      <div class="foot">▶ 打开使用</div>
+    </a>
+    <a class="card" href="./L25_主成分分析.html">
+      <span class="tag">L25 · 第五章</span>
+      <h3>主成分分析（PCA）</h3>
+      <p>二维数据的协方差矩阵 <math><mi class="bm">C</mi></math> 正交对角化，特征向量就是主成分方向；转动一条方向线，投影方差 <math><msup><mi class="bm">u</mi><mi>T</mi></msup><mi class="bm">C</mi><mi class="bm">u</mi></math> 在特征方向取最大、最小值（二次型的极值），把点投影到第一主成分上实现降维，并与最小二乘对比。</p>
       <div class="foot">▶ 打开使用</div>
     </a>
   </div>

@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>交通流量与电路网络 · L21 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1; --red:#c53030;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --hl-cell:#fff3cd; --hl-col:#e9e3fb;
+    --road:#2b6cb0; --ext:#b7791f; --neg:#e53e3e; --free:#6b46c1;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  #canvasContainer{width:100%;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fbfdff;}
+  canvas{display:block;}
+  .tip{font-size:14px;color:var(--sub);margin-top:6px;line-height:1.8;}
+  button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+  .presets button{font-size:12.5px;padding:5px 10px;}
+  .plabel{font-size:12.5px;color:var(--sub);margin:12px 0 4px;}
+  .inrow{display:grid;grid-template-columns:1fr 92px;gap:6px 10px;align-items:center;font-size:14px;margin:4px 0;}
+  .inrow input[type=number]{width:92px;font-size:15px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .inrow input:focus{outline:none;border-color:var(--blue);}
+  label.chk{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;margin-top:10px;}
+  label.chk input{accent-color:var(--blue);width:16px;height:16px;}
+  .sl{display:grid;grid-template-columns:52px 1fr 56px;gap:8px;align-items:center;margin:6px 0;font-size:14px;}
+  .sl input[type=range]{width:100%;accent-color:var(--free);}
+  .sl .v{font-variant-numeric:tabular-nums;text-align:right;font-family:"Cambria Math","STIX Two Math",serif;}
+  .slnote{font-size:13px;color:var(--sub);margin:-2px 0 6px 60px;}
+  .bal{font-size:14px;margin-top:8px;}
+  .bal.ok{color:var(--green);} .bal.no{color:var(--red);font-weight:600;}
+  /* 场景切换 */
+  .scenebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;margin:0 0 14px 10px;}
+  .scenebar button{border:none;border-radius:0;padding:8px 16px;font-size:13.5px;background:#fff;color:var(--sub);}
+  .scenebar button.on{background:#eef4fb;color:var(--blue);font-weight:600;}
+  /* 求解过程 */
+  .steps{font-size:14px;line-height:2;}
+  .steps math{font-size:1.05em;}
+  .steps .st{margin:12px 0 2px;font-weight:600;color:var(--sub);font-size:14px;}
+  .steps .st:first-child{margin-top:0;}
+  .steps .ctr{text-align:center;overflow-x:auto;overflow-y:hidden;line-height:2.4;}
+  .eqs{display:flex;flex-direction:column;align-items:center;gap:0;}
+  .eqs .el{display:inline-block;min-width:4.2em;text-align:right;color:var(--sub);margin-right:8px;}
+  .matbox{display:flex;justify-content:center;padding:4px 0;overflow-x:auto;}
+  table.mat{border-collapse:collapse;margin:0 auto;}
+  table.mat td,table.mat th{border:1px solid #cbd5e1;min-width:42px;height:36px;padding:0 7px;text-align:center;
+     vertical-align:middle;font-size:15px;font-variant-numeric:tabular-nums;}
+  table.mat th{background:#f1f5f9;font-weight:600;font-size:13.5px;color:var(--sub);}
+  table.mat td{font-family:"Cambria Math","STIX Two Math",serif;}
+  table.mat td.zero{color:#a0aec0;}
+  table.mat td.sep{border-left:3px double #64748b;}
+  table.mat th.sep{border-left:3px double #64748b;}
+  table.mat .pv{background:var(--hl-cell);font-weight:700;}
+  table.mat .fc{background:var(--hl-col);}
+  .frac{display:inline-flex;flex-direction:column;vertical-align:middle;line-height:1.05;font-size:.82em;}
+  .frac .num{border-bottom:1.4px solid currentColor;padding:0 3px;}
+  .frac .den{padding:0 3px;}
+  .legend{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:8px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:14px;height:14px;border:1px solid #cbd5e1;border-radius:3px;display:inline-block;}
+  .legend i.ln{height:4px;border:none;border-radius:2px;width:18px;}
+  .verdict{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:14px;line-height:1.9;}
+  .verdict.uniq{background:#e6fffa;color:#234e52;border:1px solid #b2f5ea;}
+  .verdict.inf{background:#fffaf0;color:#744210;border:1px solid #f6e05e;}
+  .verdict.none{background:#fff5f5;color:#822727;border:1px solid #feb2b2;}
+  .placeholder{color:#a0aec0;font-size:14px;text-align:center;padding:24px 10px;}
+  /* 练习 */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody input.qin{width:80px;font-size:15px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .qc{text-align:center;margin-top:4px;}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:14px;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .opts input{accent-color:var(--blue);}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:14px;margin-top:6px;line-height:1.9;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,350px);gap:16px;align-items:start;}
+  @media(max-width:860px){ .layout{grid-template-columns:minmax(0,1fr);} .col-left{display:contents;}
+    .col-left>.card:first-child{order:1;} .col-right{order:2;} .col-left>.card:nth-child(2){order:3;} }
+  table.rk{border-collapse:collapse;margin:8px auto 6px;}
+  table.rk td{padding:1px 6px;font-size:14px;}
+  table.rk td:first-child{text-align:right;}
+  .presets button.on{border-color:var(--blue);background:#eef4fb;color:var(--blue);}
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>交通流量与电路网络</h1>
+  <span class="sub">守恒定律 ⇒ 线性方程组 <math><mi class="bm">A</mi><mi class="bm">x</mi><mo>=</mo><mi class="bm">b</mi></math> · 解的情况与解的结构</span>
+  <span class="tag">L21 · 应用案例</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    网络中的“流”在每个节点都满足<b>守恒定律</b>：流入的总量 = 流出的总量。每个节点写一个方程，就得到线性方程组 <math><mi class="bm">A</mi><mi class="bm">x</mi><mo>=</mo><mi class="bm">b</mi></math>。由秩判断解的情况：
+    <table class="rk">
+      <tr><td><math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo><mo>&lt;</mo><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>|</mo><mi class="bm">b</mi><mo>)</mo></math></td><td>⇒ 无解</td></tr>
+      <tr><td><math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo><mo>=</mo><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>|</mo><mi class="bm">b</mi><mo>)</mo><mo>=</mo><mi>n</mi></math></td><td>⇒ 唯一解</td></tr>
+      <tr><td><math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo><mo>=</mo><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>|</mo><mi class="bm">b</mi><mo>)</mo><mo>&lt;</mo><mi>n</mi></math></td><td>⇒ 无穷多解，通解 <math><mi class="bm">x</mi><mo>=</mo><msup><mi class="bm">η</mi><mo>*</mo></msup><mo>+</mo><msub><mi>k</mi><mn>1</mn></msub><msub><mi class="bm">ξ</mi><mn>1</mn></msub><mo>+</mo><mo>⋯</mo></math></td></tr>
+    </table>
+    <b>交通流量</b>里每条路段都“从一个路口出、进另一个路口”，所以各路口方程加起来左边恰好抵消，只有 3 个是独立的，而路段至少 4 条，方程组往往有无穷多解：自由未知量对应“可以自由调配”的路段流量，再加上流量不能为负，就得到它的<b>取值范围</b>。<b>电路网络</b>里由基尔霍夫电流定律（节点）和电压定律（回路）列方程，各支路电流有唯一解。
+  </div>
+
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div><div class="scenebar" id="sceneBar">
+    <button id="scTraffic" class="on">① 交通流量</button>
+    <button id="scCircuit">② 电路网络</button>
+  </div>
+
+  <div class="layout">
+  <div class="col-left">
+    <div class="card">
+      <div id="canvasContainer"><canvas id="canvas"></canvas></div>
+      <div class="legend" id="legendBox"></div>
+    </div>
+    <div class="card">
+      <h2 id="stepsTitle">列方程与求解</h2>
+      <div class="steps" id="stepsBox"></div>
+    </div>
+  </div>
+
+  <div class="col-right">
+    <div class="card" id="trafficCard">
+      <h2>路网的外部流量（辆/小时，示意数据）</h2>
+      <div class="inrow"><span>路口 <math><mi>A</mi></math> 驶入</span><input type="number" id="eA" step="10" min="0"></div>
+      <div class="inrow"><span>路口 <math><mi>B</mi></math> 驶出</span><input type="number" id="eB" step="10" min="0"></div>
+      <div class="inrow"><span>路口 <math><mi>C</mi></math> 驶入</span><input type="number" id="eC" step="10" min="0"></div>
+      <div class="inrow"><span>路口 <math><mi>D</mi></math> 驶出</span><input type="number" id="eD" step="10" min="0"></div>
+      <div class="bal" id="balBox"></div>
+      <label class="chk"><input type="checkbox" id="diagOn"> 增加一条斜路 <math><msub><mi>x</mi><mn>5</mn></msub></math>（<math><mi>A</mi><mo>→</mo><mi>C</mi></math>）</label>
+      <div class="plabel">自由未知量（拖动看各路段流量怎么变）：</div>
+      <div id="sliderBox"></div>
+      <div class="plabel">例子：</div>
+      <div class="presets" id="tPresets"></div>
+    </div>
+
+    <div class="card" id="circuitCard" style="display:none;">
+      <h2>电路参数</h2>
+      <div class="inrow"><span>电源 <math><msub><mi>E</mi><mn>1</mn></msub></math>（V）</span><input type="number" id="cE1" step="1" min="0"></div>
+      <div class="inrow"><span>电源 <math><msub><mi>E</mi><mn>2</mn></msub></math>（V）</span><input type="number" id="cE2" step="1" min="0"></div>
+      <div class="inrow"><span>电阻 <math><msub><mi>R</mi><mn>1</mn></msub></math>（Ω）</span><input type="number" id="cR1" step="1" min="1"></div>
+      <div class="inrow"><span>电阻 <math><msub><mi>R</mi><mn>2</mn></msub></math>（Ω）</span><input type="number" id="cR2" step="1" min="1"></div>
+      <div class="inrow"><span>电阻 <math><msub><mi>R</mi><mn>3</mn></msub></math>（Ω）</span><input type="number" id="cR3" step="1" min="1"></div>
+      <div class="tip">图中箭头是<b>假设</b>的电流方向。解出的电流为负，说明实际方向与假设相反。</div>
+      <div class="plabel">例子：</div>
+      <div class="presets" id="cPresets"></div>
+    </div>
+
+    <div class="card" id="quizCard" style="display:none;">
+      <div class="quizhead">
+        <h2>练习 · 网络中的线性方程组</h2>
+        <span class="stats" id="quizStats"></span>
+        <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+      </div>
+      <div class="qbody" id="qBody"></div>
+      <div class="feedback" id="qFeedback"></div>
+      <div class="qbtns">
+        <button class="primary" id="qSubmit">提交</button>
+        <button id="qHint">提示</button>
+        <button id="qReveal">看解析</button>
+        <button id="qNext">下一题 ▸</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+/* ═══════════ 有理数与消元 ═══════════ */
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; }
+function F(n,d){ d=d||1; if(d<0){n=-n;d=-d;} const g=gcd(n,d)||1; return {n:n/g,d:d/g}; }
+const fadd=(a,b)=>F(a.n*b.d+b.n*a.d,a.d*b.d), fsub=(a,b)=>F(a.n*b.d-b.n*a.d,a.d*b.d),
+      fmul=(a,b)=>F(a.n*b.n,a.d*b.d), fdiv=(a,b)=>F(a.n*b.d,a.d*b.n), fz=a=>a.n===0, fv=a=>a.n/a.d;
+function rref(M){
+  const R=M.map(r=>r.map(v=>F(v))); const m=R.length, n=R[0].length; const piv=[]; let row=0;
+  for(let c=0;c<n&&row<m;c++){
+    let p=-1; for(let r=row;r<m;r++) if(!fz(R[r][c])){ p=r; break; }
+    if(p<0) continue;
+    [R[row],R[p]]=[R[p],R[row]];
+    const pv=R[row][c]; R[row]=R[row].map(v=>fdiv(v,pv));
+    for(let r=0;r<m;r++) if(r!==row&&!fz(R[r][c])){ const k=R[r][c]; R[r]=R[r].map((v,j)=>fsub(v,fmul(k,R[row][j]))); }
+    piv.push(c); row++;
+  }
+  return {R,piv};
+}
+// 解 A x = b：返回 秩、解的情况、特解、基础解系（分数）
+function solve(A,b){
+  const n=A[0].length, M=A.map((r,i)=>[...r,b[i]]);
+  const {R,piv}=rref(M);
+  const rA=piv.filter(c=>c<n).length, rAb=piv.length;
+  const res={R,piv,n,rA,rAb};
+  if(rA<rAb){ res.kind="none"; return res; }
+  const free=[]; for(let j=0;j<n;j++) if(!piv.includes(j)) free.push(j);
+  res.free=free; res.kind=free.length?"inf":"uniq";
+  const eta=Array(n).fill(0).map(()=>F(0)); piv.forEach((pc,i)=>{ eta[pc]=R[i][n]; });
+  res.eta=eta;
+  res.basis=free.map(f=>{ const v=Array(n).fill(0).map(()=>F(0)); v[f]=F(1); piv.forEach((pc,i)=>{ v[pc]=F(-R[i][f].n,R[i][f].d); }); return v; });
+  return res;
+}
+
+/* ═══════════ MathML / HTML 片段 ═══════════ */
+const NEG='<mo form="prefix" lspace="0" rspace="0">&#x2212;</mo>';
+function fML(f){ if(typeof f==="number") f=F(f); const a=Math.abs(f.n); const s=f.n<0?NEG:"";
+  return s+(f.d===1?`<mn>${a}</mn>`:`<mfrac><mn>${a}</mn><mn>${f.d}</mn></mfrac>`); }
+function fHTML(f){ if(typeof f==="number") f=F(f); if(f.d===1) return (f.n<0?"&#x2212;":"")+Math.abs(f.n);
+  return (f.n<0?"&#x2212;":"")+`<span class="frac"><span class="num">${Math.abs(f.n)}</span><span class="den">${f.d}</span></span>`; }
+function dec(v){ let t=(Math.round(v*1000)/1000).toString(); return t.replace("-","−"); }
+const vX=j=>`<msub><mi>x</mi><mn>${j+1}</mn></msub>`;
+const vI=j=>`<msub><mi>I</mi><mn>${j+1}</mn></msub>`;
+function lhsML(row,vf){ let s="",first=true;
+  row.forEach((a,j)=>{ if(a===0) return; const abs=Math.abs(a);
+    if(first){ if(a<0) s+=NEG; } else s+=a<0?"<mo>&#x2212;</mo>":"<mo>+</mo>";
+    s+=(abs===1?"":`<mn>${abs}</mn>`)+vf(j); first=false; });
+  return s||"<mn>0</mn>"; }
+function colML(arr){ return `<mrow><mo>(</mo><mtable>${arr.map(v=>`<mtr><mtd>${v}</mtd></mtr>`).join("")}</mtable><mo>)</mo></mrow>`; }
+function augHTML(A,b,vf,rowNames){
+  const n=A[0].length;
+  let h='<table class="mat"><tr><th></th>'+A[0].map((_,j)=>`<th><math>${vf(j)}</math></th>`).join("")+'<th class="sep"><math><mi class="bm">b</mi></math></th></tr>';
+  A.forEach((r,i)=>{ h+=`<tr><th>${rowNames[i]}</th>`+r.map(v=>`<td class="${v===0?"zero":""}">${fHTML(v)}</td>`).join("")+`<td class="sep">${fHTML(b[i])}</td></tr>`; });
+  return h+"</table>";
+}
+function rrefHTML(res,vf){
+  const n=res.n;
+  let h='<table class="mat"><tr>'+Array.from({length:n},(_,j)=>`<th><math>${vf(j)}</math></th>`).join("")+'<th class="sep"></th></tr>';
+  res.R.forEach((row,i)=>{ h+="<tr>"+row.map((f,j)=>{ const c=[]; if(res.piv[i]===j) c.push("pv"); else if(j<n&&res.free&&res.free.includes(j)) c.push("fc"); if(j===n) c.push("sep"); if(fz(f)&&res.piv[i]!==j) c.push("zero");
+    return `<td class="${c.join(" ")}">${fHTML(f)}</td>`; }).join("")+"</tr>"; });
+  return h+"</table>";
+}
+
+/* ═══════════ 交通网络模型 ═══════════
+   路口 A(左上) B(右上) C(右下) D(左下)；外部：A 驶入 a，B 驶出 b，C 驶入 c，D 驶出 d
+   路段：x1 A→B，x2 B→C，x3 C→D，x4 A→D，(x5 A→C)                                 */
+const NODES=[{k:"A",x:0.25,y:0.22,ext:"in"},{k:"B",x:0.75,y:0.22,ext:"out"},{k:"C",x:0.75,y:0.80,ext:"in"},{k:"D",x:0.25,y:0.80,ext:"out"}];
+function makeNet(e,diag){
+  const roads=[[0,1],[1,2],[2,3],[0,3]]; if(diag) roads.push([0,2]);
+  const A=NODES.map((_,i)=>roads.map(([f,t])=>f===i?1:t===i?-1:0));   // 流出 +1，流入 −1
+  const b=NODES.map((nd,i)=>nd.ext==="in"?e[i]:-e[i]);                 // 外部驶入 − 外部驶出
+  return {e:e.slice(),diag,roads,A,b,res:solve(A,b)};
+}
+function flowsAt(net,ts){ const r=net.res; return r.eta.map((h,j)=>fv(h)+r.basis.reduce((s,v,k)=>s+ts[k]*fv(v[j]),0)); }
+// 其余自由未知量固定时，第 k 个自由未知量的可行区间（各路段流量 ≥ 0）
+function interval(net,ts,k){
+  const r=net.res; let lo=-Infinity, hi=Infinity, ok=true;
+  r.eta.forEach((h,j)=>{
+    const c2=fv(h)+r.basis.reduce((s,v,q)=>q===k?s:s+ts[q]*fv(v[j]),0);
+    const sl=fv(r.basis[k][j]);
+    if(Math.abs(sl)<1e-12){ if(c2<-1e-9) ok=false; }
+    else if(sl>0) lo=Math.max(lo,-c2/sl); else hi=Math.min(hi,c2/(-sl));
+  });
+  if(!ok||lo>hi+1e-9) return null;
+  return [lo,hi];
+}
+// 找一组使全部路段流量 ≥ 0 的自由未知量取值（找不到返回 null）
+function feasiblePoint(net){
+  const r=net.res; if(r.kind==="none") return null; const nf=r.free.length;
+  if(nf===0) return flowsAt(net,[]).every(v=>v>-1e-9)?[]:null;
+  const span=Math.max(...net.e,1)*2, st=Math.max(1,Math.round(span/60));
+  const tryT=t=>flowsAt(net,t).every(v=>v>-1e-9);
+  if(nf===1){ const iv=interval(net,[0],0); if(!iv) return null; const lo=Math.max(0,iv[0]), hi=Math.min(iv[1],lo+span); return [Math.round((lo+hi)/20)*10>hi||Math.round((lo+hi)/20)*10<lo?lo:Math.round((lo+hi)/20)*10]; }
+  for(let a=0;a<=span;a+=st) for(let b=0;b<=span;b+=st){ const t=[a,b]; if(tryT(t)) return t; }
+  return null;
+}
+function natEqML(net,i){   // 路口 i：驶入 = 驶出 的自然写法
+  const ins=[], outs=[];
+  if(NODES[i].ext==="in") ins.push(`<mn>${net.e[i]}</mn>`); else outs.push(`<mn>${net.e[i]}</mn>`);
+  net.roads.forEach(([f,t],j)=>{ if(t===i) ins.push(vX(j)); if(f===i) outs.push(vX(j)); });
+  return `<math>${ins.join("<mo>+</mo>")}<mo>=</mo>${outs.join("<mo>+</mo>")}</math>`;
+}
+function trafficSteps(net,ts){
+  const r=net.res, names=NODES.map(n=>`路口 <math><mi>${n.k}</mi></math>`);
+  let h=`<div class="st">① 每个路口“驶入 = 驶出”</div><div class="eqs">`
+   +NODES.map((nd,i)=>`<div><span class="el"><math><mi>${nd.k}</mi></math>：</span>${natEqML(net,i)}<mspace width="1em"/> ⟹ <math>${lhsML(net.A[i],vX)}<mo>=</mo>${fML(net.b[i])}</math></div>`).join("")+`</div>`;
+  h+=`<div class="tip" style="text-align:center;">（未知量移到左边：流出该路口的路段取 <math><mo>+</mo></math>，流入的取 <math><mo>&#x2212;</mo></math>；右边 = 外部驶入 − 外部驶出）</div>`;
+  h+=`<div class="st">② 增广矩阵 <math><mo>(</mo><mi class="bm">A</mi><mo>|</mo><mi class="bm">b</mi><mo>)</mo></math> 化为行最简形</div>`
+   +`<div class="matbox">${augHTML(net.A,net.b,vX,names)}</div><div class="ctr">⟶ 初等行变换 ⟶</div><div class="matbox">${rrefHTML(r,vX)}</div>`
+   +`<div class="legend"><span><i style="background:var(--hl-cell)"></i>主元</span>${r.free&&r.free.length?'<span><i style="background:var(--hl-col)"></i>自由未知量所在列</span>':""}</div>`;
+  h+=`<div class="ctr"><math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo><mo>=</mo><mn>${r.rA}</mn><mo>,</mo><mspace width="0.6em"/><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>|</mo><mi class="bm">b</mi><mo>)</mo><mo>=</mo><mn>${r.rAb}</mn><mo>,</mo><mspace width="0.6em"/><mi>n</mi><mo>=</mo><mn>${r.n}</mn></math></div>`;
+  if(r.kind==="none"){
+    const tin=net.e[0]+net.e[2], tout=net.e[1]+net.e[3];
+    h+=`<div class="verdict none"><math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo><mo>&lt;</mo><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>|</mo><mi class="bm">b</mi><mo>)</mo></math>，方程组<b>无解</b>。行最简形最后一行是 <math><mn>0</mn><mo>=</mo><mn>1</mn></math>（矛盾方程）：把四个路口的方程相加，左边各路段都一进一出、正好抵消，得到“总驶入 = 总驶出”。现在总驶入 ${tin}、总驶出 ${tout}，不相等，车辆不守恒，这样的流量不可能实现。</div>`;
+    return h;
+  }
+  const fr=r.free.map(vX);
+  h+=`<div class="st">③ 通解（自由未知量 <math>${fr.join("<mo>,</mo>")}</math>，取 <math>${r.free.map((f,k)=>`${vX(f)}<mo>=</mo><msub><mi>k</mi><mn>${k+1}</mn></msub>`).join("<mo>,</mo>")}</math>）</div>`
+   +`<div class="ctr"><math display="block"><mi class="bm">x</mi><mo>=</mo>${colML(r.eta.map(fML))}`
+   +r.basis.map((v,k)=>`<mo>+</mo><msub><mi>k</mi><mn>${k+1}</mn></msub>${colML(v.map(fML))}`).join("")+`</math></div>`
+   +`<div class="tip">有 <math><mi>n</mi><mo>&#x2212;</mo><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo><mo>=</mo><mn>${r.free.length}</mn></math> 个自由未知量：从 <math><mi>A</mi></math> 驶入的车可以走不同的路线到达出口（例如直接走 <math>${vX(3)}</math>，或绕 <math><mi>A</mi><mo>→</mo><mi>B</mi><mo>→</mo><mi>C</mi><mo>→</mo><mi>D</mi></math>），路口方程只规定了“进出平衡”，不规定车流在各条路线之间怎么分配，所以这些路段的流量可以由交通管理部门<b>自由调配</b>，其余路段随之确定。</div>`;
+  // 非负约束
+  const xs=flowsAt(net,ts), neg=xs.map((v,j)=>v<-1e-9?j:-1).filter(j=>j>=0);
+  h+=`<div class="st">④ 实际约束：各路段流量 <math><msub><mi>x</mi><mi>j</mi></msub><mo>≥</mo><mn>0</mn></math></div>`;
+  r.free.forEach((f,k)=>{
+    const iv=interval(net,ts,k);
+    const others=r.free.filter((_,q)=>q!==k).map((g,q)=>`${vX(g)}<mo>=</mo><mn>${ts[r.free.indexOf(g)]}</mn>`);
+    h+=`<div class="ctr">`+(others.length?`当 <math>${others.join("<mo>,</mo>")}</math> 时，`:"")
+      +(iv?`<math><mn>${dec(Math.max(iv[0],0))}</mn><mo>≤</mo>${vX(f)}<mo>≤</mo>${iv[1]===Infinity?"<mo>+</mo><mi>∞</mi>":`<mn>${dec(iv[1])}</mn>`}</math>`:`${"<math>"+vX(f)+"</math>"} 取任何值都会有路段流量为负`)+`</div>`;
+  });
+  const anyFeas=!!feasiblePoint(net);
+  if(neg.length&&!anyFeas) h+=`<div class="verdict none">当前取值下 <math>${neg.map(vX).join("<mo>,</mo>")}</math> 为负（图中红色）。而且自由未知量<b>取任何值</b>都会有路段流量为负：这组外部流量虽然守恒，但在这样的单行道路网里<b>没有可行的调配方案</b>${net.e[1]>net.e[0]?`（路口 <math><mi>B</mi></math> 要驶出 ${net.e[1]}，可它的车只能从 <math><mi>A</mi></math> 经 <math>${vX(0)}</math> 送来，而 <math><mi>A</mi></math> 只驶入 ${net.e[0]}）`:""}。</div>`;
+  else if(neg.length) h+=`<div class="verdict none">当前取值下 <math>${neg.map(vX).join("<mo>,</mo>")}</math> 为负（图中红色）：数学上仍是方程组的解，但单行道上流量不能为负，实际不可行。${mode==="explore"?"把自由未知量调回上面的范围内即可。":""}</div>`;
+  else h+=`<div class="verdict uniq">当前各路段流量都非负，是一种可行的调配方案。</div>`;
+  return h;
+}
+
+/* ═══════════ 电路模型 ═══════════
+   左支路：E1 与 R1，电流 I1 向上；右支路：E2 与 R2，电流 I2 向上；中间支路 R3，电流 I3 向下。
+   节点 a：I1 + I2 − I3 = 0；回路Ⅰ（左）：R1 I1 + R3 I3 = E1；回路Ⅱ（右）：R2 I2 + R3 I3 = E2      */
+function makeCir(E1,E2,R1,R2,R3){
+  const A=[[1,1,-1],[R1,0,R3],[0,R2,R3]], b=[0,E1,E2];
+  return {E1,E2,R1,R2,R3,A,b,res:solve(A,b)};
+}
+const cf=n=>n===1?"":`<mn>${n}</mn>`;
+function circuitSteps(c){
+  const r=c.res, names=["节点 <math><mi>a</mi></math>","回路Ⅰ","回路Ⅱ"];
+  let h=`<div class="st">① 基尔霍夫定律列方程</div><div class="eqs">`
+   +`<div><span class="el">节点 <math><mi>a</mi></math>：</span><math>${vI(0)}<mo>+</mo>${vI(1)}<mo>=</mo>${vI(2)}</math>（电流定律：流入 = 流出）</div>`
+   +`<div><span class="el">回路Ⅰ：</span><math>${cf(c.R1)}${vI(0)}<mo>+</mo>${cf(c.R3)}${vI(2)}<mo>=</mo>${fML(c.E1)}</math>（电压定律：电阻压降之和 = 电动势）</div>`
+   +`<div><span class="el">回路Ⅱ：</span><math>${cf(c.R2)}${vI(1)}<mo>+</mo>${cf(c.R3)}${vI(2)}<mo>=</mo>${fML(c.E2)}</math></div></div>`
+   +`<div class="tip">节点 <math><mi>b</mi></math> 的方程 <math>${vI(2)}<mo>=</mo>${vI(0)}<mo>+</mo>${vI(1)}</math> 与节点 <math><mi>a</mi></math> 相同；外圈大回路的方程等于回路Ⅰ减回路Ⅱ。它们都不独立，加进来不改变秩，所以只取上面三个。</div>`;
+  h+=`<div class="st">② 增广矩阵化为行最简形</div><div class="matbox">${augHTML(c.A,c.b,vI,names)}</div><div class="ctr">⟶ 初等行变换 ⟶</div><div class="matbox">${rrefHTML(r,vI)}</div>`;
+  const det=c.R1*c.R2+c.R1*c.R3+c.R2*c.R3;
+  h+=`<div class="ctr"><math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo><mo>=</mo><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>|</mo><mi class="bm">b</mi><mo>)</mo><mo>=</mo><mn>3</mn><mo>=</mo><mi>n</mi></math>，唯一解（<math><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi class="bm">A</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow><mo>=</mo>${fML(-det)}<mo>≠</mo><mn>0</mn></math>）</div>`;
+  h+=`<div class="st">③ 各支路电流</div><div class="ctr"><math displaystyle="true">`+r.eta.map((f,j)=>`${vI(j)}<mo>=</mo>${fML(f)}`).join("<mo>,</mo><mspace width='1em'/>")+`</math>（单位 A）</div>`;
+  const neg=r.eta.map((f,j)=>f.n<0?j:-1).filter(j=>j>=0);
+  if(neg.length) h+=`<div class="verdict inf"><math>${neg.map(vI).join("<mo>,</mo>")}</math> 为负：实际电流方向与图中假设的方向<b>相反</b>（图中红色箭头为实际方向），大小为 <math displaystyle="true">${neg.map(j=>fML(F(-r.eta[j].n,r.eta[j].d))).join("<mo>,</mo>")}</math> A。列方程时方向可以随便假设，解出来的符号会自动告诉你真实方向。</div>`;
+  else if(r.eta.some(f=>f.n===0)){ const z=r.eta.findIndex(f=>f.n===0);
+    h+=`<div class="verdict uniq"><math>${vI(z)}<mo>=</mo><mn>0</mn></math>：`+(z===2?`中间支路没有电源，电流为 0 说明 <math><mi>a</mi></math>、<math><mi>b</mi></math> 两点电势相等。`:`这条支路的电动势 <math><msub><mi>E</mi><mn>${z+1}</mn></msub></math> 恰好等于 <math><mi>a</mi></math>、<math><mi>b</mi></math> 两点间的电压，所以没有电流流过。`)+`</div>`; }
+  else h+=`<div class="verdict uniq">三个电流都为正，实际方向与假设一致。</div>`;
+  return h;
+}
+
+/* ═══════════ 画布 ═══════════ */
+const canvas=document.getElementById("canvas"), ctx=canvas.getContext("2d"), container=document.getElementById("canvasContainer");
+let W=600,H=420;
+const CMFONT='"Cambria Math","STIX Two Math",serif';
+function toMath(str){ let o=""; for(const ch of str){ const c=ch.codePointAt(0);
+  o+=(c>=0x61&&c<=0x7A)?String.fromCodePoint(c===0x68?0x210E:0x1D44E+c-0x61):(c>=0x41&&c<=0x5A)?String.fromCodePoint(0x1D434+c-0x41):ch; } return o; }
+function col(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+// 标签：斜体字母 + 下标 + 尾部文字（数字正体），以 (x,y) 为中心
+function subLabel(letter,sub,tail,x,y,color,px){
+  px=px||15; const fM=`${px}px ${CMFONT}`, fS=`${Math.round(px*0.7)}px ${CMFONT}`;
+  ctx.save(); ctx.font=fM; const L=toMath(letter), wL=ctx.measureText(L).width;
+  ctx.font=fS; const wS=sub?ctx.measureText(sub).width+1:0;
+  ctx.font=fM; const wT=tail?ctx.measureText(tail).width:0;
+  let x0=x-(wL+wS+wT)/2;
+  ctx.textBaseline="middle"; ctx.textAlign="left"; ctx.lineJoin="round"; ctx.strokeStyle="rgba(255,255,255,.95)"; ctx.fillStyle=color;
+  ctx.lineWidth=px*0.3; ctx.font=fM; ctx.strokeText(L,x0,y); ctx.fillText(L,x0,y);
+  if(sub){ ctx.font=fS; ctx.lineWidth=px*0.25; ctx.strokeText(sub,x0+wL+1,y+px*0.3); ctx.fillText(sub,x0+wL+1,y+px*0.3); }
+  if(tail){ ctx.font=fM; ctx.lineWidth=px*0.3; ctx.strokeText(tail,x0+wL+wS,y); ctx.fillText(tail,x0+wL+wS,y); }
+  ctx.restore();
+}
+function plainLabel(t,x,y,color,px){ ctx.save(); ctx.font=`${px||14}px ${CMFONT}`; ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.lineJoin="round"; ctx.lineWidth=4; ctx.strokeStyle="rgba(255,255,255,.95)"; ctx.strokeText(t,x,y); ctx.fillStyle=color; ctx.fillText(t,x,y); ctx.restore(); }
+function arrow(x0,y0,x1,y1,color,w,dash){
+  const dx=x1-x0, dy=y1-y0, len=Math.hypot(dx,dy); if(len<2) return;
+  const ux=dx/len, uy=dy/len, head=Math.max(10,w*2.6), hw=Math.max(5,w*1.5);
+  ctx.save(); ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=w; ctx.lineCap="round"; if(dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1-ux*head*0.8,y1-uy*head*0.8); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x1-ux*head-uy*hw,y1-uy*head+ux*hw); ctx.lineTo(x1-ux*head+uy*hw,y1-uy*head-ux*hw); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function resize(){
+  W=Math.max(300,container.clientWidth); H=Math.round(Math.min(Math.max(W*0.7,280),430));
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr); canvas.style.width=W+"px"; canvas.style.height=H+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0); redraw();
+}
+window.addEventListener("resize",resize);
+
+// 画路网：flows=null 时只标未知量名（练习用）
+function drawNet(net,flows){
+  ctx.clearRect(0,0,W,H); ctx.fillStyle="#fff"; ctx.fillRect(0,0,W,H);
+  const P=NODES.map(n=>({x:n.x*W,y:n.y*H})), rN=Math.max(15,Math.min(W,H)*0.045);
+  const maxF=flows?Math.max(1,...flows.map(Math.abs),...net.e):1;
+  // 外部道路
+  NODES.forEach((nd,i)=>{
+    const p=P[i], side=(i===0||i===3)?-1:1, xo=p.x+side*Math.min(W*0.2,110);
+    const w=flows?2+8*net.e[i]/maxF:3;
+    if(nd.ext==="in") arrow(xo,p.y,p.x-side*rN*1.15,p.y,col("--ext"),w); else arrow(p.x+side*rN*1.15,p.y,xo,p.y,col("--ext"),w);
+    plainLabel(`${nd.ext==="in"?"驶入":"驶出"} ${net.e[i]}`,(xo+p.x)/2+side*6,p.y-16-w/2,col("--ext"),13.5);
+  });
+  // 内部路段
+  net.roads.forEach(([f,t],j)=>{
+    const a=P[f], b=P[t], dx=b.x-a.x, dy=b.y-a.y, L=Math.hypot(dx,dy), ux=dx/L, uy=dy/L;
+    const v=flows?flows[j]:null, negv=v!==null&&v<-1e-9;
+    const w=flows?2+8*Math.abs(v)/maxF:3;
+    const isFree=net.res.free&&net.res.free.includes(j);
+    const c=negv?col("--neg"):isFree&&flows?col("--free"):col("--road");
+    arrow(a.x+ux*rN*1.2,a.y+uy*rN*1.2,b.x-ux*rN*1.2,b.y-uy*rN*1.2,c,w,negv?[8,6]:null);
+    // 标签放在路段外侧
+    let nx=-uy, ny=ux; const mx=(a.x+b.x)/2, my=(a.y+b.y)/2, cx=W/2, cy=(P[0].y+P[2].y)/2;
+    if((mx+nx-cx)*(mx-cx)+(my+ny-cy)*(my-cy)<(mx-cx)**2+(my-cy)**2 && j!==4){ nx=-nx; ny=-ny; }
+    if(j===4){ nx=uy; ny=-ux; }
+    const off=16+w/2+(Math.abs(nx)>0.5?26:0);
+    subLabel("x",String(j+1),v===null?"":" = "+dec(v),mx+nx*off,my+ny*off,c,15);
+  });
+  // 路口
+  P.forEach((p,i)=>{ ctx.beginPath(); ctx.arc(p.x,p.y,rN,0,2*Math.PI); ctx.fillStyle="#f8fafc"; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle="#4a5568"; ctx.stroke();
+    subLabel(NODES[i].k,"","",p.x,p.y,"#1a202c",17); });
+}
+// 画电路：cur=null 时不标电流数值
+function drawCir(c,cur){
+  ctx.clearRect(0,0,W,H); ctx.fillStyle="#fff"; ctx.fillRect(0,0,W,H);
+  const xl=W*0.18, xm=W*0.5, xr=W*0.82, yt=H*0.16, yb=H*0.86;
+  ctx.save(); ctx.strokeStyle="#2d3748"; ctx.lineWidth=2.2; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(xl,yt); ctx.lineTo(xr,yt); ctx.moveTo(xl,yb); ctx.lineTo(xr,yb);
+  [xl,xm,xr].forEach(x=>{ ctx.moveTo(x,yt); ctx.lineTo(x,yb); }); ctx.stroke(); ctx.restore();
+  const res=(x,y,i,val)=>{ ctx.save(); ctx.fillStyle="#fff"; ctx.strokeStyle="#2d3748"; ctx.lineWidth=2; ctx.fillRect(x-9,y-24,18,48); ctx.strokeRect(x-9,y-24,18,48); ctx.restore();
+    subLabel("R",String(i),` = ${val} Ω`,x+(x>W*0.7?-58:58),y,"#2d3748",15); };
+  // 电源标签单独画（带下标）
+  const batL=(x,y,i,val)=>{ ctx.save(); ctx.fillStyle="#fff"; ctx.fillRect(x-24,y-10,48,20); ctx.strokeStyle="#2d3748"; ctx.lineCap="round";
+    ctx.lineWidth=2.6; ctx.beginPath(); ctx.moveTo(x-20,y-6); ctx.lineTo(x+20,y-6); ctx.stroke();
+    ctx.lineWidth=5; ctx.beginPath(); ctx.moveTo(x-10,y+6); ctx.lineTo(x+10,y+6); ctx.stroke(); ctx.restore();
+    plainLabel("+",x+(x>W*0.7?-28:28),y-14,"#2d3748",14);
+    subLabel("E",String(i),` = ${val} V`,x+(x>W*0.7?-60:60),y,"#2d3748",15); };
+  batL(xl,H*0.40,1,c.E1); res(xl,H*0.66,1,c.R1);
+  batL(xr,H*0.40,2,c.E2); res(xr,H*0.66,2,c.R2);
+  res(xm,H*0.52,3,c.R3);
+  // 节点
+  [[xm,yt,"a",-14],[xm,yb,"b",16]].forEach(([x,y,t,o])=>{ ctx.beginPath(); ctx.arc(x,y,4.5,0,2*Math.PI); ctx.fillStyle="#2d3748"; ctx.fill(); subLabel(t,"","",x+12,y+o*0.9,"#2d3748",16); });
+  // 回路标注
+  plainLabel("回路Ⅰ",(xl+xm)/2,H*0.80,"#a0aec0",14); plainLabel("回路Ⅱ",(xm+xr)/2,H*0.80,"#a0aec0",14);
+  // 电流箭头（假设方向：I1、I2 向上，I3 向下）
+  const cur3=cur||[null,null,null];
+  // 标签都放在导线内侧；中间支路的标签放低一些，避免与右支路标签重叠
+  [[xl,-1,0,H*0.25,1],[xr,-1,1,H*0.25,-1],[xm,1,2,H*0.33,1]].forEach(([x,dir,j,y0,side])=>{
+    const v=cur3[j], negv=v!==null&&v<0;
+    arrow(x,y0-dir*12,x,y0+dir*12,col("--road"),3);                    // 假设方向
+    if(negv) arrow(x+side*9,y0+dir*12,x+side*9,y0-dir*12,col("--neg"),2.4);  // 实际方向
+    const tail=v===null?"":` ${Math.abs(v*1000-Math.round(v*1000))<1e-6?"=":"≈"} ${dec(v)} A`;
+    ctx.save(); ctx.font=`15px ${CMFONT}`; const w=ctx.measureText("I"+(j+1)+tail).width+6; ctx.restore();
+    subLabel("I",String(j+1),tail,x+side*(w/2+(negv?20:10)),y0,negv?col("--neg"):col("--road"),15);
+  });
+}
+function redraw(){
+  if(mode==="practice"){ drawQuiz(); return; }
+  if(scene==="traffic"){ drawNet(net,net.res.kind==="none"?null:flowsAt(net,ts)); }
+  else drawCir(cir,cir.res.eta.map(fv));
+}
+
+/* ═══════════ 自由探索 ═══════════ */
+let mode="explore", scene="traffic";
+let net=makeNet([600,400,300,500],false), ts=[100], cir=makeCir(12,12,2,3,6);
+const TPRE=[["默认（1 个自由未知量）",[600,400,300,500],false,[100]],["加斜路（2 个自由未知量）",[600,400,300,500],true,[60,40]],
+            ["驶入驶出不守恒（无解）",[600,400,350,500],false,[100]],["没有非负解",[300,400,600,500],false,[0]]];
+const CPRE=[["默认",[12,12,2,3,6]],["某支路电流为负",[12,6,2,3,6]],["某支路电流为 0",[12,9,2,3,6]]];
+function readNet(){
+  const e=["eA","eB","eC","eD"].map(id=>{ const el=document.getElementById(id), v=Math.max(0,Math.round(+el.value||0)); if(el.value!==""&&+el.value!==v) el.value=v; return v; });
+  const diag=document.getElementById("diagOn").checked;
+  net=makeNet(e,diag);
+  const nf=net.res.free?net.res.free.length:0;
+  while(ts.length<nf) ts.push(0); ts=ts.slice(0,Math.max(nf,0));
+  buildSliders(); updateTraffic();
+}
+function setNetInputs(e,diag,t){ ["eA","eB","eC","eD"].forEach((id,i)=>document.getElementById(id).value=e[i]); document.getElementById("diagOn").checked=diag; ts=t.slice(); readNet(); }
+function buildSliders(){
+  const box=document.getElementById("sliderBox"), r=net.res;
+  if(r.kind==="none"){ box.innerHTML='<div class="tip">方程组无解，没有自由未知量。</div>'; return; }
+  box.innerHTML=r.free.map((f,k)=>`<div class="sl"><span><math>${vX(f)}</math></span><input type="range" min="0" max="1000" step="10" value="${ts[k]}" data-k="${k}"><span class="v" id="slv${k}">${ts[k]}</span></div><div class="slnote" id="sln${k}"></div>`).join("");
+  box.querySelectorAll("input[type=range]").forEach(el=>el.addEventListener("input",()=>{ ts[+el.dataset.k]=+el.value; updateTraffic(); }));
+}
+function updateTraffic(){
+  const r=net.res, tin=net.e[0]+net.e[2], tout=net.e[1]+net.e[3];
+  const bb=document.getElementById("balBox");
+  bb.className="bal "+(tin===tout?"ok":"no");
+  bb.innerHTML=`总驶入 ${net.e[0]} + ${net.e[2]} = ${tin}，总驶出 ${net.e[1]} + ${net.e[3]} = ${tout}　${tin===tout?"✓ 守恒":"✗ 不守恒"}`;
+  if(r.kind!=="none") r.free.forEach((f,k)=>{ document.getElementById("slv"+k).textContent=ts[k];
+    const iv=interval(net,ts,k); document.getElementById("sln"+k).textContent=iv?`可行范围：${dec(Math.max(0,iv[0]))} ～ ${iv[1]===Infinity?"不限":dec(iv[1])}`:(r.free.length===1||!feasiblePoint(net)?"取任何值都有路段流量为负，没有可行方案":"在另一个自由未知量的当前取值下，没有可行值"); });
+  document.getElementById("stepsBox").innerHTML=trafficSteps(net,ts);
+  document.getElementById("legendBox").innerHTML='<span><i class="ln" style="background:var(--ext)"></i>外部道路</span><span><i class="ln" style="background:var(--road)"></i>路段（粗细 ∝ 流量）</span><span><i class="ln" style="background:var(--free)"></i>自由未知量对应的路段</span><span><i class="ln" style="background:var(--neg)"></i>流量为负（不可行）</span>';
+  redraw();
+}
+function readCir(){
+  const v=["cE1","cE2","cR1","cR2","cR3"].map(id=>{ const el=document.getElementById(id), x=Math.round(+el.value||0); if(el.value!==""&&el.value!=="-"&&+el.value!==x) el.value=x; return x; });
+  for(let i=2;i<5;i++) if(v[i]<1){ v[i]=1; document.getElementById(["cR1","cR2","cR3"][i-2]).value=1; }
+  cir=makeCir(...v);
+  document.getElementById("stepsBox").innerHTML=circuitSteps(cir);
+  document.getElementById("legendBox").innerHTML='<span><i class="ln" style="background:var(--road)"></i>蓝色箭头：假设的电流方向</span><span><i class="ln" style="background:var(--neg)"></i>红色箭头：实际方向（电流为负时）</span>';
+  redraw();
+}
+function setCirInputs(v){ ["cE1","cE2","cR1","cR2","cR3"].forEach((id,i)=>document.getElementById(id).value=v[i]); readCir(); }
+function clearOn(box){ document.querySelectorAll(`#${box} button`).forEach(b=>b.classList.remove("on")); }
+["eA","eB","eC","eD"].forEach(id=>document.getElementById(id).addEventListener("change",()=>{ clearOn("tPresets"); readNet(); }));
+["eA","eB","eC","eD"].forEach(id=>document.getElementById(id).addEventListener("input",()=>{ clearOn("tPresets"); readNet(); }));
+document.getElementById("diagOn").addEventListener("change",()=>{ clearOn("tPresets"); ts=document.getElementById("diagOn").checked?[60,40]:[100]; readNet(); });
+["cE1","cE2","cR1","cR2","cR3"].forEach(id=>document.getElementById(id).addEventListener("input",()=>{ clearOn("cPresets"); readCir(); }));
+document.getElementById("tPresets").innerHTML=TPRE.map((p,i)=>`<button data-i="${i}">${p[0]}</button>`).join("");
+document.querySelectorAll("#tPresets button").forEach(b=>b.addEventListener("click",()=>{ const p=TPRE[+b.dataset.i]; setNetInputs(p[1],p[2],p[3]); clearOn("tPresets"); b.classList.add("on"); }));
+document.getElementById("cPresets").innerHTML=CPRE.map((p,i)=>`<button data-i="${i}">${p[0]}</button>`).join("");
+document.querySelectorAll("#cPresets button").forEach(b=>b.addEventListener("click",()=>{ setCirInputs(CPRE[+b.dataset.i][1]); clearOn("cPresets"); b.classList.add("on"); }));
+function setScene(s){
+  scene=s;
+  document.getElementById("scTraffic").classList.toggle("on",s==="traffic");
+  document.getElementById("scCircuit").classList.toggle("on",s==="circuit");
+  document.getElementById("trafficCard").style.display=s==="traffic"?"":"none";
+  document.getElementById("circuitCard").style.display=s==="circuit"?"":"none";
+  if(s==="traffic") updateTraffic(); else readCir();
+}
+document.getElementById("scTraffic").addEventListener("click",()=>setScene("traffic"));
+document.getElementById("scCircuit").addEventListener("click",()=>setScene("circuit"));
+
+/* ═══════════ 练习 ═══════════
+   题型：entry 路口方程 / 系数矩阵元素 | type 解的情况与自由未知量个数 | flow 给定自由未知量求路段流量 | bound 可行区间端点 */
+const QUIZKEY="la-network-flow-quiz";
+let streak=0, stats=loadStats(), quiz=null;
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){ if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return; stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats(); }
+function renderStats(){ const acc=stats.attempted?Math.round(stats.correct/stats.attempted*100):0;
+  document.getElementById("quizStats").innerHTML=`已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`; }
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function randExt(conserve,feasible){
+  let a,b,c,d;
+  for(;;){ a=ri(4,16)*50; b=ri(2,14)*50; c=ri(2,14)*50; d=a+c-b;
+    if(d<100||d>1200) continue; if(feasible&&a-b<50) continue; break; }
+  if(!conserve){ let k; do{ k=ri(-4,4)*50; }while(k===0||d+k<50); d+=k; }
+  return [a,b,c,d];
+}
+const TYPEOPTS=["唯一解","无穷多解，自由未知量 1 个","无穷多解，自由未知量 2 个","无解"];
+function genProblem(){
+  const r=Math.random();
+  if(r<0.28){
+    const nt=makeNet(randExt(true,false),Math.random()<0.4);
+    const i=ri(0,3); const askB=Math.random()<0.3; const cand=[];
+    nt.roads.forEach((_,j)=>{ if(nt.A[i][j]!==0||Math.random()<0.3) cand.push(j); });
+    const j=cand[ri(0,cand.length-1)];
+    return {kind:"entry",net:nt,i,j,askB,ans:askB?nt.b[i]:nt.A[i][j]};
+  }else if(r<0.55){
+    const t=ri(0,3);
+    if(t===3){ const v=[ri(6,24),ri(3,24),ri(1,10),ri(1,10),ri(1,10)]; return {kind:"type",cir:makeCir(...v),ansIdx:0,selected:-1}; }
+    const nt=makeNet(randExt(t!==2,false),t===1||(t===2&&Math.random()<0.5));
+    const rr=nt.res; const ans=rr.kind==="none"?3:rr.free.length===1?1:2;
+    return {kind:"type",net:nt,ansIdx:ans,selected:-1};
+  }else if(r<0.8){
+    const nt=makeNet(randExt(true,true),false);
+    const iv=interval(nt,[0],0); const hi=Math.min(iv[1],1000);
+    const t=Math.round(ri(0,Math.floor(hi/10))*10);
+    const j=ri(0,2); const fl=flowsAt(nt,[t]);
+    return {kind:"flow",net:nt,t,j,ans:Math.round(fl[j])};
+  }else{
+    const nt=makeNet(randExt(true,true),false);
+    const iv=interval(nt,[0],0);
+    return {kind:"bound",net:nt,ans:Math.round(iv[1])};
+  }
+}
+function extText(nt){ return `外部流量（辆/小时）：<math><mi>A</mi></math> 驶入 ${nt.e[0]}，<math><mi>B</mi></math> 驶出 ${nt.e[1]}，<math><mi>C</mi></math> 驶入 ${nt.e[2]}，<math><mi>D</mi></math> 驶出 ${nt.e[3]}。`; }
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody"), fb=document.getElementById("qFeedback");
+  q.done=false; q.revealed=false; fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  if(q.kind==="entry"){
+    const nd=NODES[q.i].k;
+    body.innerHTML=`路网如左图，${extText(q.net)}<br>把每个路口的方程整理成“流出该路口的路段取 <math><mo>+</mo></math>、流入的取 <math><mo>&#x2212;</mo></math>，右边 = 外部驶入 − 外部驶出”，行按路口 <math><mi>A</mi><mo>,</mo><mi>B</mi><mo>,</mo><mi>C</mi><mo>,</mo><mi>D</mi></math> 排列。`
+      +(q.askB?`常数列 <math><mi class="bm">b</mi></math> 中路口 <math><mi>${nd}</mi></math> 对应的数是：`:`系数矩阵 <math><mi class="bm">A</mi></math> 中路口 <math><mi>${nd}</mi></math> 那一行、<math>${vX(q.j)}</math> 那一列的数是：`)
+      +`<div class="qc"><input class="qin" id="qA" type="number"></div>`;
+  }else if(q.kind==="type"){
+    const head=q.cir?`电路如左图：<math><msub><mi>E</mi><mn>1</mn></msub><mo>=</mo><mn>${q.cir.E1}</mn></math> V，<math><msub><mi>E</mi><mn>2</mn></msub><mo>=</mo><mn>${q.cir.E2}</mn></math> V，<math><msub><mi>R</mi><mn>1</mn></msub><mo>=</mo><mn>${q.cir.R1}</mn></math> Ω，<math><msub><mi>R</mi><mn>2</mn></msub><mo>=</mo><mn>${q.cir.R2}</mn></math> Ω，<math><msub><mi>R</mi><mn>3</mn></msub><mo>=</mo><mn>${q.cir.R3}</mn></math> Ω。用基尔霍夫定律求三条支路电流 <math>${vI(0)}<mo>,</mo>${vI(1)}<mo>,</mo>${vI(2)}</math>，`
+      :`路网如左图（未知量是各路段流量），${extText(q.net)}<br>按“驶入 = 驶出”列出四个路口的方程组，`;
+    body.innerHTML=head+`这个方程组的解的情况是：<div class="opts" id="qOpts">`+TYPEOPTS.map((t,i)=>`<label data-i="${i}"><input type="radio" name="qopt" value="${i}"><span>${t}</span></label>`).join("")+"</div>";
+    body.querySelectorAll("#qOpts label").forEach(l=>l.addEventListener("click",()=>{ body.querySelectorAll("#qOpts label").forEach(x=>x.classList.remove("sel")); l.classList.add("sel"); l.querySelector("input").checked=true; q.selected=+l.dataset.i; }));
+  }else if(q.kind==="flow"){
+    body.innerHTML=`路网如左图，${extText(q.net)}<br>以 <math>${vX(3)}</math> 为自由未知量。若交通部门把路段 <math>${vX(3)}</math> 的流量定为 <math>${vX(3)}<mo>=</mo><mn>${q.t}</mn></math>，则 <math>${vX(q.j)}</math> 等于多少？`
+      +`<div class="qc"><math>${vX(q.j)}<mo>=</mo></math> <input class="qin" id="qA" type="number"></div>`;
+  }else{
+    body.innerHTML=`路网如左图，${extText(q.net)}<br>各路段都是单行道，流量不能为负。在所有可行的调配方案中，路段 <math>${vX(3)}</math> 的流量<b>最大</b>可以是多少？`
+      +`<div class="qc"><math>${vX(3)}</math> 的最大值 = <input class="qin" id="qA" type="number"></div>`;
+  }
+  body.querySelectorAll("input.qin").forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); }));
+  document.getElementById("stepsBox").innerHTML='<div class="placeholder">提交答案或点“看解析”后，这里显示完整的求解过程</div>';
+  document.getElementById("legendBox").innerHTML="";
+  redraw(); renderStats();
+}
+function drawQuiz(){
+  const q=quiz; if(!q) return;
+  if(q.cir){ drawCir(q.cir,q.revealed?q.cir.res.eta.map(fv):null); return; }
+  const nt=q.net;
+  if(q.revealed&&nt.res.kind!=="none"){
+    const t=q.kind==="flow"?[q.t]:q.kind==="bound"?[q.ans]:(feasiblePoint(nt)||nt.res.free.map(()=>0));
+    // entry/type 揭晓时取一个可行（或 0）的自由未知量值展示
+    drawNet(nt,flowsAt(nt,t));
+  }else drawNet(nt,null);
+}
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return; const fb=document.getElementById("qFeedback");
+  if(q.kind==="type"){
+    if(q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个选项"; return; }
+    if(q.selected===q.ansIdx) markCorrect();
+    else{ fb.className="feedback no"; fb.textContent="不对哦：先比较 R(A) 与 R(A|b)，相等时再看未知量个数 n − R。"; }
+    return;
+  }
+  const v=document.getElementById("qA").value.trim();
+  if(v===""){ fb.className="feedback no"; fb.textContent="请先填一个数"; return; }
+  if(Math.abs(+v-q.ans)<1e-9) markCorrect();
+  else if(q.kind==="entry"&&+v===-q.ans){ fb.className="feedback no"; fb.textContent="大小对了，注意符号约定：流出取 +、流入取 −；右边 = 外部驶入 − 外部驶出。"; }
+  else{ fb.className="feedback no"; fb.textContent=q.kind==="entry"?"还不对～ 看这条路段是进入、离开还是不经过这个路口。":q.kind==="flow"?"还不对，先用路口方程把各路段用 x₄ 表示出来～":"还不对：每条路段都 ≥ 0，看哪一条最先变成负数。"; }
+}
+function solHTML(){
+  const q=quiz;
+  if(q.kind==="entry"){ const nd=NODES[q.i].k;
+    return `<div class="sol">路口 <math><mi>${nd}</mi></math>：${natEqML(q.net,q.i)} ⟹ <math>${lhsML(q.net.A[q.i],vX)}<mo>=</mo>${fML(q.net.b[q.i])}</math>，所以这个数是 <math>${fML(q.ans)}</math>。完整过程见左侧。</div>`; }
+  if(q.kind==="type"){
+    if(q.cir) return `<div class="sol">节点电流方程 1 个 + 回路电压方程 2 个，<math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo><mo>=</mo><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>|</mo><mi class="bm">b</mi><mo>)</mo><mo>=</mo><mn>3</mn><mo>=</mo><mi>n</mi></math>，唯一解。见左侧。</div>`;
+    const r=q.net.res;
+    return `<div class="sol"><math><mi>n</mi><mo>=</mo><mn>${r.n}</mn></math>，<math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>)</mo><mo>=</mo><mn>${r.rA}</mn></math>，<math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>|</mo><mi class="bm">b</mi><mo>)</mo><mo>=</mo><mn>${r.rAb}</mn></math>：`
+      +(r.kind==="none"?`总驶入 ${q.net.e[0]+q.net.e[2]} ≠ 总驶出 ${q.net.e[1]+q.net.e[3]}，无解。`:`无穷多解，自由未知量 <math><mn>${r.n}</mn><mo>&#x2212;</mo><mn>${r.rA}</mn><mo>=</mo><mn>${r.free.length}</mn></math> 个（四个路口方程之和恒为 0，只有 3 个独立）。`)+`见左侧。</div>`;
+  }
+  const r=q.net.res, e=r.eta.map(fv), xi=r.basis[0].map(fv);
+  const expr=[0,1,2].map(j=>`<math>${vX(j)}<mo>=</mo>${fML(r.eta[j])}${xi[j]<0?"<mo>&#x2212;</mo>":"<mo>+</mo>"}${vX(3)}</math>`).join("，");
+  if(q.kind==="flow") return `<div class="sol">由路口方程得 ${expr}。代入 <math>${vX(3)}<mo>=</mo><mn>${q.t}</mn></math>，<math>${vX(q.j)}<mo>=</mo><mn>${q.ans}</mn></math>。</div>`;
+  return `<div class="sol">由路口方程得 ${expr}。各路段 ≥ 0 ⟹ <math><mn>0</mn><mo>≤</mo>${vX(3)}<mo>≤</mo><mn>${q.ans}</mn></math>（再大就有路段流量变负），所以最大值是 <math><mn>${q.ans}</mn></math>。</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+function showFull(){ const q=quiz; q.revealed=true;
+  if(q.cir) document.getElementById("stepsBox").innerHTML=circuitSteps(q.cir);
+  else{ const t=q.kind==="flow"?[q.t]:q.kind==="bound"?[q.ans]:(feasiblePoint(q.net)||(q.net.res.free||[]).map(()=>0)); document.getElementById("stepsBox").innerHTML=trafficSteps(q.net,t); }
+  redraw(); }
+function markCorrect(){ const q=quiz; q.done=true; stats.attempted++; stats.correct++; streak++; saveStats(); showFull();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML(); lockQ(); renderStats(); }
+function onReveal(){ const q=quiz; if(!q||q.done) return; q.done=true; stats.attempted++; streak=0; saveStats(); showFull();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML(); lockQ(); renderStats(); }
+function onHint(){
+  const q=quiz; if(!q) return; const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="entry") fb.innerHTML="提示：先写“驶入 = 驶出”，再把未知量都移到左边、数字移到右边。";
+  else if(q.kind==="type") fb.innerHTML=q.cir?"提示：3 个未知电流、3 个独立方程，看系数行列式是否为 0。":"提示：四个路口方程相加，左边恰好全部抵消，所以 R(A) ≤ 3；再看总驶入是否等于总驶出。";
+  else fb.innerHTML=`提示：从路口 <math><mi>A</mi></math> 出发：<math>${vX(0)}<mo>=</mo></math>(A 驶入) − <math>${vX(3)}</math>，再依次到 <math><mi>B</mi></math>、<math><mi>C</mi></math>。`;
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+function setMode(m){
+  mode=m;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("sceneBar").style.display=m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display=m==="practice"?"":"none";
+  if(m==="practice"){ document.getElementById("trafficCard").style.display="none"; document.getElementById("circuitCard").style.display="none"; quiz=genProblem(); renderProblem(); }
+  else{ quiz=null; setScene(scene); }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
+setNetInputs([600,400,300,500],false,[100]);
+document.querySelector("#tPresets button").classList.add("on"); document.querySelector("#cPresets button").classList.add("on");
+["cE1","cE2","cR1","cR2","cR3"].forEach((id,i)=>document.getElementById(id).value=[12,12,2,3,6][i]);
+resize();
+</script>
+
+<script>
+/* ── 排版：标点不单独成行、不在行首；左括号不留在行尾 ── */
+(function(){
+  const CLOSE=/^[，。、；：）)！？」》,.;:!?…]+/, OPEN=/[（(「《]+$/;
+  function wrapOf(m){
+    if(m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr")) return m.parentNode;
+    const s=document.createElement("span"); s.className="nobr"; s.style.whiteSpace="nowrap";
+    m.parentNode.insertBefore(s,m); s.appendChild(m); return s;
+  }
+  function glue(root){
+    (root.querySelectorAll?root:document).querySelectorAll("math").forEach(m=>{
+      if(m.closest("math")!==m || m.getAttribute("display")==="block") return;
+      const host=m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let nx=host.nextSibling;
+      if(nx && nx.nodeType===3){ const k=nx.data.match(CLOSE); if(k){ const w=wrapOf(m);
+          w.appendChild(document.createTextNode(k[0])); nx.data=nx.data.slice(k[0].length); } }
+      const h2=m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let pv=h2.previousSibling;
+      if(pv && pv.nodeType===3){ const k=pv.data.match(OPEN); if(k){ const w=wrapOf(m);
+          w.insertBefore(document.createTextNode(k[0]),w.firstChild); pv.data=pv.data.slice(0,pv.data.length-k[0].length); } }
+    });
+  }
+  let busy=false;
+  const ob=new MutationObserver(()=>{ if(busy) return; busy=true; ob.disconnect(); glue(document.body); ob.observe(document.body,{childList:true,subtree:true}); busy=false; });
+  glue(document.body); ob.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-network-flow";          // ← 计数键：与编号 L# 解耦的稳定标识，永不改动
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

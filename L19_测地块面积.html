@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测地块面积（鞋带公式） · L19 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1; --red:#c53030;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --poly:#1e3a8a; --pos:#2b6cb0; --neg:#e53e3e;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.1em;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  #canvasContainer{width:100%;display:flex;justify-content:center;touch-action:none;}
+  canvas{display:block;cursor:crosshair;border:1px solid var(--line);border-radius:10px;background:#fbfdff;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:8px;justify-content:center;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:16px;height:12px;border-radius:3px;display:inline-block;}
+  .tip{font-size:12.5px;color:var(--sub);margin-top:6px;text-align:center;}
+  button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+  .presets button{font-size:12.5px;padding:5px 10px;}
+  .presets button.on{border-color:var(--blue);background:#eef4fb;}
+  .plabel{font-size:12.5px;color:var(--sub);margin:12px 0 2px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:14px;}
+  .row input[type=number]{width:80px;font-size:14px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;text-align:center;}
+  .row label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+  .row input[type=radio],.row input[type=checkbox]{accent-color:var(--blue);}
+  .steps{font-size:14px;line-height:2;}
+  .steps math{font-size:1.05em;}
+  .steps .st{margin:12px 0 2px;font-weight:600;color:var(--sub);font-size:14px;}
+  .steps .ctr{text-align:center;overflow-x:auto;overflow-y:hidden;padding:2px 0;line-height:2.4;}
+  .steps .tip{font-size:14px;color:var(--ink);text-align:left;}
+  table.terms{border-collapse:collapse;margin:6px auto;font-size:14px;}
+  table.terms td,table.terms th{border:1px solid var(--line);padding:2px 10px;text-align:center;vertical-align:middle;}
+  table.terms th{background:#f8fafc;color:var(--sub);font-weight:600;}
+  table.terms tr.pos td.v{color:var(--pos);font-weight:600;}
+  table.terms tr.neg td.v{color:var(--neg);font-weight:600;}
+  table.terms tr{cursor:pointer;}
+  table.terms tr.hl td{background:#fff8e6;}
+  .verdict{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:14px;line-height:1.9;}
+  .verdict.uniq{background:#e6fffa;color:#234e52;border:1px solid #b2f5ea;}
+  .verdict.inf{background:#fffaf0;color:#744210;border:1px solid #f6e05e;}
+  .verdict.none{background:#fff5f5;color:#822727;border:1px solid #feb2b2;}
+  .big{text-align:center;margin:4px 0;font-weight:600;}
+  /* 练习 */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody input.qin{width:80px;font-size:15px;padding:4px 6px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .qgrid{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;flex-wrap:wrap;}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid var(--line);
+       border-radius:8px;cursor:pointer;font-size:14px;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .opts input{accent-color:var(--blue);}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:13.5px;margin-top:6px;line-height:1.9;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,340px);gap:16px;align-items:start;}
+  @media(max-width:860px){ .layout{grid-template-columns:minmax(0,1fr);} .col-right{order:-1;} }
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:#718096;text-align:center;}
+  table.terms th:first-child,table.terms td:first-child{white-space:nowrap;}
+  .filebtn{display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;font-size:13.5px;}
+  .filebtn:hover{border-color:var(--blue);}
+  .filename{font-size:12.5px;color:var(--sub);margin-left:6px;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>测地块面积（鞋带公式）</h1>
+  <span class="sub">二阶行列式 = 有向面积 · 多边形面积 = 各三角形有向面积之和</span>
+  <span class="tag">L19 · 应用案例</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    二阶行列式 <math><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mtable><mtr><mtd><msub><mi>x</mi><mn>1</mn></msub></mtd><mtd><msub><mi>y</mi><mn>1</mn></msub></mtd></mtr><mtr><mtd><msub><mi>x</mi><mn>2</mn></msub></mtd><mtd><msub><mi>y</mi><mn>2</mn></msub></mtd></mtr></mtable><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow></math>
+    是两向量 <math><mo stretchy="false">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo>,</mo><msub><mi>y</mi><mn>1</mn></msub><mo stretchy="false">)</mo></math>、<math><mo stretchy="false">(</mo><msub><mi>x</mi><mn>2</mn></msub><mo>,</mo><msub><mi>y</mi><mn>2</mn></msub><mo stretchy="false">)</mo></math> 张成的平行四边形的<b>有向面积</b>（见 L2），三角形的有向面积是它的一半。
+    把多边形的顶点 <math><msub><mi>P</mi><mn>1</mn></msub><mo>,</mo><mo>…</mo><mo>,</mo><msub><mi>P</mi><mi>n</mi></msub></math> 依次与原点 <math><mi>O</mi></math> 连成 <math><mi>n</mi></math> 个三角形，把它们的有向面积加起来：
+    <div class="formula">
+      <math display="block"><mi>S</mi><mo>=</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover>
+        <mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mtable><mtr><mtd><msub><mi>x</mi><mi>i</mi></msub></mtd><mtd><msub><mi>y</mi><mi>i</mi></msub></mtd></mtr><mtr><mtd><msub><mi>x</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></msub></mtd><mtd><msub><mi>y</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></msub></mtd></mtr></mtable><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow>
+        <mo>,</mo><mspace width="1.2em"/><msub><mi>P</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><msub><mi>P</mi><mn>1</mn></msub></math>
+    </div>
+    多边形外面的部分被正、负三角形<b>相互抵消</b>，剩下的恰好是多边形的面积——这就是测量中常用的<b>鞋带公式</b>（坐标法）。顶点按<b>逆时针</b>排列时 <math><mi>S</mi><mo>&gt;</mo><mn>0</mn></math>，按<b>顺时针</b>排列时 <math><mi>S</mi><mo>&lt;</mo><mn>0</mn></math>，面积都是 <math><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi>S</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow></math>。只要测出地块拐点的坐标，就能算出面积。
+  </div>
+
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div class="layout">
+  <div class="col-left">
+    <div class="card">
+      <div id="canvasContainer"><canvas id="canvas"></canvas></div>
+      <div class="legend" id="legendBox">
+        <span><i style="background:rgba(43,108,176,.28)"></i>有向面积为正的三角形</span>
+        <span><i style="background:rgba(229,62,62,.28)"></i>有向面积为负的三角形</span>
+        <span><i style="background:none;border:2px solid var(--poly);height:10px"></i>多边形（箭头为顶点顺序）</span>
+      </div>
+      <div class="tip" id="canvasTip">点空白处按顺序添加顶点（最多 20 个），拖动可移动，双击某个顶点删除</div>
+    </div>
+    <div class="card" id="stepsCard">
+      <h2>计算过程</h2>
+      <div class="steps" id="stepsBox"></div>
+    </div>
+  </div>
+
+  <div class="col-right">
+    <div id="exploreSide">
+      <div class="card">
+        <h2>地块</h2>
+        <div class="plabel" style="margin-top:0;">例子：</div>
+        <div class="presets" id="presetBox"></div>
+        <div class="row">
+          <button id="btnUndo">删除最后一个顶点</button>
+          <button id="btnClear">清空</button>
+          <button id="btnRev">反转顶点顺序</button>
+        </div>
+        <div class="plabel">三角形的公共顶点：</div>
+        <div class="row" style="margin-top:2px;">
+          <label><input type="radio" name="ref" value="O" checked>原点 <math><mi>O</mi></math></label>
+          <label><input type="radio" name="ref" value="P1">第一个顶点 <math><msub><mi>P</mi><mn>1</mn></msub></math></label>
+        </div>
+        <div class="row"><label><input type="checkbox" id="snapOn" checked>顶点吸附到网格（半格）</label></div>
+      </div>
+      <div class="card">
+        <h2>底图与比例尺（可选）</h2>
+        <div class="row" style="margin-top:0;">
+          <label class="filebtn">上传底图…<input type="file" id="imgIn" accept="image/*" style="display:none;"></label><span class="filename" id="imgName">未选择图片</span>
+        </div>
+        <div class="row"><button id="btnImgOff">移除底图</button></div>
+        <div class="row">比例尺：1 格 = <input type="number" id="scaleIn" value="10" min="0" step="any"> 米</div>
+        <div class="tip" style="text-align:left;">计算过程最后会按比例尺换算成实际面积（平方米、亩）。上传地图截图或地块照片后（会清空已有顶点），沿边界依次点出拐点，再按图上的比例尺填写“1 格 = 多少米”。图片只在本机浏览器里显示，不会上传。</div>
+      </div>
+    </div>
+
+    <div class="card" id="quizCard" style="display:none;">
+      <div class="quizhead">
+        <h2>练习 · 鞋带公式</h2>
+        <span class="stats" id="quizStats"></span>
+        <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+      </div>
+      <div class="qbody" id="qBody"></div>
+      <div class="feedback" id="qFeedback"></div>
+      <div class="qbtns">
+        <button class="primary" id="qSubmit">提交</button>
+        <button id="qHint">提示</button>
+        <button id="qReveal">看解析</button>
+        <button id="qNext">下一题 ▸</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+/* ═══════════ 数据 ═══════════ */
+const PRESETS=[
+  {name:"矩形", pts:[[1,1],[7,1],[7,5],[1,5]]},
+  {name:"凹多边形", pts:[[1,1],[8,1],[8,7],[4.5,3.5],[1,7]]},
+  {name:"不规则地块", pts:[[1.5,1],[6,0.5],[9,2.5],[8.5,6],[6,8.5],[3,7.5],[0.5,4.5]]},
+  {name:"顺时针排列", pts:[[1,1],[2,6],[7,7],[8,2]]},
+  {name:"自交（公式失效）", pts:[[1,1],[7,7],[7,1],[1,7]]}
+];
+let pts=PRESETS[0].pts.map(p=>p.slice()), ref="O", snapOn=true;
+let mode="explore", quiz=null, drag=-1, hl=-1;
+let img=null;                      // {el, w, h}（数据坐标下放在 [0,10]×[0,10h/w]）
+
+/* ═══════════ 数学 ═══════════ */
+function refPoint(P,r){ return r==="P1"&&P.length? P[0] : [0,0]; }
+function terms(P,r){                // 每一项：三角形 R P_i P_{i+1}
+  const n=P.length, R=refPoint(P,r), out=[];
+  for(let i=0;i<n;i++){
+    const a=P[i], b=P[(i+1)%n];
+    const ax=a[0]-R[0], ay=a[1]-R[1], bx=b[0]-R[0], by=b[1]-R[1];
+    out.push({i, j:(i+1)%n, ax, ay, bx, by, D:ax*by-bx*ay});
+  }
+  return out;
+}
+function signedArea(P){ let s=0; for(let i=0;i<P.length;i++){ const a=P[i], b=P[(i+1)%P.length]; s+=a[0]*b[1]-b[0]*a[1]; } return s/2; }
+function segX(p1,p2,p3,p4){         // 两线段是否相交（含共线重叠）
+  const o=(a,b,c)=>Math.sign((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]));
+  const on=(a,b,c)=>Math.min(a[0],b[0])-1e-12<=c[0]&&c[0]<=Math.max(a[0],b[0])+1e-12&&Math.min(a[1],b[1])-1e-12<=c[1]&&c[1]<=Math.max(a[1],b[1])+1e-12;
+  const d1=o(p3,p4,p1),d2=o(p3,p4,p2),d3=o(p1,p2,p3),d4=o(p1,p2,p4);
+  if(d1*d2<0&&d3*d4<0) return true;
+  if(d1===0&&on(p3,p4,p1)) return true; if(d2===0&&on(p3,p4,p2)) return true;
+  if(d3===0&&on(p1,p2,p3)) return true; if(d4===0&&on(p1,p2,p4)) return true;
+  return false;
+}
+function selfIntersect(P){
+  const n=P.length; if(n<4) return false;
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
+    if(j===i+1||(i===0&&j===n-1)) continue;
+    if(segX(P[i],P[(i+1)%n],P[j],P[(j+1)%n])) return true;
+  }
+  return false;
+}
+function hasDup(P){ for(let i=0;i<P.length;i++) for(let j=i+1;j<P.length;j++) if(Math.abs(P[i][0]-P[j][0])<1e-9&&Math.abs(P[i][1]-P[j][1])<1e-9) return true; return false; }
+function trimNum(v){ let t=(Math.round(v*1e4)/1e4).toString(); if(t==="-0") t="0"; return t; }
+const NEG='<mo form="prefix" lspace="0" rspace="0">&#x2212;</mo>';
+function mnum(v){ const t=trimNum(v); return t.startsWith("-")?NEG+`<mn>${t.slice(1)}</mn>`:`<mn>${t}</mn>`; }
+function txt(v){ return trimNum(v).replace("-","−"); }
+const Psub=(i)=>`<msub><mi>P</mi><mn>${i+1}</mn></msub>`;
+function det2ML(a,b,c,d){ return `<mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mtable columnspacing="0.8em"><mtr><mtd>${mnum(a)}</mtd><mtd>${mnum(b)}</mtd></mtr><mtr><mtd>${mnum(c)}</mtd><mtd>${mnum(d)}</mtd></mtr></mtable><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow>`; }
+function prodML(p,q){ // 乘积项：负数加括号
+  const f=v=>v<0?`<mo stretchy="false">(</mo>${mnum(v)}<mo stretchy="false">)</mo>`:mnum(v);
+  return f(p)+"<mo>&#x22C5;</mo>"+f(q);
+}
+function areaUnits(S){ return Math.abs(S); }
+function fmtReal(m2){ const mu=m2/(10000/15); return `${(+m2.toPrecision(5)).toLocaleString("zh-CN")} 平方米 ≈ ${(+mu.toPrecision(4)).toLocaleString("zh-CN")} 亩`; }
+
+/* ═══════════ 计算过程 ═══════════ */
+function stepsHTML(P,r,opt){
+  opt=opt||{};
+  const n=P.length;
+  if(n<3) return `<div class="verdict inf">至少需要 3 个顶点才能围成多边形，在画布空白处继续点击添加。</div>`;
+  const T=terms(P,r), sum=T.reduce((s,t)=>s+t.D,0), S=sum/2;
+  const R=r==="P1"?Psub(0):`<mi>O</mi>`;
+  let h=`<div class="st">① 顶点坐标（按顺序）</div><div class="ctr">`
+    +P.map((p,i)=>`<math>${Psub(i)}<mo stretchy="false">(</mo>${mnum(p[0])}<mo>,</mo>${mnum(p[1])}<mo stretchy="false">)</mo></math>`).join("，")+`</div>`;
+  if(r==="P1") h+=`<div class="tip">以 <math>${Psub(0)}</math> 为公共顶点时，先把各点坐标减去 <math>${Psub(0)}</math> 的坐标（相当于把坐标原点移到 <math>${Psub(0)}</math>），含 <math>${Psub(0)}</math> 的两项为 0。</div>`;
+  h+=`<div class="st">② 每个三角形 <math>${R}<msub><mi>P</mi><mi>i</mi></msub><msub><mi>P</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></msub></math> 的二阶行列式（点击某一行可在图上高亮）</div>`
+    +`<div style="overflow-x:auto;"><table class="terms" id="termTbl"><tr><th>三角形</th><th>二阶行列式 <math><msub><mi>D</mi><mi>i</mi></msub></math></th><th>有向面积 <math displaystyle="true"><mfrac><mn>1</mn><mn>2</mn></mfrac><msub><mi>D</mi><mi>i</mi></msub></math></th></tr>`;
+  T.forEach((t,k)=>{
+    const cls=t.D>1e-12?"pos":t.D<-1e-12?"neg":"";
+    h+=`<tr class="${cls}${k===opt.hl?" hl":""}" data-k="${k}"><td><math>${R}${Psub(t.i)}${Psub(t.j)}</math></td>`
+      +`<td><math>${det2ML(t.ax,t.ay,t.bx,t.by)}<mo>=</mo>${prodML(t.ax,t.by)}<mo>&#x2212;</mo>${prodML(t.bx,t.ay)}<mo>=</mo>${mnum(t.D)}</math></td>`
+      +`<td class="v"><math>${mnum(t.D/2)}</math></td></tr>`;
+  });
+  h+=`</table></div>`;
+  h+=`<div class="st">③ 求和</div><div class="ctr"><math displaystyle="true"><mo>∑</mo><msub><mi>D</mi><mi>i</mi></msub><mo>=</mo>`
+    +T.map((t,k)=>(k&&t.D>=0?"<mo>+</mo>":"")+(t.D<0?(k?"<mo>&#x2212;</mo>":NEG)+`<mn>${txt(-t.D)}</mn>`:mnum(t.D))).join("")
+    +`<mo>=</mo>${mnum(sum)}</math></div><div class="ctr"><math displaystyle="true"><mi>S</mi><mo>=</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><mo>∑</mo><msub><mi>D</mi><mi>i</mi></msub><mo>=</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><mo>&#x22C5;</mo>${sum<0?`<mo stretchy="false">(</mo>${mnum(sum)}<mo stretchy="false">)</mo>`:mnum(sum)}<mo>=</mo>${mnum(S)}</math></div>`;
+  if(hasDup(P)){ h+=`<div class="verdict none">有两个顶点<b>重合</b>：请拖开或双击删除其中一个，再看面积。</div>`; return h; }
+  if(selfIntersect(P)){
+    h+=`<div class="verdict none">这个多边形的边<b>自相交</b>：交叉的两部分绕行方向相反，有向面积一正一负相互抵消，<math><mi>S</mi></math> 不再等于围成的面积，鞋带公式<b>失效</b>。实际测量时，拐点要沿边界依次编号。</div>`;
+    return h;
+  }
+  if(Math.abs(S)<1e-12){ h+=`<div class="verdict inf">各顶点共线，围成的面积为 0。</div>`; return h; }
+  h+=`<div class="verdict uniq">${S>0?"S &gt; 0：顶点按<b>逆时针</b>排列":"S &lt; 0：顶点按<b>顺时针</b>排列"}，面积 <math><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi>S</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow><mo>=</mo>${mnum(Math.abs(S))}</math> 平方格。`
+    +(opt.scale>0?`<br>按比例尺 1 格 = ${txt(opt.scale)} 米，实际面积 <b>${fmtReal(Math.abs(S)*opt.scale*opt.scale)}</b>（1 亩 ≈ 666.7 平方米）。`:"")+`</div>`;
+  if(!opt.quiz) h+=`<div class="tip" style="margin-top:8px;">试试：①切换公共顶点为 <math>${Psub(0)}</math>，每一项都变了，但总和不变；②点“反转顶点顺序”，每一项都变号，<math><mi>S</mi></math> 也变号。图中多边形外的部分被<span style="color:var(--pos)">蓝色</span>、<span style="color:var(--neg)">红色</span>三角形重叠覆盖、正负抵消。</div>`;
+  return h;
+}
+
+/* ═══════════ 画布 ═══════════ */
+const canvas=document.getElementById("canvas"), ctx=canvas.getContext("2d"), container=document.getElementById("canvasContainer");
+let size=480, view={x0:-1,y0:-1,span:12,t:1};
+const PADP=30;
+function niceStep(span){ const raw=span/10, p=Math.pow(10,Math.floor(Math.log10(raw))), m=raw/p; return (m<1.5?1:m<3.5?2:m<7.5?5:10)*p; }
+function fitView(P,withO){
+  let xs=P.map(p=>p[0]), ys=P.map(p=>p[1]);
+  if(withO){ xs.push(0); ys.push(0); }
+  if(img&&mode==="explore"){ xs.push(0,10); ys.push(0,10*img.h/img.w); }
+  if(!xs.length){ xs=[0,10]; ys=[0,10]; }
+  let xa=Math.min(...xs), xb=Math.max(...xs), ya=Math.min(...ys), yb=Math.max(...ys);
+  let span=Math.max(xb-xa,yb-ya,4); span*=1.12;
+  const t=niceStep(span); span=Math.ceil(span/t)*t;
+  const cx=(xa+xb)/2, cy=(ya+yb)/2;
+  return {x0:Math.floor((cx-span/2)/t)*t, y0:Math.floor((cy-span/2)/t)*t, span:span+t, t};
+}
+const X=x=>PADP+(x-view.x0)/view.span*(size-2*PADP);
+const Y=y=>size-PADP-(y-view.y0)/view.span*(size-2*PADP);
+const Xi=px=>view.x0+(px-PADP)/(size-2*PADP)*view.span;
+const Yi=py=>view.y0+(size-PADP-py)/(size-2*PADP)*view.span;
+function resize(){
+  size=Math.max(280,Math.min(container.clientWidth,520));
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  canvas.width=Math.round(size*dpr); canvas.height=Math.round(size*dpr);
+  canvas.style.width=size+"px"; canvas.style.height=size+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0); redraw();
+}
+window.addEventListener("resize",resize);
+const CMFONT='"Cambria Math","STIX Two Math",serif';
+function toMath(str){ let o=""; for(const ch of str){ const c=ch.codePointAt(0); o+= (c>=0x61&&c<=0x7A)?String.fromCodePoint(c===0x68?0x210E:0x1D44E+c-0x61):(c>=0x41&&c<=0x5A)?String.fromCodePoint(0x1D434+c-0x41):ch; } return o; }
+function label(t,x,y,color,px,align){ ctx.save(); ctx.font=`${px||15}px ${CMFONT}`; ctx.textAlign=align||"left"; ctx.textBaseline="middle";
+  ctx.lineJoin="round"; ctx.lineWidth=3; ctx.strokeStyle="rgba(255,255,255,.92)"; ctx.strokeText(t,x,y); ctx.fillStyle=color; ctx.fillText(t,x,y); ctx.restore(); }
+function subLabel(letter,idx,x,y,color){   // P 斜体 + 正体小号下标
+  label(toMath(letter),x,y,color,16);
+  ctx.save(); ctx.font=`16px ${CMFONT}`; const w=ctx.measureText(toMath(letter)).width; ctx.restore();
+  label(String(idx),x+w+0.5,y+5,color,11.5);
+}
+function tickTxt(v,st){ const d=Math.max(0,-Math.floor(Math.log10(st)+1e-9)); return v.toFixed(d).replace("-","−"); }
+function drawFrame(){
+  ctx.clearRect(0,0,size,size);
+  if(img&&mode==="explore"){ ctx.save(); ctx.globalAlpha=0.85; const x0=X(0), y1=Y(10*img.h/img.w); ctx.drawImage(img.el,x0,y1,X(10)-x0,Y(0)-y1); ctx.restore(); }
+  const t=view.t, x1=view.x0+view.span, y1=view.y0+view.span;
+  ctx.lineWidth=1; ctx.font='11px "Segoe UI",system-ui'; ctx.fillStyle="#718096";
+  // 半格细线
+  if(snapOn||mode!=="explore"){ ctx.strokeStyle="rgba(226,232,240,.55)"; for(let v=view.x0;v<=x1+1e-9;v+=t/2){ const p=Math.round(X(v))+0.5; ctx.beginPath(); ctx.moveTo(p,Y(y1)); ctx.lineTo(p,Y(view.y0)); ctx.stroke(); }
+    for(let v=view.y0;v<=y1+1e-9;v+=t/2){ const p=Math.round(Y(v))+0.5; ctx.beginPath(); ctx.moveTo(X(view.x0),p); ctx.lineTo(X(x1),p); ctx.stroke(); } }
+  for(let v=view.x0;v<=x1+1e-9;v+=t){ const p=Math.round(X(v))+0.5; ctx.strokeStyle=Math.abs(v)<1e-9?"#94a3b8":"#dfe7f1"; ctx.beginPath(); ctx.moveTo(p,Y(y1)); ctx.lineTo(p,Y(view.y0)); ctx.stroke();
+    ctx.textAlign="center"; ctx.textBaseline="top"; ctx.fillText(tickTxt(v,t),p,Y(view.y0)+5); }
+  for(let v=view.y0;v<=y1+1e-9;v+=t){ const p=Math.round(Y(v))+0.5; ctx.strokeStyle=Math.abs(v)<1e-9?"#94a3b8":"#dfe7f1"; ctx.beginPath(); ctx.moveTo(X(view.x0),p); ctx.lineTo(X(x1),p); ctx.stroke();
+    ctx.textAlign="right"; ctx.textBaseline="middle"; ctx.fillText(tickTxt(v,t),X(view.x0)-5,p); }
+  if(view.x0<0&&x1>0&&view.y0<0&&y1>0){ ctx.beginPath(); ctx.arc(X(0),Y(0),3,0,7); ctx.fillStyle="#4a5568"; ctx.fill(); label(toMath("O"),X(0)-15,Y(0)+11,"#4a5568",15); }
+  label(toMath("x"),X(x1)-4,Y(view.y0)-12,"#4a5568",16,"right");
+  label(toMath("y"),X(view.x0)+8,Y(y1)+12,"#4a5568",16,"left");
+}
+function drawTriangles(P,r,onlyK){
+  const T=terms(P,r), R=refPoint(P,r);
+  T.forEach((t,k)=>{
+    if(onlyK!=null&&k!==onlyK) return;
+    if(Math.abs(t.D)<1e-12) return;
+    const a=P[t.i], b=P[t.j];
+    ctx.beginPath(); ctx.moveTo(X(R[0]),Y(R[1])); ctx.lineTo(X(a[0]),Y(a[1])); ctx.lineTo(X(b[0]),Y(b[1])); ctx.closePath();
+    const strong=(k===hl);
+    ctx.fillStyle=t.D>0?`rgba(43,108,176,${strong?.45:.16})`:`rgba(229,62,62,${strong?.45:.16})`; ctx.fill();
+    ctx.strokeStyle=t.D>0?"rgba(43,108,176,.5)":"rgba(229,62,62,.5)"; ctx.lineWidth=strong?1.8:0.8; ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
+  });
+  if(r==="O"){ ctx.beginPath(); ctx.arc(X(0),Y(0),3.2,0,7); ctx.fillStyle="#4a5568"; ctx.fill(); }
+}
+function drawPolygon(P,closed,arrows){
+  if(!P.length) return;
+  ctx.save(); ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue("--poly"); ctx.lineWidth=2.4; ctx.lineJoin="round";
+  ctx.beginPath(); ctx.moveTo(X(P[0][0]),Y(P[0][1])); for(let i=1;i<P.length;i++) ctx.lineTo(X(P[i][0]),Y(P[i][1])); if(closed&&P.length>2) ctx.closePath(); ctx.stroke();
+  if(arrows){ const n=P.length, m=closed?n:n-1;
+    for(let i=0;i<m;i++){ const a=P[i], b=P[(i+1)%n]; const ax=X(a[0]),ay=Y(a[1]),bx=X(b[0]),by=Y(b[1]); const L=Math.hypot(bx-ax,by-ay); if(L<22) continue;
+      const ang=Math.atan2(by-ay,bx-ax), mx=(ax+bx)/2, my=(ay+by)/2, hd=9;
+      ctx.beginPath(); ctx.moveTo(mx+hd*0.6*Math.cos(ang),my+hd*0.6*Math.sin(ang));
+      ctx.lineTo(mx-hd*Math.cos(ang)+hd*0.5*Math.sin(ang), my-hd*Math.sin(ang)-hd*0.5*Math.cos(ang));
+      ctx.lineTo(mx-hd*Math.cos(ang)-hd*0.5*Math.sin(ang), my-hd*Math.sin(ang)+hd*0.5*Math.cos(ang)); ctx.closePath(); ctx.fillStyle=ctx.strokeStyle; ctx.fill(); } }
+  ctx.restore();
+}
+function drawVertices(P,showLabels){
+  const n=P.length; let cx=0,cy=0; P.forEach(p=>{cx+=p[0];cy+=p[1];}); cx/=n||1; cy/=n||1;
+  P.forEach((p,i)=>{ ctx.beginPath(); ctx.arc(X(p[0]),Y(p[1]),i===drag?7:5.5,0,7); ctx.fillStyle=i===0?"#b7791f":"#1e3a8a"; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle="#fff"; ctx.stroke();
+    if(showLabels){ let dx=p[0]-cx, dy=p[1]-cy; const L=Math.hypot(dx,dy)||1; dx/=L; dy/=L; subLabel("P",i+1,X(p[0])+dx*16-7,Y(p[1])-dy*16,"#1a202c"); } });
+}
+function syncBtns(){ const n=pts.length;
+  document.getElementById("btnUndo").disabled=n===0; document.getElementById("btnClear").disabled=n===0;
+  document.getElementById("btnRev").disabled=n<3; document.getElementById("btnImgOff").disabled=!img;
+  document.getElementById("imgName").textContent=img?img.name:"未选择图片"; }
+function redraw(){
+  if(mode==="practice"){ drawQuiz(); return; }
+  syncBtns();
+  if(drag<0) view=fitView(pts, ref==="O");
+  drawFrame();
+  if(pts.length>=3) drawTriangles(pts,ref);
+  drawPolygon(pts,true,true);
+  drawVertices(pts,true);
+  renderSteps();
+}
+function scaleVal(){ const v=parseFloat(document.getElementById("scaleIn").value); return v>0?v:0; }
+function renderSteps(){
+  document.getElementById("stepsBox").innerHTML=stepsHTML(pts,ref,{hl,scale:scaleVal()});
+  bindRows();
+}
+function bindRows(){
+  document.querySelectorAll("#termTbl tr[data-k]").forEach(tr=>tr.addEventListener("click",()=>{ const k=+tr.dataset.k; hl=(hl===k?-1:k);
+    if(mode==="explore") redraw(); else { drawQuiz(); document.querySelectorAll("#termTbl tr[data-k]").forEach(x=>x.classList.toggle("hl",+x.dataset.k===hl)); } }));
+}
+
+/* ═══════════ 交互 ═══════════ */
+function evPos(e){ const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+function hit(p){ let best=-1,bd=14; pts.forEach(([x,y],i)=>{ const d=Math.hypot(X(x)-p.x,Y(y)-p.y); if(d<bd){bd=d;best=i;} }); return best; }
+function snap(v){ const st=view.t/2; return snapOn?Math.round(Math.round(v/st)*st*1e6)/1e6:Math.round(v*100)/100; }
+let lastTap={t:0,i:-1};
+canvas.addEventListener("pointerdown",e=>{
+  if(mode!=="explore") return;
+  const p=evPos(e); let i=hit(p); const now=Date.now();
+  if(i>=0&&lastTap.i===i&&now-lastTap.t<350){ pts.splice(i,1); lastTap={t:0,i:-1}; drag=-1; hl=-1; redraw(); return; }
+  lastTap={t:now,i};
+  if(i<0){
+    if(p.x<PADP-4||p.x>size-PADP+4||p.y<PADP-4||p.y>size-PADP+4) return;
+    if(pts.length>=20){ const tp=document.getElementById("canvasTip"); tp.textContent="已到 20 个顶点上限"; setTimeout(()=>tp.textContent="点空白处按顺序添加顶点（最多 20 个），拖动可移动，双击某个顶点删除",2000); return; }
+    pts.push([snap(Xi(p.x)),snap(Yi(p.y))]); i=pts.length-1; lastTap={t:now,i}; hl=-1; clearPresetOn();
+  }
+  drag=i; canvas.setPointerCapture(e.pointerId); redraw();
+});
+canvas.addEventListener("pointermove",e=>{
+  if(drag<0) return; const p=evPos(e);
+  const x=Math.min(Math.max(Xi(p.x),view.x0),view.x0+view.span), y=Math.min(Math.max(Yi(p.y),view.y0),view.y0+view.span);
+  pts[drag]=[snap(x),snap(y)]; clearPresetOn(); redraw();
+});
+const endDrag=()=>{ if(drag>=0){ drag=-1; redraw(); } };
+canvas.addEventListener("pointerup",endDrag); canvas.addEventListener("pointercancel",endDrag);
+function clearPresetOn(){ document.querySelectorAll("#presetBox button").forEach(b=>b.classList.remove("on")); }
+function setPreset(i){ pts=PRESETS[i].pts.map(p=>p.slice()); hl=-1;
+  document.querySelectorAll("#presetBox button").forEach((b,j)=>b.classList.toggle("on",j===i)); redraw(); }
+document.getElementById("presetBox").innerHTML=PRESETS.map((p,i)=>`<button data-i="${i}">${p.name}</button>`).join("");
+document.querySelectorAll("#presetBox button").forEach(b=>b.addEventListener("click",()=>setPreset(+b.dataset.i)));
+document.getElementById("btnUndo").addEventListener("click",()=>{ pts.pop(); hl=-1; redraw(); });
+document.getElementById("btnClear").addEventListener("click",()=>{ pts=[]; hl=-1; clearPresetOn(); redraw(); });
+document.getElementById("btnRev").addEventListener("click",()=>{ if(pts.length>1){ pts=[pts[0],...pts.slice(1).reverse()]; } hl=-1; redraw(); });
+document.querySelectorAll('input[name=ref]').forEach(r=>r.addEventListener("change",e=>{ ref=e.target.value; hl=-1; redraw(); }));
+document.getElementById("snapOn").addEventListener("change",e=>{ snapOn=e.target.checked; redraw(); });
+document.getElementById("scaleIn").addEventListener("input",()=>renderSteps());
+document.getElementById("imgIn").addEventListener("change",e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  const url=URL.createObjectURL(f), el=new Image();
+  el.onload=()=>{ img={el,w:el.naturalWidth,h:el.naturalHeight,name:f.name}; pts=[]; hl=-1; clearPresetOn(); redraw(); };
+  el.src=url;
+});
+document.getElementById("btnImgOff").addEventListener("click",()=>{ img=null; document.getElementById("imgIn").value=""; redraw(); });
+
+/* ═══════════ 练习模式 ═══════════
+   题型：area 求面积 | orient 判断顺/逆时针 | term 求某一项二阶行列式 */
+const QUIZKEY="la-shoelace-area-quiz";
+let streak=0, stats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){ if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return; stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats(); }
+function renderStats(){ const acc=stats.attempted?Math.round(stats.correct/stats.attempted*100):0;
+  document.getElementById("quizStats").innerHTML=`已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`; }
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function genPoly(){                 // 3~5 个整数顶点的简单多边形（按角度排序保证不自交）
+  for(let t=0;t<500;t++){
+    const n=ri(3,5), cx=ri(3,5), cy=ri(3,5);
+    const angs=[]; for(let i=0;i<n;i++) angs.push(Math.random()*2*Math.PI); angs.sort((a,b)=>a-b);
+    const P=angs.map(a=>{ const r=2+Math.random()*2.5; return [Math.round(cx+r*Math.cos(a)), Math.round(cy+r*Math.sin(a))]; });
+    if(P.some(p=>p[0]<0||p[1]<0||p[0]>8||p[1]>8)) continue;
+    if(hasDup(P)||selfIntersect(P)) continue;
+    // 相邻三点不共线
+    let col=false; for(let i=0;i<n;i++){ const a=P[i],b=P[(i+1)%n],c=P[(i+2)%n]; if((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])===0) col=true; }
+    if(col) continue;
+    if(Math.abs(signedArea(P))<2) continue;
+    return Math.random()<0.5?P:[P[0],...P.slice(1).reverse()];
+  }
+  return [[1,1],[5,1],[3,4]];
+}
+function genProblem(){
+  const r=Math.random(), P=genPoly();
+  if(r<0.4) return {kind:"area",P,ans:Math.abs(signedArea(P))};
+  if(r<0.7) return {kind:"orient",P,ccw:signedArea(P)>0,selected:-1};
+  const T=terms(P,"O"), ks=T.map((t,i)=>i).filter(i=>T[i].D!==0); const k=ks.length?ks[ri(0,ks.length-1)]:0;
+  return {kind:"term",P,k,t:T[k],ans:T[k].D};
+}
+function ptsList(P){ return P.map((p,i)=>`<math>${Psub(i)}<mo stretchy="false">(</mo>${mnum(p[0])}<mo>,</mo>${mnum(p[1])}<mo stretchy="false">)</mo></math>`).join("，"); }
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody"), fb=document.getElementById("qFeedback");
+  q.done=false; q.revealed=false; hl=-1; fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  if(q.kind==="area"){
+    body.innerHTML=`一块地的拐点依次为 ${ptsList(q.P)}（单位：格）。用鞋带公式求它的面积：`
+      +`<div class="qgrid">面积 <math><mo>=</mo></math><input class="qin" id="qA" type="text"> 平方格</div><div class="tip" style="text-align:center;">可填整数、小数或分数（如 27/2）</div>`;
+  }else if(q.kind==="orient"){
+    body.innerHTML=`多边形的顶点依次为 ${ptsList(q.P)}。不看图，用鞋带公式算 <math><mi>S</mi></math> 的符号，判断顶点的排列方向：<div class="opts" id="qOpts">`
+      +["逆时针（S &gt; 0）","顺时针（S &lt; 0）"].map((t,i)=>`<label data-i="${i}"><input type="radio" name="qopt" value="${i}"><span>${t}</span></label>`).join("")+"</div>";
+    body.querySelectorAll("#qOpts label").forEach(l=>l.addEventListener("click",()=>{
+      body.querySelectorAll("#qOpts label").forEach(x=>x.classList.remove("sel")); l.classList.add("sel");
+      l.querySelector("input").checked=true; q.selected=+l.dataset.i; }));
+  }else{
+    const a=q.P[q.t.i], b=q.P[q.t.j];
+    body.innerHTML=`已知 <math>${Psub(q.t.i)}<mo stretchy="false">(</mo>${mnum(a[0])}<mo>,</mo>${mnum(a[1])}<mo stretchy="false">)</mo></math>，<math>${Psub(q.t.j)}<mo stretchy="false">(</mo>${mnum(b[0])}<mo>,</mo>${mnum(b[1])}<mo stretchy="false">)</mo></math>。求三角形 <math><mi>O</mi>${Psub(q.t.i)}${Psub(q.t.j)}</math> 对应的二阶行列式：`
+      +`<div class="qgrid"><math><msub><mi>D</mi><mn>${q.t.i+1}</mn></msub><mo>=</mo><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mtable columnspacing="0.8em"><mtr><mtd><msub><mi>x</mi><mn>${q.t.i+1}</mn></msub></mtd><mtd><msub><mi>y</mi><mn>${q.t.i+1}</mn></msub></mtd></mtr><mtr><mtd><msub><mi>x</mi><mn>${q.t.j+1}</mn></msub></mtd><mtd><msub><mi>y</mi><mn>${q.t.j+1}</mn></msub></mtd></mtr></mtable><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow><mo>=</mo></math><input class="qin" id="qA" type="text"></div>`;
+  }
+  body.querySelectorAll("input.qin").forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); }));
+  document.getElementById("stepsBox").innerHTML=`<div class="tip">提交答案或点“看解析”后，这里显示完整的计算过程。</div>`;
+  drawQuiz(); renderStats();
+}
+function drawQuiz(){
+  const q=quiz; if(!q) return;
+  view=fitView(q.P,true); drawFrame();
+  if(q.kind==="term"){
+    const a=q.P[q.t.i], b=q.P[q.t.j];
+    if(q.revealed){ ctx.beginPath(); ctx.moveTo(X(0),Y(0)); ctx.lineTo(X(a[0]),Y(a[1])); ctx.lineTo(X(b[0]),Y(b[1])); ctx.closePath();
+      ctx.fillStyle=q.ans>0?"rgba(43,108,176,.3)":"rgba(229,62,62,.3)"; ctx.fill(); }
+    ctx.save(); ctx.strokeStyle="#94a3b8"; ctx.setLineDash([5,4]); ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(X(0),Y(0)); ctx.lineTo(X(a[0]),Y(a[1])); ctx.moveTo(X(0),Y(0)); ctx.lineTo(X(b[0]),Y(b[1])); ctx.stroke(); ctx.restore();
+    ctx.beginPath(); ctx.arc(X(0),Y(0),3.2,0,7); ctx.fillStyle="#4a5568"; ctx.fill();
+    const sub=[a,b]; const saved=drag; drag=-1;
+    sub.forEach((p,k)=>{ ctx.beginPath(); ctx.arc(X(p[0]),Y(p[1]),5.5,0,7); ctx.fillStyle="#1e3a8a"; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle="#fff"; ctx.stroke();
+      subLabel("P",(k?q.t.j:q.t.i)+1,X(p[0])+9,Y(p[1])-12,"#1a202c"); });
+    drag=saved; return;
+  }
+  if(q.kind==="orient"&&!q.revealed){ label("提交或看解析后显示图形",size/2,size/2,"#4a5568",15,"center"); return; }
+  if(q.revealed){ drawTriangles(q.P,"O"); drawPolygon(q.P,true,true); }
+  else if(q.kind==="area") drawPolygon(q.P,true,false);
+  drawVertices(q.P,true);
+}
+function parseVal(s){
+  s=s.trim().replace(/−/g,"-"); if(!s) return NaN;
+  const m=s.match(/^(-?\d+(?:\.\d+)?)\s*(?:\/\s*(\d+(?:\.\d+)?))?$/); if(!m) return NaN;
+  const a=parseFloat(m[1]); if(m[2]===undefined) return a; const b=parseFloat(m[2]); return b===0?NaN:a/b;
+}
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return; const fb=document.getElementById("qFeedback");
+  if(q.kind==="orient"){
+    if(q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个选项"; return; }
+    if((q.selected===0)===q.ccw) markCorrect();
+    else{ fb.className="feedback no"; fb.textContent="不对哦：把各项二阶行列式加起来，看 S 的正负。"; }
+    return;
+  }
+  const v=parseVal(document.getElementById("qA").value);
+  if(Number.isNaN(v)){ fb.className="feedback no"; fb.textContent="请填写一个数（整数、小数或分数 a/b）"; return; }
+  if(Math.abs(v-q.ans)<1e-9) markCorrect();
+  else if(q.kind==="area"&&Math.abs(v+q.ans)<1e-9){ fb.className="feedback no"; fb.textContent="面积是正数：S 为负时取绝对值。"; }
+  else if(q.kind==="area"&&Math.abs(v-2*q.ans)<1e-9){ fb.className="feedback no"; fb.textContent="差一个系数：各项行列式之和还要乘 1/2。"; }
+  else if(q.kind==="term"&&Math.abs(v+q.ans)<1e-9){ fb.className="feedback no"; fb.textContent="符号反了：二阶行列式 = 主对角线乘积 − 副对角线乘积。"; }
+  else{ fb.className="feedback no"; fb.textContent="还不对，再算算～（也可以点“看解析”）"; }
+}
+function solHTML(){
+  const q=quiz;
+  if(q.kind==="term"){ const t=q.t;
+    return `<div class="sol"><math><msub><mi>D</mi><mn>${t.i+1}</mn></msub><mo>=</mo>${det2ML(t.ax,t.ay,t.bx,t.by)}<mo>=</mo>${prodML(t.ax,t.by)}<mo>&#x2212;</mo>${prodML(t.bx,t.ay)}<mo>=</mo>${mnum(t.D)}</math>。${t.D>0?"为正：从 ":"为负：从 "}<math><mi>O</mi>${Psub(t.i)}</math> 转到 <math><mi>O</mi>${Psub(t.j)}</math> 是${t.D>0?"逆":"顺"}时针。</div>`; }
+  const S=signedArea(q.P);
+  if(q.kind==="area") return `<div class="sol"><math><mi>S</mi><mo>=</mo>${mnum(S)}</math>，面积 <math><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mi>S</mi><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow><mo>=</mo>${mnum(Math.abs(S))}</math> 平方格。完整过程见左侧。</div>`;
+  return `<div class="sol"><math><mi>S</mi><mo>=</mo>${mnum(S)}</math> ${S>0?"&gt; 0，逆时针":"&lt; 0，顺时针"}。完整过程见左侧。</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+function termSteps(q){ const t=q.t;
+  return `<div class="st">二阶行列式</div><div class="ctr"><math><msub><mi>D</mi><mn>${t.i+1}</mn></msub><mo>=</mo>${det2ML(t.ax,t.ay,t.bx,t.by)}<mo>=</mo>${prodML(t.ax,t.by)}<mo>&#x2212;</mo>${prodML(t.bx,t.ay)}<mo>=</mo>${mnum(t.D)}</math></div>`
+   +`<div class="st">几何意义</div><div class="tip">三角形 <math><mi>O</mi>${Psub(t.i)}${Psub(t.j)}</math> 的面积是 <math displaystyle="true"><mfrac><mn>1</mn><mn>2</mn></mfrac><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><msub><mi>D</mi><mn>${t.i+1}</mn></msub><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow><mo>=</mo>${mnum(Math.abs(t.D)/2)}</math>；<math><msub><mi>D</mi><mn>${t.i+1}</mn></msub></math> ${t.D>0?"为正":"为负"}，说明从 <math><mi>O</mi>${Psub(t.i)}</math> 转到 <math><mi>O</mi>${Psub(t.j)}</math> 是${t.D>0?"逆":"顺"}时针（图中${t.D>0?"蓝":"红"}色三角形）。鞋带公式把所有这样的项加起来再乘 <math displaystyle="true"><mfrac><mn>1</mn><mn>2</mn></mfrac></math>。</div>`; }
+function showFull(){ quiz.revealed=true; drawQuiz();
+  document.getElementById("stepsBox").innerHTML=quiz.kind==="term"?termSteps(quiz):stepsHTML(quiz.P,"O",{quiz:true}); bindRows(); }
+function markCorrect(){ const q=quiz; q.done=true; stats.attempted++; stats.correct++; streak++; saveStats(); showFull();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML(); lockQ(); renderStats(); }
+function onReveal(){ const q=quiz; if(!q||q.done) return; q.done=true; stats.attempted++; streak=0; saveStats(); showFull();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML(); lockQ(); renderStats(); }
+function onHint(){
+  const q=quiz; if(!q) return; const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="term") fb.innerHTML=`提示：<math><mrow><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><mtable><mtr><mtd><mi>a</mi></mtd><mtd><mi>b</mi></mtd></mtr><mtr><mtd><mi>c</mi></mtd><mtd><mi>d</mi></mtd></mtr></mtable><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></mrow><mo>=</mo><mi>a</mi><mi>d</mi><mo>&#x2212;</mo><mi>b</mi><mi>c</mi></math>，第一行是 <math>${Psub(q.t.i)}</math> 的坐标，第二行是 <math>${Psub(q.t.j)}</math> 的坐标。`;
+  else fb.innerHTML=`提示：依次算 <math><msub><mi>D</mi><mi>i</mi></msub><mo>=</mo><msub><mi>x</mi><mi>i</mi></msub><msub><mi>y</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>&#x2212;</mo><msub><mi>x</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></msub><msub><mi>y</mi><mi>i</mi></msub></math>（最后一项用 <math>${Psub(q.P.length-1)}</math> 和 <math>${Psub(0)}</math>），再求和乘 <math><mfrac><mn>1</mn><mn>2</mn></mfrac></math>${q.kind==="area"?"，最后取绝对值":"，看正负"}。`;
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+function setMode(m){
+  mode=m; hl=-1;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("exploreSide").style.display=m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display=m==="practice"?"":"none";
+  document.getElementById("canvasTip").style.display=m==="explore"?"":"none";
+  if(m==="practice"){ quiz=genProblem(); renderProblem(); }
+  else { quiz=null; redraw(); }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
+document.querySelectorAll("#presetBox button")[0].classList.add("on");
+resize();
+</script>
+<script>
+/* ── 排版：标点不单独成行、不在行首；左括号不留在行尾 ── */
+(function(){
+  const CLOSE=/^[，。、；：）)！？」》,.;:!?…]+/, OPEN=/[（(「《]+$/;
+  function wrapOf(m){
+    if(m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr")) return m.parentNode;
+    const s=document.createElement("span"); s.className="nobr"; s.style.whiteSpace="nowrap";
+    m.parentNode.insertBefore(s,m); s.appendChild(m); return s;
+  }
+  function glue(root){
+    (root.querySelectorAll?root:document).querySelectorAll("math").forEach(m=>{
+      if(m.closest("math")!==m || m.getAttribute("display")==="block") return;
+      const host=m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let nx=host.nextSibling;
+      if(nx && nx.nodeType===3){ const k=nx.data.match(CLOSE); if(k){ const w=wrapOf(m);
+          w.appendChild(document.createTextNode(k[0])); nx.data=nx.data.slice(k[0].length); } }
+      const h2=m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let pv=h2.previousSibling;
+      if(pv && pv.nodeType===3){ const k=pv.data.match(OPEN); if(k){ const w=wrapOf(m);
+          w.insertBefore(document.createTextNode(k[0]),w.firstChild); pv.data=pv.data.slice(0,pv.data.length-k[0].length); } }
+    });
+  }
+  let busy=false;
+  const ob=new MutationObserver(()=>{ if(busy) return; busy=true; ob.disconnect(); glue(document.body); ob.observe(document.body,{childList:true,subtree:true}); busy=false; });
+  glue(document.body); ob.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-shoelace-area";          // ← 计数键：与编号 L# 解耦的稳定标识，永不改动
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

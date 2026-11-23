@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>邻接矩阵与通路计数 · L20 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1; --red:#c53030;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --hl-cell:#fff3cd; --hl-row:#d1e7dd; --hl-col:#f8d7da; --path:#dd6b20;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  #canvasContainer{width:100%;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fbfdff;touch-action:none;}
+  canvas{display:block;max-width:100%;}
+  .tip{font-size:13px;color:var(--sub);margin-top:6px;text-align:center;}
+  button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+  .presets button{font-size:12.5px;padding:5px 10px;}
+  .presets button.on{border-color:var(--blue);background:#eef4fb;}
+  .plabel{font-size:12.5px;color:var(--sub);margin:12px 0 2px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:14px;}
+  .row select{font-size:14px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:#fff;}
+  .row input[type=range]{flex:1;min-width:120px;accent-color:var(--blue);}
+  label.rd{display:inline-flex;align-items:center;gap:5px;font-size:14px;cursor:pointer;}
+  label.rd input{accent-color:var(--blue);}
+  .verdict{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:14px;line-height:1.9;}
+  .verdict.uniq{background:#e6fffa;color:#234e52;border:1px solid #b2f5ea;}
+  .verdict.inf{background:#fffaf0;color:#744210;border:1px solid #f6e05e;}
+  /* 矩阵表格 */
+  .mats{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;align-items:flex-start;}
+  .matwrap{text-align:center;}
+  .matwrap .cap{font-size:14px;margin-bottom:4px;}
+  table.mat{border-collapse:collapse;margin:0 auto;}
+  table.mat td,table.mat th{border:1px solid #cbd5e1;min-width:32px;height:30px;padding:0 6px;text-align:center;
+     vertical-align:middle;font-size:14px;font-variant-numeric:tabular-nums;}
+  table.mat th{background:#f1f5f9;font-weight:600;font-size:12.5px;color:var(--sub);}
+  table.mat td{font-family:"Cambria Math","STIX Two Math",serif;}
+  table.mat td.zero{color:#a0aec0;}
+  table.mat.click td{cursor:pointer;}
+  table.mat.click td:hover{outline:2px solid var(--blue);outline-offset:-2px;}
+  table.mat .hr{background:var(--hl-row);}
+  table.mat .hc{background:var(--hl-col);}
+  table.mat .hx{background:var(--hl-cell);font-weight:700;color:var(--ink);}
+  .legend{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:10px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:14px;height:14px;border:1px solid #cbd5e1;border-radius:3px;display:inline-block;}
+  .steps{font-size:14px;line-height:2;}
+  .flow{text-align:center;line-height:2.3;}
+  .flow .tm{white-space:nowrap;display:inline-block;margin:0 1px;}
+  .ringlg{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:13px;color:var(--sub);margin-top:6px;}
+  .ringlg i{display:inline-block;width:13px;height:13px;border-radius:50%;border:3px solid;vertical-align:-2px;margin-right:5px;}
+  .steps .ctr{text-align:center;overflow-x:auto;overflow-y:hidden;padding:2px 0;line-height:2.4;}
+  .steps ul{margin:4px 0;padding-left:22px;}
+  .plist{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .plist button{font-size:13px;padding:3px 9px;font-variant-numeric:tabular-nums;}
+  .plist button.on{background:#fff3e6;border-color:var(--path);color:#9c4221;}
+  .placeholder{color:#a0aec0;font-size:13.5px;text-align:center;padding:20px 10px;}
+  /* 练习 */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody input.qin{width:46px;font-size:15px;padding:3px 4px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .qgrid{display:flex;justify-content:center;margin-top:6px;}
+  .qmat{display:inline-grid;gap:4px;padding:4px 8px;border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-radius:6px;}
+  .ctrq{text-align:center;margin:4px 0;}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid var(--line);
+       border-radius:8px;cursor:pointer;font-size:14px;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .opts input{accent-color:var(--blue);}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:14px;margin-top:6px;line-height:1.9;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,340px);gap:16px;align-items:start;}
+  @media(max-width:860px){ .layout{grid-template-columns:minmax(0,1fr);} .col-right{order:-1;} }
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>邻接矩阵与通路计数</h1>
+  <span class="sub"><math><msup><mi class="bm">A</mi><mi>k</mi></msup></math> 的元素 = 恰好走 <math><mi>k</mi></math> 步的通路条数</span>
+  <span class="tag">L20 · 应用案例</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    把地铁站、机场、用户等看成图中的<b>节点</b>，它们之间的连接看成<b>边</b>。图的<b>邻接矩阵</b> <math><mi class="bm">A</mi><mo>=</mo><mo>(</mo><msub><mi>a</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>)</mo></math> 规定：
+    从节点 <math><mi>i</mi></math> 到节点 <math><mi>j</mi></math> 有一条边时 <math><msub><mi>a</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mn>1</mn></math>，否则为 <math><mn>0</mn></math>（无向图的邻接矩阵是对称矩阵）。由矩阵乘法，
+    <div class="formula">
+      <math display="block"><msub><mrow><mo>(</mo><msup><mi class="bm">A</mi><mn>2</mn></msup><mo>)</mo></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo>
+        <munderover><mo>∑</mo><mrow><mi>l</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>a</mi><mrow><mi>i</mi><mi>l</mi></mrow></msub><msub><mi>a</mi><mrow><mi>l</mi><mi>j</mi></mrow></msub></math>
+    </div>
+    其中 <math><msub><mi>a</mi><mrow><mi>i</mi><mi>l</mi></mrow></msub><msub><mi>a</mi><mrow><mi>l</mi><mi>j</mi></mrow></msub><mo>=</mo><mn>1</mn></math> 恰好表示“<math><mi>i</mi><mo>→</mo><mi>l</mi><mo>→</mo><mi>j</mi></math>”这条以 <math><mi>l</mi></math> 为中转的两步通路，所以 <math><msub><mrow><mo>(</mo><msup><mi class="bm">A</mi><mn>2</mn></msup><mo>)</mo></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub></math> 就是从 <math><mi>i</mi></math> 到 <math><mi>j</mi></math> 恰好走 2 步的通路条数。
+    一般地，<b><math><msub><mrow><mo>(</mo><msup><mi class="bm">A</mi><mi>k</mi></msup><mo>)</mo></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub></math> 是从 <math><mi>i</mi></math> 到 <math><mi>j</mi></math> 恰好走 <math><mi>k</mi></math> 步的通路条数</b>（图论中称为“通路”，允许重复经过同一节点和同一条边）。
+  </div>
+
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div class="layout">
+  <div class="col-left">
+    <div class="card">
+      <div id="canvasContainer"><canvas id="canvas"></canvas></div>
+      <div class="ringlg" id="ringLg"><span><i style="border-color:var(--green)"></i>起点 <math><mi>i</mi></math></span><span><i style="border-color:var(--red)"></i>终点 <math><mi>j</mi></math></span><span><i style="border-color:var(--purple)"></i>起点与终点相同</span></div>
+      <div class="tip" id="canvasTip">拖动节点可移动；依次点两个节点，添加或删除它们之间的边</div>
+    </div>
+    <div class="card" id="matCard">
+      <h2 id="matTitle">邻接矩阵与它的幂</h2>
+      <div class="mats" id="matBox"></div>
+      <div class="legend" id="matLegend"></div>
+      <div class="steps" id="expBox"></div>
+    </div>
+    <div class="card" id="pathCard">
+      <h2>具体通路</h2>
+      <div class="steps" id="pathBox"></div>
+    </div>
+  </div>
+
+  <div class="col-right">
+    <div id="exploreSide">
+      <div class="card">
+        <h2>图与问题</h2>
+        <div class="plabel" style="margin-top:0;">实际场景：</div>
+        <div class="presets" id="presetBox"></div>
+        <div class="row">
+          <label class="rd"><input type="radio" name="dir" value="0" id="dirU">无向图</label>
+          <label class="rd"><input type="radio" name="dir" value="1" id="dirD">有向图</label>
+        </div>
+        <div class="row">从 <select id="selI"></select> 到 <select id="selJ"></select></div>
+        <div class="row">步数 <math><mi>k</mi></math> <input type="range" id="selK" min="1" max="6" step="1"><b id="kVal"></b></div>
+        <div class="row">
+          <button id="btnAddNode">添加节点</button>
+          <button id="btnDelNode">删除最后一个节点</button>
+          <button id="btnClearE">清空所有边</button>
+        </div>
+        <div class="verdict uniq" id="interpBox" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="card" id="quizCard" style="display:none;">
+      <div class="quizhead">
+        <h2>练习 · 邻接矩阵与通路计数</h2>
+        <span class="stats" id="quizStats"></span>
+        <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+      </div>
+      <div class="qbody" id="qBody"></div>
+      <div class="feedback" id="qFeedback"></div>
+      <div class="qbtns">
+        <button class="primary" id="qSubmit">提交</button>
+        <button id="qHint">提示</button>
+        <button id="qReveal">看解析</button>
+        <button id="qNext">下一题 ▸</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+/* ═══════════ 场景 ═══════════ */
+const SCENES=[
+  {name:"地铁换乘（无向）", directed:false, i:1, j:5, k:3,
+   names:["北站","西站","中心站","东站","南站","机场"],
+   pos:[[0.5,0.13],[0.14,0.48],[0.5,0.48],[0.84,0.48],[0.4,0.86],[0.86,0.86]],
+   edges:[[0,2],[1,2],[2,3],[2,4],[1,4],[3,5],[0,3]],
+   interp:'每条边表示两站之间相邻（一段区间）。<math><msub><mrow><mo>(</mo><msup><mi class="bm">A</mi><mi>k</mi></msup><mo>)</mo></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub></math> 就是从 <math><mi>i</mi></math> 站出发、恰好坐 <math><mi>k</mi></math> 段区间到达 <math><mi>j</mi></math> 站的走法数。使它不为 0 的最小的 <math><mi>k</mi></math>，就是两站之间最少要坐几段。'},
+  {name:"航线网络（有向）", directed:true, i:0, j:2, k:2,
+   names:["北京","上海","广州","成都","西安"],
+   pos:[[0.5,0.12],[0.86,0.4],[0.72,0.86],[0.28,0.86],[0.14,0.4]],
+   edges:[[0,1],[1,2],[2,0],[0,3],[3,4],[4,0],[1,0],[3,2]],
+   interp:'某航空公司一天内执行的直飞航班（示意数据），每条有向边表示一个航班的飞行方向，并不是每个航班当天都有返程。<math><msub><mrow><mo>(</mo><msup><mi class="bm">A</mi><mi>k</mi></msup><mo>)</mo></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub></math> 是从 <math><mi>i</mi></math> 出发、恰好乘 <math><mi>k</mi></math> 次航班（中途转机 <math><mi>k</mi><mo>&#x2212;</mo><mn>1</mn></math> 次）到达 <math><mi>j</mi></math> 的方案数。'},
+  {name:"社交关注（有向）", directed:true, i:0, j:2, k:2,
+   names:["甲","乙","丙","丁","戊"],
+   pos:[[0.2,0.2],[0.8,0.2],[0.8,0.8],[0.2,0.8],[0.5,0.5]],
+   edges:[[0,1],[1,2],[2,0],[0,3],[3,2],[4,0],[2,4]],
+   interp:'边 <math><mi>i</mi><mo>→</mo><mi>j</mi></math> 表示 <math><mi>i</mi></math> 关注了 <math><mi>j</mi></math>。<math><msub><mrow><mo>(</mo><msup><mi class="bm">A</mi><mn>2</mn></msup><mo>)</mo></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub></math> 是“<math><mi>i</mi></math> 关注的人里，有几个关注了 <math><mi>j</mi></math>”。社交软件推荐“你可能认识的人”，用的就是这类两步关系。'},
+  {name:"小区道路（无向）", directed:false, i:0, j:4, k:2,
+   names:["大门","1号楼","2号楼","超市","花园"],
+   pos:[[0.12,0.5],[0.45,0.18],[0.85,0.18],[0.45,0.82],[0.85,0.68]],
+   edges:[[0,1],[0,3],[1,2],[1,4],[2,4],[3,4]],
+   interp:'每条边表示一段道路。<math><msub><mrow><mo>(</mo><msup><mi class="bm">A</mi><mi>k</mi></msup><mo>)</mo></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub></math> 是从 <math><mi>i</mi></math> 出发恰好走 <math><mi>k</mi></math> 段路到达 <math><mi>j</mi></math> 的走法数（可以走回头路）。'},
+  {name:"空白（自己画）", directed:false, i:0, j:1, k:2,
+   names:["1","2","3","4"], pos:[[0.25,0.22],[0.75,0.22],[0.75,0.78],[0.25,0.78]], edges:[], interp:""}
+];
+
+/* ═══════════ 图的状态与计算 ═══════════ */
+let G=null, sceneIdx=0, mode="explore", quiz=null;
+let sel=-1, hlPath=-1, playTimer=null;
+function makeGraph(sc){
+  const n=sc.names.length, A=Array.from({length:n},()=>Array(n).fill(0));
+  sc.edges.forEach(([a,b])=>{ A[a][b]=1; if(!sc.directed) A[b][a]=1; });
+  return {names:sc.names.slice(), pos:sc.pos.map(p=>p.slice()), A, directed:sc.directed, i:sc.i, j:sc.j, k:sc.k};
+}
+function matMul(X,Y){ const n=X.length; return X.map((r,i)=>Array.from({length:n},(_,j)=>{ let s=0; for(let l=0;l<n;l++) s+=X[i][l]*Y[l][j]; return s; })); }
+function matPow(A,k){ let P=A.map((r,i)=>r.map((_,j)=>i===j?1:0)); for(let t=0;t<k;t++) P=matMul(P,A); return P; }
+function walks(A,i,j,k,cap){       // 枚举恰好 k 步的通路（允许重复节点），最多 cap 条
+  const out=[], path=[i];
+  (function dfs(u,d){ if(out.length>=cap) return;
+    if(d===k){ if(u===j) out.push(path.slice()); return; }
+    for(let v=0;v<A.length;v++) if(A[u][v]){ path.push(v); dfs(v,d+1); path.pop(); if(out.length>=cap) return; } })(i,0);
+  return out;
+}
+const lab=(g,v)=>g.names[v]===String(v+1)?String(v+1):`${v+1}（${g.names[v]}）`;
+const short=(g,v)=>g.names[v]===String(v+1)?String(v+1):g.names[v];
+// 嵌入中文句子：有名字直接用名字；只有编号时写成“节点 3 ”（数字两侧留空格）
+const nm=(g,v)=>g.names[v]===String(v+1)?`节点 ${v+1} `:g.names[v];
+// 去掉中文标点前多余的空格
+const cj=t=>t.replace(/ +([，。、；：）！？])/g,"$1");
+
+/* ═══════════ 画布 ═══════════ */
+const canvas=document.getElementById("canvas"), ctx=canvas.getContext("2d"), container=document.getElementById("canvasContainer");
+let W=600,H=380; const R=17;
+function resize(){
+  W=Math.max(300,container.clientWidth); H=Math.round(Math.min(Math.max(W*0.6,280),420));
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr);
+  canvas.style.width=W+"px"; canvas.style.height=H+"px"; ctx.setTransform(dpr,0,0,dpr,0,0); drawGraph();
+}
+window.addEventListener("resize",resize);
+const PX=p=>({x:p[0]*W, y:p[1]*H});
+function col(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+// 边的几何：返回二次贝塞尔曲线 起点/控制点/终点（已避开节点圆）
+function edgeGeom(g,a,b,curved){
+  const p=PX(g.pos[a]), q=PX(g.pos[b]); const dx=q.x-p.x, dy=q.y-p.y, L=Math.hypot(dx,dy)||1;
+  const ux=dx/L, uy=dy/L, nx=-uy, ny=ux, off=curved?20:0;
+  const c={x:(p.x+q.x)/2+nx*off, y:(p.y+q.y)/2+ny*off};
+  const s0=Math.atan2(c.y-p.y,c.x-p.x), e0=Math.atan2(q.y-c.y,q.x-c.x);
+  return {s:{x:p.x+Math.cos(s0)*R, y:p.y+Math.sin(s0)*R}, c, e:{x:q.x-Math.cos(e0)*(R+2), y:q.y-Math.sin(e0)*(R+2)}, ang:e0,
+          mid:{x:0.25*p.x+0.5*c.x+0.25*q.x, y:0.25*p.y+0.5*c.y+0.25*q.y}, nx, ny};
+}
+function strokeEdge(gm,color,w,arrow){
+  ctx.save(); ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=w; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(gm.s.x,gm.s.y); ctx.quadraticCurveTo(gm.c.x,gm.c.y,gm.e.x,gm.e.y); ctx.stroke();
+  if(arrow){ const h=9+w, a=gm.ang; ctx.beginPath(); ctx.moveTo(gm.e.x+Math.cos(a)*2,gm.e.y+Math.sin(a)*2);
+    ctx.lineTo(gm.e.x-h*Math.cos(a)+h*0.45*Math.sin(a), gm.e.y-h*Math.sin(a)-h*0.45*Math.cos(a));
+    ctx.lineTo(gm.e.x-h*Math.cos(a)-h*0.45*Math.sin(a), gm.e.y-h*Math.sin(a)+h*0.45*Math.cos(a)); ctx.closePath(); ctx.fill(); }
+  ctx.restore();
+}
+function isCurved(g,a,b){ return g.directed && g.A[a][b] && g.A[b][a]; }
+// 节点名放在背离图中心的方向（减少与边重叠）
+// 节点名的位置：在 8 个方向里挑一个不压边、不出界、尽量背离图中心的位置
+function labelPos(g,v,p,tw){
+  let cx=0,cy=0; g.pos.forEach(q=>{cx+=q[0]*W;cy+=q[1]*H;}); cx/=g.pos.length; cy/=g.pos.length;
+  let ox=p.x-cx, oy=p.y-cy, L=Math.hypot(ox,oy); if(L<20){ ox=0; oy=1; L=1; } ox/=L; oy/=L;
+  const n=g.A.length, segs=[];
+  for(let a=0;a<n;a++) for(let b=0;b<n;b++) if(g.A[a][b]&&(g.directed||a<b)){ const P=PX(g.pos[a]),Q=PX(g.pos[b]); segs.push([P,Q]); }
+  const hh=8; let best=null, bs=1e9;
+  for(let t=0;t<8;t++){
+    const ang=t*Math.PI/4, ux=Math.cos(ang), uy=Math.sin(ang);
+    let x,y,al;
+    if(Math.abs(ux)<0.3){ x=p.x; y=p.y+Math.sign(uy)*(R+14); al="center"; }
+    else{ al=ux>0?"left":"right"; x=p.x+Math.sign(ux)*(R+8); y=p.y+uy*(R+6); }
+    const x0=al==="center"?x-tw/2:al==="left"?x:x-tw, x1=x0+tw, y0=y-hh, y1=y+hh;
+    let sc=0;
+    if(x0<3||x1>W-3||y0<2||y1>H-2) sc+=100;
+    segs.forEach(([P,Q])=>{ for(let k=1;k<20;k++){ const sx=P.x+(Q.x-P.x)*k/20, sy=P.y+(Q.y-P.y)*k/20;
+        if(sx>x0-2&&sx<x1+2&&sy>y0-2&&sy<y1+2){ sc+=10; break; } } });
+    g.pos.forEach((q,w)=>{ if(w===v) return; const qx=q[0]*W,qy=q[1]*H; if(qx>x0-R&&qx<x1+R&&qy>y0-R&&qy<y1+R) sc+=50; });
+    sc+= (1-(ux*ox+uy*oy))*1.5;
+    if(sc<bs){ bs=sc; best={x,y,align:al}; }
+  }
+  return best;
+}
+function drawGraph(){
+  const g=activeGraph(); ctx.clearRect(0,0,W,H);
+  const rl=document.getElementById("ringLg"); if(rl) rl.style.display=(g&&g.showIJ)?"":"none";
+  if(!g) return;
+  const n=g.names.length;
+  for(let a=0;a<n;a++) for(let b=0;b<n;b++){
+    if(!g.A[a][b]) continue; if(!g.directed&&b<a) continue;
+    strokeEdge(edgeGeom(g,a,b,isCurved(g,a,b)),"#94a3b8",2,g.directed);
+  }
+  // 高亮通路
+  const P=currentPathList(); let path=null;
+  if(hlPath>=0&&P&&P[hlPath]) path=P[hlPath];
+  if(path){
+    const used={};
+    for(let t=0;t<path.length-1;t++){
+      const a=path[t], b=path[t+1]; const gm=edgeGeom(g,a,b,isCurved(g,a,b));
+      strokeEdge(gm,col("--path"),4,g.directed);
+      const key=g.directed?a+">"+b:Math.min(a,b)+"-"+Math.max(a,b); used[key]=(used[key]||0)+1;
+      const o=(used[key]-1)*16;
+      const lx=gm.mid.x+gm.nx*(12+o), ly=gm.mid.y+gm.ny*(12+o);
+      ctx.save(); ctx.beginPath(); ctx.arc(lx,ly,9,0,2*Math.PI); ctx.fillStyle=col("--path"); ctx.fill();
+      ctx.fillStyle="#fff"; ctx.font='bold 11px "Segoe UI",system-ui'; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(t+1,lx,ly+0.5); ctx.restore();
+    }
+  }
+  // 节点
+  for(let v=0;v<n;v++){
+    const p=PX(g.pos[v]);
+    const isS=g.i===v&&g.k>0&&g.showIJ, isT=g.j===v&&g.k>0&&g.showIJ;
+    ctx.save();
+    if(isS||isT){ ctx.beginPath(); ctx.arc(p.x,p.y,R+5,0,2*Math.PI); ctx.lineWidth=3;
+      ctx.strokeStyle=isS&&isT?col("--purple"):isS?col("--green"):col("--red"); ctx.stroke(); }
+    ctx.beginPath(); ctx.arc(p.x,p.y,R,0,2*Math.PI); ctx.fillStyle=v===sel?"#ebf4ff":"#fff"; ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle=col("--blue"); if(v===sel) ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle=col("--blue"); ctx.font='600 14px "Segoe UI",system-ui'; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(v+1,p.x,p.y+0.5);
+    if(g.names[v]!==String(v+1)){ ctx.font='13px "Microsoft YaHei",system-ui'; ctx.lineJoin="round"; ctx.lineWidth=3; ctx.strokeStyle="rgba(255,255,255,.95)";
+      const L=labelPos(g,v,p,ctx.measureText(g.names[v]).width); ctx.textAlign=L.align; ctx.strokeText(g.names[v],L.x,L.y); ctx.fillStyle="#2d3748"; ctx.fillText(g.names[v],L.x,L.y); }
+    ctx.restore();
+  }
+}
+
+/* ═══════════ 交互（自由探索） ═══════════ */
+function evPos(e){ const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+function hitNode(p){ const g=G; let best=-1,bd=R+6; g.pos.forEach((q,i)=>{ const d=Math.hypot(q[0]*W-p.x,q[1]*H-p.y); if(d<bd){bd=d;best=i;} }); return best; }
+let dragC=null;
+canvas.addEventListener("pointerdown",e=>{
+  if(mode!=="explore") return; const p=evPos(e), i=hitNode(p);
+  if(i<0){ if(sel>=0){ sel=-1; updateTip(); drawGraph(); } return; }
+  dragC={i,x:p.x,y:p.y,moved:false}; canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener("pointermove",e=>{
+  if(!dragC) return; const p=evPos(e);
+  if(!dragC.moved&&Math.hypot(p.x-dragC.x,p.y-dragC.y)>5) dragC.moved=true;
+  if(dragC.moved){ G.pos[dragC.i]=[Math.min(Math.max(p.x/W,0.05),0.95), Math.min(Math.max(p.y/H,0.07),0.88)]; drawGraph(); }
+});
+function endDrag(){
+  if(!dragC) return; const c=dragC; dragC=null;
+  if(c.moved) return;
+  if(sel<0) sel=c.i; else if(sel===c.i) sel=-1; else { toggleEdge(sel,c.i); sel=-1; }
+  updateTip(); renderAll();
+}
+canvas.addEventListener("pointerup",endDrag); canvas.addEventListener("pointercancel",()=>{ dragC=null; });
+function toggleEdge(a,b){ const v=G.A[a][b]?0:1; G.A[a][b]=v; if(!G.directed) G.A[b][a]=v; stopPlay(); hlPath=-1; }
+function updateTip(){
+  const t=document.getElementById("canvasTip");
+  t.innerHTML= sel>=0 ? `已选中节点 ${sel+1}，再点另一个节点：${G.directed?"添加或删除从节点 "+(sel+1)+" 出发、指向它的边":"添加或删除它们之间的边"}（点空白处取消）`
+                         : '拖动节点可移动；依次点两个节点，添加或删除它们之间的边；也可以点下方矩阵 <math><mi class="bm">A</mi></math> 的格子';
+}
+function fillSelects(){
+  const n=G.names.length, opt=v=>`<option value="${v}">${lab(G,v)}</option>`;
+  const si=document.getElementById("selI"), sj=document.getElementById("selJ");
+  si.innerHTML=G.names.map((_,v)=>opt(v)).join(""); sj.innerHTML=si.innerHTML;
+  if(G.i>=n) G.i=0; if(G.j>=n) G.j=n-1; si.value=G.i; sj.value=G.j;
+  document.getElementById("selK").value=G.k; document.getElementById("kVal").textContent=G.k;
+  document.getElementById(G.directed?"dirD":"dirU").checked=true;
+}
+function setScene(idx){
+  sceneIdx=idx; G=makeGraph(SCENES[idx]); G.showIJ=true; sel=-1; stopPlay(); hlPath=-1;
+  document.querySelectorAll("#presetBox button").forEach((b,j)=>b.classList.toggle("on",j===idx));
+  const ib=document.getElementById("interpBox"); ib.style.display=SCENES[idx].interp?"":"none"; ib.innerHTML=SCENES[idx].interp;
+  fillSelects(); updateTip(); renderAll();
+}
+document.getElementById("presetBox").innerHTML=SCENES.map((s,i)=>`<button data-i="${i}">${s.name}</button>`).join("");
+document.querySelectorAll("#presetBox button").forEach(b=>b.addEventListener("click",()=>setScene(+b.dataset.i)));
+document.getElementById("selI").addEventListener("change",e=>{ G.i=+e.target.value; stopPlay(); hlPath=-1; renderAll(); });
+document.getElementById("selJ").addEventListener("change",e=>{ G.j=+e.target.value; stopPlay(); hlPath=-1; renderAll(); });
+document.getElementById("selK").addEventListener("input",e=>{ G.k=+e.target.value; document.getElementById("kVal").textContent=G.k; stopPlay(); hlPath=-1; renderAll(); });
+document.getElementById("dirU").addEventListener("change",()=>{ if(!G.directed) return; G.directed=false;
+  const n=G.A.length; let add=0; for(let a=0;a<n;a++) for(let b=0;b<n;b++) if(G.A[a][b]&&!G.A[b][a]){ G.A[b][a]=1; add++; } stopPlay(); hlPath=-1; updateTip(); renderAll();
+  if(add) document.getElementById("canvasTip").textContent=`已改为无向图：原来的 ${add} 条单向边都变成了双向（矩阵变为对称矩阵）。`; });
+document.getElementById("dirD").addEventListener("change",()=>{ G.directed=true; stopPlay(); hlPath=-1; updateTip(); renderAll();
+  document.getElementById("canvasTip").textContent="已改为有向图：每条无向边看成方向相反的两条有向边，矩阵不变；可以点节点删去其中一个方向。"; });
+document.getElementById("btnAddNode").addEventListener("click",()=>{
+  const n=G.names.length; if(n>=7){ document.getElementById("canvasTip").textContent="最多 7 个节点"; return; }
+  let best=null,bd=-1; for(let t=0;t<200;t++){ const c=[0.08+0.84*Math.random(),0.1+0.75*Math.random()];
+    const d=Math.min(...G.pos.map(q=>Math.hypot((q[0]-c[0])*W,(q[1]-c[1])*H))); if(d>bd){bd=d;best=c;} }
+  G.names.push(String(n+1)); G.pos.push(best);
+  G.A.forEach(r=>r.push(0)); G.A.push(Array(n+1).fill(0)); fillSelects(); stopPlay(); hlPath=-1; renderAll(); });
+document.getElementById("btnDelNode").addEventListener("click",()=>{
+  const n=G.names.length; if(n<=2){ document.getElementById("canvasTip").textContent="至少保留 2 个节点"; return; } G.names.pop(); G.pos.pop(); G.A.pop(); G.A.forEach(r=>r.pop()); sel=-1; fillSelects(); stopPlay(); hlPath=-1; renderAll(); });
+document.getElementById("btnClearE").addEventListener("click",()=>{ G.A.forEach(r=>r.fill(0)); stopPlay(); hlPath=-1; renderAll(); });
+
+/* ═══════════ MathML 片段 ═══════════ */
+const ij=(i,j)=>`<mrow><mn>${i+1}</mn><mn>${j+1}</mn></mrow>`;
+const aML=(i,j)=>`<msub><mi>a</mi>${ij(i,j)}</msub>`;
+function powML(k){ return k===1?`<mi class="bm">A</mi>`:`<msup><mi class="bm">A</mi><mn>${k}</mn></msup>`; }
+function powEl(k,i,j){ return k===1?aML(i,j):`<msub><mrow><mo>(</mo>${powML(k)}<mo>)</mo></mrow>${ij(i,j)}</msub>`; }
+function matTable(M,g,o){
+  o=o||{}; const n=M.length;
+  let h=`<table class="mat${o.click?" click":""}"${o.id?` id="${o.id}"`:""}><tr><th></th>`+M.map((_,j)=>`<th>${j+1}</th>`).join("")+"</tr>";
+  M.forEach((r,i)=>{ h+=`<tr><th>${i+1}</th>`+r.map((v,j)=>{ const c=[]; if(v===0) c.push("zero");
+      if(o.cell&&o.cell[0]===i&&o.cell[1]===j) c.push("hx"); else if(o.row===i) c.push("hr"); else if(o.col===j) c.push("hc");
+      return `<td class="${c.join(" ")}" data-i="${i}" data-j="${j}">${v}</td>`; }).join("")+"</tr>"; });
+  return h+"</table>";
+}
+
+/* ═══════════ 渲染：矩阵、展开式、通路 ═══════════ */
+function activeGraph(){ return mode==="practice"?(quiz?quiz.g:null):G; }
+function currentPathList(){ const g=activeGraph(); return g&&g._paths?g._paths:null; }
+function renderMatrices(g,opt){
+  opt=opt||{}; const {i,j,k}=g, n=g.A.length;
+  const box=document.getElementById("matBox"), exp=document.getElementById("expBox"), lg=document.getElementById("matLegend");
+  if(opt.onlyA){
+    box.innerHTML=`<div class="matwrap"><div class="cap">邻接矩阵 <math><mi class="bm">A</mi></math></div>${matTable(g.A,g)}</div>`;
+    lg.innerHTML=""; exp.innerHTML=`<div class="tip" style="text-align:left;">第 <math><mi>i</mi></math> 行第 <math><mi>j</mi></math> 列是 1，当且仅当图中有${g.directed?'从节点 <math><mi>i</mi></math> 指向节点 <math><mi>j</mi></math> 的边':'节点 <math><mi>i</mi></math> 与节点 <math><mi>j</mi></math> 之间的边（无向图，矩阵对称）'}；本工具不画自环，对角元都是 0。</div>`;
+    return;
+  }
+  const Ak=matPow(g.A,k), Ak1=k>1?matPow(g.A,k-1):null;
+  let h="";
+  if(k===1){
+    h=`<div class="matwrap"><div class="cap"><math><mi class="bm">A</mi></math></div>${matTable(g.A,g,{cell:[i,j],click:opt.click,id:"tblA"})}</div>`;
+    lg.innerHTML=`<span><i style="background:var(--hl-cell)"></i>所求元素</span>`;
+  }else{
+    h=`<div class="matwrap"><div class="cap"><math>${powML(k-1)}</math>（第 ${i+1} 行）</div>${matTable(Ak1,g,{row:i})}</div>`
+     +`<div class="matwrap"><div class="cap"><math><mi class="bm">A</mi></math>（第 ${j+1} 列）</div>${matTable(g.A,g,{col:j,click:opt.click,id:"tblA"})}</div>`
+     +`<div class="matwrap"><div class="cap"><math>${powML(k)}<mo>=</mo>${powML(k-1)}<mi class="bm">A</mi></math></div>${matTable(Ak,g,{cell:[i,j]})}</div>`;
+    lg.innerHTML=`<span><i style="background:var(--hl-row)"></i><math>${powML(k-1)}</math> 的第 ${i+1} 行</span><span><i style="background:var(--hl-col)"></i><math><mi class="bm">A</mi></math> 的第 ${j+1} 列</span><span><i style="background:var(--hl-cell)"></i>两者相乘求和得到的元素</span>`;
+  }
+  box.innerHTML=h;
+  if(opt.click){ const t=document.getElementById("tblA"); if(t) t.querySelectorAll("td").forEach(td=>td.addEventListener("click",()=>{
+      const a=+td.dataset.i, b=+td.dataset.j; if(a===b){ document.getElementById("canvasTip").textContent="本工具不画自环（对角元保持为 0）"; return; }
+      toggleEdge(a,b); renderAll(); })); }
+  // 展开式
+  const val=Ak[i][j]; let e="";
+  if(k===1){
+    e=`<div class="ctr"><math>${aML(i,j)}<mo>=</mo><mn>${val}</mn></math>：${val?`有一条从${nm(g,i)}${g.directed?"指向":"到"}${nm(g,j)}的边，即 1 步的通路有 1 条`:i===j?`本工具不画自环，走 1 步不能回到原地`:`${nm(g,i)}与${nm(g,j)}之间没有${g.directed?"这个方向的":""}边，1 步走不到`}。</div>`;
+  }else{
+    const terms=[], nums=[], nz=[];
+    for(let l=0;l<n;l++){
+      terms.push(k===2?`${aML(i,l)}${aML(l,j)}`:`${powEl(k-1,i,l)}${aML(l,j)}`);
+      nums.push(`<mn>${Ak1[i][l]}</mn><mo>⋅</mo><mn>${g.A[l][j]}</mn>`);
+      if(Ak1[i][l]&&g.A[l][j]) nz.push(l);
+    }
+    const tm=x=>`<span class="tm"><math>${x}</math></span>`, PL='<mo form="infix" lspace="0.22em" rspace="0.22em">+</mo>', EQ='<mo form="infix" lspace="0.28em" rspace="0.28em">=</mo>';
+    e=`<div class="flow">`+tm(`${powEl(k,i,j)}<mo>=</mo>${terms[0]}`)+terms.slice(1).map(t=>tm(PL+t)).join("")+`</div>`
+     +`<div class="flow">`+tm(EQ+nums[0])+nums.slice(1).map(t=>tm(PL+t)).join("")+tm(EQ+`<mn>${val}</mn>`)+`</div>`;
+    if(nz.length){
+      e+=`<div>不为 0 的项对应最后一步之前所在的节点 <math><mi>l</mi></math>：</div><ul>`+nz.map(l=>
+        `<li>经${nm(g,l)}中转：${k===2?`${short(g,i)}→${short(g,l)} 有边`:`从${nm(g,i)}走 ${k-1} 步到${nm(g,l)}有 ${Ak1[i][l]} 条通路`}，再走 ${short(g,l)}→${short(g,j)} 这一步，贡献 ${Ak1[i][l]} 条</li>`).join("")+`</ul>`;
+    }else e+=`<div>每一项都是 0：没有哪个节点 <math><mi>l</mi></math> 能让${nm(g,i)}先走 ${k-1} 步到达、再走一步到${nm(g,j)}。</div>`;
+  }
+  exp.innerHTML=cj(e);
+}
+function renderPaths(g){
+  const box=document.getElementById("pathBox"), {i,j,k}=g, cnt=matPow(g.A,k)[i][j], CAP=30;
+  g._paths=cnt? walks(g.A,i,j,k,CAP):[];
+  let h=`<div>从${nm(g,i)}到${nm(g,j)}恰好走 ${k} 步的通路共 <b>${cnt}</b> 条`+(cnt? `，正好等于 <math>${powEl(k,i,j)}</math>。`:"。")+"</div>";
+  if(cnt){
+    if(cnt>CAP) h+=`<div class="tip" style="text-align:left;">条数较多，下面只列出前 ${CAP} 条。</div>`;
+    h+=`<div class="plist">`+g._paths.map((p,t)=>`<button data-t="${t}" class="${t===hlPath?"on":""}">${p.map(v=>short(g,v)).join("→")}</button>`).join("")+`</div>`;
+    h+=`<div class="row"><button class="primary" id="btnPlay">${playTimer?"■ 停止":"▶ 逐条演示"}</button><span class="tip">点一条通路，在图上高亮它</span></div>`;
+  }else{
+    // 最少几步能到
+    let m=0; for(let t=1;t<=12;t++){ if(matPow(g.A,t)[i][j]){ m=t; break; } }
+    const others=[]; for(let t=1;t<=8;t++) if(t!==k&&matPow(g.A,t)[i][j]) others.push(t);
+    let msg;
+    if(!m) msg=`在 12 步以内都无法从${nm(g,i)}到达${nm(g,j)}（两者之间没有${g.directed?"沿箭头方向的":""}通路）。`;
+    else if(m>k) msg=`步数不够：最少要走 ${m} 步才能${i===j?`从${nm(g,i)}出发再回到这里`:`从${nm(g,i)}到达${nm(g,j)}`}（使 <math>${powEl(m,i,j)}</math> 不为 0 的最小的 <math><mi>k</mi></math>）。`;
+    else msg=`虽然从${nm(g,i)}走 ${m} 步就能${i===j?"回到原地":"到达"+nm(g,j)}，但<b>恰好</b> ${k} 步的通路一条也没有。8 步以内能恰好到达的步数是：${others.join("、")}。`;
+    h+=`<div class="tip" style="text-align:left;">${msg}</div>`;
+  }
+  box.innerHTML=cj(h);
+  box.querySelectorAll(".plist button").forEach(b=>b.addEventListener("click",()=>{ stopPlay(); hlPath=+b.dataset.t; markPathBtn(); drawGraph(); }));
+  const bp=document.getElementById("btnPlay"); if(bp) bp.addEventListener("click",()=>{ if(playTimer){ stopPlay(); } else startPlay(); });
+}
+function markPathBtn(){ document.querySelectorAll("#pathBox .plist button").forEach(b=>b.classList.toggle("on",+b.dataset.t===hlPath));
+  const bp=document.getElementById("btnPlay"); if(bp) bp.textContent=playTimer?"■ 停止":"▶ 逐条演示"; }
+function startPlay(){ const P=currentPathList(); if(!P||!P.length) return; hlPath=-1;
+  const step=()=>{ hlPath=(hlPath+1)%P.length; markPathBtn(); drawGraph(); };
+  step(); playTimer=setInterval(step,1300); markPathBtn(); }
+function stopPlay(){ if(playTimer){ clearInterval(playTimer); playTimer=null; } markPathBtn(); }
+function renderAll(){
+  if(mode==="explore"){
+    document.getElementById("matCard").style.display=""; document.getElementById("pathCard").style.display="";
+    renderMatrices(G,{click:true}); renderPaths(G);
+  }
+  drawGraph();
+}
+
+/* ═══════════ 练习模式 ═══════════
+   题型：matrix 写出邻接矩阵 | power 求 (A²)ij 或 (A³)ij | reach 能否恰好 k 步到达 */
+const QUIZKEY="la-adjacency-paths-quiz";
+let streak=0, stats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){ if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return; stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats(); }
+function renderStats(){ const acc=stats.attempted?Math.round(stats.correct/stats.attempted*100):0;
+  document.getElementById("quizStats").innerHTML=`已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`; }
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+const POS3=[[0.5,0.16],[0.82,0.78],[0.18,0.78]], POS4=[[0.22,0.2],[0.78,0.2],[0.78,0.8],[0.22,0.8]];
+function randGraph(n){
+  const directed=Math.random()<0.5; let A, ne;
+  do{ A=Array.from({length:n},()=>Array(n).fill(0)); ne=0;
+    for(let a=0;a<n;a++) for(let b=0;b<n;b++){ if(a===b) continue; if(!directed&&b<a) continue;
+      if(Math.random()<(directed?0.4:0.5)){ A[a][b]=1; if(!directed) A[b][a]=1; ne++; } }
+  }while(ne<n-1||ne>(directed?7:5));
+  return {names:Array.from({length:n},(_,v)=>String(v+1)), pos:(n===3?POS3:POS4).map(p=>p.slice()), A, directed, i:0, j:0, k:1, showIJ:false};
+}
+function genProblem(){
+  const r=Math.random();
+  if(r<0.3){ const g=randGraph(Math.random()<0.4?3:4); return {kind:"matrix",g}; }
+  if(r<0.65){
+    const g=randGraph(4); const k=Math.random()<0.55?2:3; let i,j,v,tries=0;
+    do{ i=ri(0,3); j=ri(0,3); v=matPow(g.A,k)[i][j]; tries++; }while(v===0&&Math.random()<0.75&&tries<30);
+    Object.assign(g,{i,j,k}); return {kind:"power",g,ans:v};
+  }
+  const g=randGraph(4); const k=ri(2,4); const want=Math.random()<0.5; let i,j,v,tries=0;
+  do{ i=ri(0,3); j=ri(0,3); v=matPow(g.A,k)[i][j]; tries++; }while((v>0)!==want&&tries<40);
+  Object.assign(g,{i,j,k}); return {kind:"reach",g,ans:v>0,selected:-1};
+}
+function aMatML(A){ return `<mrow><mo>(</mo><mtable>${A.map(r=>`<mtr>${r.map(v=>`<mtd><mn>${v}</mn></mtd>`).join("")}</mtr>`).join("")}</mtable><mo>)</mo></mrow>`; }
+function renderProblem(){
+  const q=quiz, g=q.g, body=document.getElementById("qBody"), fb=document.getElementById("qFeedback");
+  q.done=false; fb.className="feedback"; fb.innerHTML=""; hlPath=-1; stopPlay(); g._paths=null; g.showIJ=false;
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  const kindTxt=g.directed?"有向图":"无向图";
+  if(q.kind==="matrix"){
+    const n=g.A.length;
+    let cells=""; for(let a=0;a<n;a++) for(let b=0;b<n;b++) cells+=`<input class="qin" id="m${a}${b}" type="number" min="0" max="1">`;
+    body.innerHTML=`写出图中${kindTxt}的邻接矩阵 <math><mi class="bm">A</mi></math>（有边填 1，没有填 0）：<div class="qgrid"><span class="qmat" style="grid-template-columns:repeat(${n},auto);">${cells}</span></div>`;
+  }else if(q.kind==="power"){
+    body.innerHTML=`图中${kindTxt}的邻接矩阵为<div class="ctrq"><math><mi class="bm">A</mi><mo>=</mo>${aMatML(g.A)}</math></div>`
+      +`求 <math>${powEl(g.k,g.i,g.j)}</math>，即从节点 ${g.i+1} 到节点 ${g.j+1} 恰好走 ${g.k} 步的通路条数：`
+      +`<div class="ctrq"><input class="qin" id="qV" type="number" min="0" style="width:64px;"></div>`;
+  }else{
+    body.innerHTML=`在图中${kindTxt}里，能否从节点 ${g.i+1} 出发，<b>恰好</b>走 ${g.k} 步到达节点 ${g.j+1}（可以重复经过节点）？<div class="opts" id="qOpts">`
+      +["能","不能"].map((t,i)=>`<label data-i="${i}"><input type="radio" name="qopt" value="${i}"><span>${t}</span></label>`).join("")+"</div>";
+    body.querySelectorAll("#qOpts label").forEach(l=>l.addEventListener("click",()=>{
+      body.querySelectorAll("#qOpts label").forEach(x=>x.classList.remove("sel")); l.classList.add("sel");
+      l.querySelector("input").checked=true; q.selected=+l.dataset.i; }));
+  }
+  body.querySelectorAll("input.qin").forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); }));
+  document.getElementById("matCard").style.display=""; document.getElementById("pathCard").style.display="none";
+  document.getElementById("matBox").innerHTML=`<div class="placeholder">提交答案或点“看解析”后，这里显示矩阵与计算过程</div>`;
+  document.getElementById("matLegend").innerHTML=""; document.getElementById("expBox").innerHTML="";
+  drawGraph(); renderStats();
+}
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return; const fb=document.getElementById("qFeedback"), g=q.g;
+  if(q.kind==="matrix"){
+    const n=g.A.length; let empty=false, wrong=0;
+    for(let a=0;a<n;a++) for(let b=0;b<n;b++){ const el=document.getElementById(`m${a}${b}`); const v=el.value.trim();
+      if(v===""){ empty=true; continue; } const bad=+v!==g.A[a][b]; el.style.borderColor=bad?"#c53030":""; if(bad) wrong++; }
+    if(empty){ fb.className="feedback no"; fb.textContent="每个格子都要填（没有边填 0）"; return; }
+    if(!wrong) markCorrect();
+    else{ fb.className="feedback no"; fb.innerHTML=`标红的 ${wrong} 个格子不对。${g.directed?'提示：有向图第 <math><mi>i</mi></math> 行第 <math><mi>j</mi></math> 列看的是从节点 <math><mi>i</mi></math> 出发、指向节点 <math><mi>j</mi></math> 的边。':'提示：无向图的边两个方向都算，矩阵是对称的。'}`; }
+  }else if(q.kind==="power"){
+    const v=document.getElementById("qV").value.trim();
+    if(v===""){ fb.className="feedback no"; fb.textContent="请先填一个数"; return; }
+    if(+v===q.ans) markCorrect();
+    else{ fb.className="feedback no"; fb.textContent="还不对～ 可以按“最后一步之前在哪个节点”分类数通路，或者直接算矩阵乘积的这一个元素。"; }
+  }else{
+    if(q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个选项"; return; }
+    if((q.selected===0)===q.ans) markCorrect();
+    else{ fb.className="feedback no"; fb.innerHTML=`不对哦：看一看 <math>${powML(g.k)}</math> 的第 ${g.i+1} 行第 ${g.j+1} 列是不是 0。`; }
+  }
+}
+function showFull(){
+  const q=quiz, g=q.g;
+  if(q.kind==="matrix"){ renderMatrices(g,{onlyA:true}); return; }
+  g.showIJ=true; renderMatrices(g,{}); document.getElementById("pathCard").style.display=""; renderPaths(g); drawGraph();
+}
+function solHTML(){
+  const q=quiz, g=q.g;
+  if(q.kind==="matrix") return `<div class="sol"><math><mi class="bm">A</mi><mo>=</mo>${aMatML(g.A)}</math>${g.directed?"":"，是对称矩阵"}。</div>`;
+  const v=matPow(g.A,g.k)[g.i][g.j];
+  if(q.kind==="power") return `<div class="sol"><math>${powEl(g.k,g.i,g.j)}<mo>=</mo><mn>${v}</mn></math>。“邻接矩阵与它的幂”中给出了矩阵相乘的展开式，${v?`“具体通路”中列出了这 ${v} 条通路`:`从节点 ${g.i+1} 恰好 ${g.k} 步走不到节点 ${g.j+1}`}。</div>`;
+  return `<div class="sol"><math>${powEl(g.k,g.i,g.j)}<mo>=</mo><mn>${v}</mn></math>，${v?"不为 0，所以<b>能</b>":"为 0，所以<b>不能</b>"}恰好 ${g.k} 步到达。</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+function markCorrect(){ const q=quiz; q.done=true; stats.attempted++; stats.correct++; streak++; saveStats(); showFull();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML(); lockQ(); renderStats(); }
+function onReveal(){ const q=quiz; if(!q||q.done) return; q.done=true; stats.attempted++; streak=0; saveStats(); showFull();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML(); lockQ(); renderStats(); }
+function onHint(){
+  const q=quiz; if(!q) return; const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="matrix") fb.innerHTML=`提示：第 <math><mi>i</mi></math> 行第 <math><mi>j</mi></math> 列填 1 ⟺ 有${q.g.directed?'从节点 <math><mi>i</mi></math> 指向节点 <math><mi>j</mi></math> 的箭头':'节点 <math><mi>i</mi></math> 与节点 <math><mi>j</mi></math> 之间的连线'}；对角线全是 0。`;
+  else if(q.kind==="power") fb.innerHTML=`提示：<math>${powEl(q.g.k,q.g.i,q.g.j)}<mo>=</mo><munderover><mo>∑</mo><mrow><mi>l</mi><mo>=</mo><mn>1</mn></mrow><mn>4</mn></munderover>${q.g.k===2?`<msub><mi>a</mi><mrow><mn>${q.g.i+1}</mn><mi>l</mi></mrow></msub>`:`<msub><mrow><mo>(</mo><msup><mi class="bm">A</mi><mn>2</mn></msup><mo>)</mo></mrow><mrow><mn>${q.g.i+1}</mn><mi>l</mi></mrow></msub>`}<msub><mi>a</mi><mrow><mi>l</mi><mn>${q.g.j+1}</mn></mrow></msub></math>，也可以直接在图上数通路。`;
+  else fb.innerHTML=`提示：能恰好 ${q.g.k} 步到达 ⟺ <math>${powEl(q.g.k,q.g.i,q.g.j)}<mo>≠</mo><mn>0</mn></math>。可以先看从节点 ${q.g.i+1} 走 1 步能到哪些节点，再看走 2 步……`;
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+function setMode(m){
+  mode=m; stopPlay(); hlPath=-1; sel=-1;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("exploreSide").style.display=m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display=m==="practice"?"":"none";
+  document.getElementById("canvasTip").style.display=m==="explore"?"":"none";
+  if(m==="practice"){ quiz=genProblem(); renderProblem(); }
+  else{ quiz=null; updateTip(); renderAll(); }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
+setScene(0); resize();
+</script>
+
+<script>
+/* ── 排版：标点不单独成行、不在行首；左括号不留在行尾 ── */
+(function(){
+  const CLOSE=/^[，。、；：）)！？」》,.;:!?…]+/, OPEN=/[（(「《]+$/;
+  function wrapOf(m){
+    if(m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr")) return m.parentNode;
+    const s=document.createElement("span"); s.className="nobr"; s.style.whiteSpace="nowrap";
+    m.parentNode.insertBefore(s,m); s.appendChild(m); return s;
+  }
+  function glue(root){
+    (root.querySelectorAll?root:document).querySelectorAll("math").forEach(m=>{
+      if(m.closest("math")!==m || m.getAttribute("display")==="block") return;
+      const host=m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let nx=host.nextSibling;
+      if(nx && nx.nodeType===3){ const k=nx.data.match(CLOSE); if(k){ const w=wrapOf(m);
+          w.appendChild(document.createTextNode(k[0])); nx.data=nx.data.slice(k[0].length); } }
+      const h2=m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let pv=h2.previousSibling;
+      if(pv && pv.nodeType===3){ const k=pv.data.match(OPEN); if(k){ const w=wrapOf(m);
+          w.insertBefore(document.createTextNode(k[0]),w.firstChild); pv.data=pv.data.slice(0,pv.data.length-k[0].length); } }
+    });
+  }
+  let busy=false;
+  const ob=new MutationObserver(()=>{ if(busy) return; busy=true; ob.disconnect(); glue(document.body); ob.observe(document.body,{childList:true,subtree:true}); busy=false; });
+  glue(document.body); ob.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-adjacency-paths";          // ← 计数键：与编号 L# 解耦的稳定标识，永不改动
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

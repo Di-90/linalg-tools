@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>马尔可夫链 · 人口迁移 · L22 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1; --red:#c53030;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --s0:#2b6cb0; --s1:#dd6b20; --s2:#2f855a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.12em;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  .cv{width:100%;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fbfdff;}
+  canvas{display:block;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--sub);margin-top:8px;justify-content:center;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:16px;height:4px;border-radius:2px;display:inline-block;}
+  .legend i.dash{background:repeating-linear-gradient(90deg,#718096 0 4px,transparent 4px 7px);}
+  button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+  .presets button{font-size:13px;padding:5px 10px;}
+  .presets button.on{border-color:var(--blue);background:#eef4fb;}
+  .plabel{font-size:13px;color:var(--sub);margin:12px 0 2px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:14px;}
+  .sl{display:grid;grid-template-columns:1fr 52px;gap:4px 8px;align-items:center;margin:6px 0;font-size:13.5px;}
+  .sl .lab{grid-column:1 / span 2;color:var(--sub);}
+  .sl input[type=range]{width:100%;accent-color:var(--blue);}
+  .sl .v{font-variant-numeric:tabular-nums;text-align:right;font-family:"Cambria Math","STIX Two Math",serif;}
+  table.inmat{border-collapse:collapse;margin:4px auto;}
+  table.inmat td,table.inmat th{padding:2px 3px;text-align:center;font-size:13px;}
+  table.inmat th{color:var(--sub);font-weight:600;}
+  table.inmat input{width:54px;font-size:14px;padding:4px 4px;border:1px solid var(--line);border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  table.inmat td.sum{font-size:12.5px;color:var(--sub);}
+  table.inmat td.sum.bad{color:var(--red);font-weight:700;}
+  .err{color:var(--red);font-size:13.5px;margin-top:6px;}
+  .readout{font-size:14px;line-height:2;text-align:center;margin-top:6px;}
+  .steps{font-size:14px;line-height:2;}
+  .steps math{font-size:1.05em;}
+  .steps .st{margin:12px 0 2px;font-weight:600;color:var(--sub);font-size:14px;}
+  .steps .ctr{text-align:center;overflow-x:auto;overflow-y:hidden;padding:2px 0;line-height:2.4;}
+  .steps .tip{font-size:14px;color:var(--ink);}
+  .verdict{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:14px;line-height:1.9;}
+  .verdict.uniq{background:#e6fffa;color:#234e52;border:1px solid #b2f5ea;}
+  .verdict.inf{background:#fffaf0;color:#744210;border:1px solid #f6e05e;}
+  .placeholder{color:#a0aec0;font-size:14px;text-align:center;padding:24px 10px;}
+  label.chk{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer;margin-top:8px;}
+  label.chk input{accent-color:var(--blue);width:16px;height:16px;}
+  /* 练习 */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody .qc{text-align:center;margin:4px 0;}
+  .qbody input.qin{width:64px;font-size:15px;padding:4px 6px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .qgrid{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;flex-wrap:wrap;}
+  .qvec{display:inline-grid;grid-template-columns:auto;gap:4px;padding:2px 8px;border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-radius:6px;}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid var(--line);
+       border-radius:8px;cursor:pointer;font-size:14px;line-height:1.6;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .opts input{accent-color:var(--blue);}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:13.5px;margin-top:6px;line-height:1.9;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,350px);gap:16px;align-items:start;}
+  @media(max-width:860px){ .layout{grid-template-columns:minmax(0,1fr);} .col-right{order:-1;} }
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>马尔可夫链 · 人口迁移</h1>
+  <span class="sub"><math><msub><mi class="bm">x</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mi class="bm">A</mi><msub><mi class="bm">x</mi><mi>k</mi></msub></math> · 稳态 = 特征值 1 的特征向量</span>
+  <span class="tag">L22 · 应用案例</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    人口在城市与农村之间每年按固定比例迁移。把第 <math><mi>k</mi></math> 年各处的人口比例写成向量 <math><msub><mi class="bm">x</mi><mi>k</mi></msub></math>，
+    迁移规律写成<b>转移矩阵</b> <math><mi class="bm">A</mi></math>（元素 <math><msub><mi>a</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></math> = 每年从状态 <math><mi>j</mi></math> 迁到状态 <math><mi>i</mi></math> 的比例；元素非负，<b>每列之和为 1</b>），则
+    <div class="formula"><math display="block"><msub><mi class="bm">x</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mi class="bm">A</mi><msub><mi class="bm">x</mi><mi>k</mi></msub><mo>,</mo><mspace width="1.2em"/><msub><mi class="bm">x</mi><mi>k</mi></msub><mo>=</mo><msup><mi class="bm">A</mi><mi>k</mi></msup><msub><mi class="bm">x</mi><mn>0</mn></msub></math></div>
+    很多年后人口分布会稳定在 <math><mi class="bm">π</mi></math>，满足 <math><mi class="bm">A</mi><mi class="bm">π</mi><mo>=</mo><mi class="bm">π</mi></math>：<b>稳态就是特征值 1 对应的特征向量</b>（各分量之和取为 1），而且与初始分布 <math><msub><mi class="bm">x</mi><mn>0</mn></msub></math> 无关。
+    对角化 <math><mi class="bm">A</mi><mo>=</mo><mi class="bm">P</mi><mi class="bm">Λ</mi><msup><mi class="bm">P</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></math> 后，<math><msup><mi class="bm">A</mi><mi>k</mi></msup><mo>=</mo><mi class="bm">P</mi><msup><mi class="bm">Λ</mi><mi>k</mi></msup><msup><mi class="bm">P</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup></math>，另一个特征值的大小决定了收敛的快慢。
+  </div>
+
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div class="layout">
+  <div class="col-left">
+    <div class="card" id="diagCard">
+      <h2 id="diagTitle">状态转移图</h2>
+      <div class="cv" id="cvDiag"><canvas id="cDiag"></canvas></div>
+      <div class="readout" id="readout"></div>
+    </div>
+    <div class="card" id="curveCard">
+      <h2 id="curveTitle">各状态占比随时间的变化</h2>
+      <div class="cv" id="cvCurve"><canvas id="cCurve"></canvas></div>
+      <div class="legend" id="curveLegend"></div>
+    </div>
+    <div class="card">
+      <h2>计算过程</h2>
+      <div class="steps" id="stepsBox"></div>
+    </div>
+  </div>
+
+  <div class="col-right">
+    <div id="exploreSide">
+      <div class="card">
+        <h2>场景（示意数据）</h2>
+        <div class="presets" id="presetBox"></div>
+        <div id="paramBox"></div>
+        <div class="err" id="matErr"></div>
+      </div>
+      <div class="card">
+        <h2>初始分布与时间</h2>
+        <div id="x0Box"></div>
+        <div class="sl"><span class="lab" id="kLab"></span><input type="range" id="kSl" min="0" max="20" step="1" value="0"><span class="v" id="kV">0</span></div>
+        <div class="row"><button class="primary" id="btnPlay">▶ 播放</button><button id="btnStep">下一步 ▸</button><button id="btnK0">回到 k = 0</button></div>
+        <label class="chk" id="multiWrap"><input type="checkbox" id="multiOn"> 同时画 5 个不同的初始分布</label>
+      </div>
+    </div>
+
+    <div class="card" id="quizCard" style="display:none;">
+      <div class="quizhead">
+        <h2>练习 · 马尔可夫链</h2>
+        <span class="stats" id="quizStats"></span>
+        <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+      </div>
+      <div class="qbody" id="qBody"></div>
+      <div class="feedback" id="qFeedback"></div>
+      <div class="qbtns">
+        <button class="primary" id="qSubmit">提交</button>
+        <button id="qHint">提示</button>
+        <button id="qReveal">看解析</button>
+        <button id="qNext">下一题 ▸</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+/* ═══════════ 工具函数 ═══════════ */
+const NEG='<mo form="prefix" lspace="0" rspace="0">&#x2212;</mo>';
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; }
+function ratOf(x,maxD){ maxD=maxD||200; for(let d=1;d<=maxD;d++){ const n=Math.round(x*d); if(Math.abs(n/d-x)<1e-9*Math.max(1,Math.abs(x))){ const g=gcd(n,d)||1; return [n/g,d/g]; } } return null; }
+function trim(v,d){ let t=(Math.round(v*Math.pow(10,d))/Math.pow(10,d)).toFixed(d); if(t.indexOf(".")>=0) t=t.replace(/0+$/,"").replace(/\.$/,""); if(t==="-0") t="0"; return t; }
+function numML(v,d){ d=d===undefined?4:d; const t=trim(v,d); return t.startsWith("-")?NEG+`<mn>${t.slice(1)}</mn>`:`<mn>${t}</mn>`; }
+function isApprox(v,d){ d=d===undefined?4:d; return Math.abs(Math.round(v*Math.pow(10,d))/Math.pow(10,d)-v)>1e-9; }
+function fracML(v,maxD){ const r=ratOf(v,maxD); if(!r) return null; const [p,q]=r; const s=(p<0?NEG:"");
+  return q===1?s+`<mn>${Math.abs(p)}</mn>`:s+`<mfrac><mn>${Math.abs(p)}</mn><mn>${q}</mn></mfrac>`; }
+function valML(v){ const f=fracML(v,200); if(f&&!/mfrac/.test(f)) return {ml:f,ap:false};
+  if(f) return {ml:f,ap:false}; return {ml:numML(v,4),ap:true}; }
+const eqs=ap=>ap?"<mo>≈</mo>":"<mo>=</mo>";
+function matML(rows){ return `<mrow><mo>(</mo><mtable>${rows.map(r=>`<mtr>${r.map(v=>`<mtd>${/mfrac/.test(v)?`<mstyle displaystyle="true">${v}</mstyle>`:v}</mtd>`).join("")}</mtr>`).join("")}</mtable><mo>)</mo></mrow>`; }
+function colML(arr){ return matML(arr.map(v=>[v])); }
+const xk=k=>`<msub><mi class="bm">x</mi>${typeof k==="number"?`<mn>${k}</mn>`:`<mi>${k}</mi>`}</msub>`;
+const BA='<mi class="bm">A</mi>', BE='<mi class="bm">E</mi>', BPI='<mi class="bm">π</mi>';
+function mulMV(A,x){ return A.map(r=>r.reduce((s,a,j)=>s+a*x[j],0)); }
+function solveSteady(A){   // (A−E)π=0, Σπ=1；返回 {pi} 或 {multi:true}
+  const n=A.length; const M=A.map((r,i)=>r.map((a,j)=>a-(i===j?1:0)));
+  // 秩检查
+  const R=M.map(r=>r.slice()); let rank=0;
+  for(let c=0;c<n&&rank<n;c++){ let p=-1,b=1e-10; for(let r=rank;r<n;r++) if(Math.abs(R[r][c])>b){b=Math.abs(R[r][c]);p=r;}
+    if(p<0) continue; [R[rank],R[p]]=[R[p],R[rank]];
+    for(let r=0;r<n;r++) if(r!==rank){ const k=R[r][c]/R[rank][c]; for(let j=0;j<n;j++) R[r][j]-=k*R[rank][j]; } rank++; }
+  if(rank<n-1) return {multi:true};
+  const S=M.map(r=>r.slice()); S[n-1]=Array(n).fill(1); const b=Array(n).fill(0); b[n-1]=1;
+  for(let c=0;c<n;c++){ let p=c; for(let r=c+1;r<n;r++) if(Math.abs(S[r][c])>Math.abs(S[p][c])) p=r;
+    [S[c],S[p]]=[S[p],S[c]]; [b[c],b[p]]=[b[p],b[c]];
+    for(let r=0;r<n;r++) if(r!==c){ const k=S[r][c]/S[c][c]; for(let j=c;j<n;j++) S[r][j]-=k*S[c][j]; b[r]-=k*b[c]; } }
+  return {pi:b.map((v,i)=>v/S[i][i])};
+}
+function det3(A){ return A[0][0]*(A[1][1]*A[2][2]-A[1][2]*A[2][1])-A[0][1]*(A[1][0]*A[2][2]-A[1][2]*A[2][0])+A[0][2]*(A[1][0]*A[2][1]-A[1][1]*A[2][0]); }
+
+/* ═══════════ 场景 ═══════════ */
+const SCENES=[
+  {key:"city", name:"城乡人口迁移", n:2, names:["城市","农村"], unit:"年", kmax:80, p:0.05, q:0.02, x0:[0.3,0.7],
+   pLab:"每年农村人口迁往城市的比例", qLab:"每年城市人口迁往农村的比例", x0Lab:"初始时城市人口的比例",
+   note:"第 1 列：现在住在城市的人，下一年有 <math><mn>1</mn><mo>−</mo><mi>q</mi></math> 留在城市、<math><mi>q</mi></math> 迁往农村；第 2 列同理。"},
+  {key:"weather", name:"天气晴 / 雨", n:2, names:["晴","雨"], unit:"天", kmax:20, p:0.50, q:0.20, x0:[1,0],
+   pLab:"今天下雨、明天转晴的概率", qLab:"今天晴、明天转雨的概率", x0Lab:"第 0 天是晴天的概率", btn:["第 0 天晴","第 0 天下雨","各一半"], curveLab:"晴、雨的概率随时间的变化",
+   note:"第 1 列：今天晴，明天晴的概率为 <math><mn>1</mn><mo>−</mo><mi>q</mi></math>、下雨的概率为 <math><mi>q</mi></math>；第 2 列：今天下雨，明天转晴的概率为 <math><mi>p</mi></math>、继续下雨的概率为 <math><mn>1</mn><mo>−</mo><mi>p</mi></math>。"},
+  {key:"bike", name:"共享单车三站点", n:3, names:["教学楼","宿舍","食堂"], unit:"小时", kmax:20, count:true,
+   A:[[0.5,0.1,0.1],[0.2,0.8,0.2],[0.3,0.1,0.7]], x0:[100,100,100],
+   note:"第 <math><mi>j</mi></math> 列：此刻停在第 <math><mi>j</mi></math> 个站点的单车，一小时后分别停到三个站点的比例。三个站点的单车总数保持不变。"}
+];
+let sc=SCENES[0], A=null, x0=null, K=0, mode="explore", quiz=null, timer=null, matValid=true;
+function buildA(){ if(sc.n===2){ const p=sc.p,q=sc.q; A=[[1-q,p],[q,1-p]]; } else A=sc.A.map(r=>r.slice()); }
+function traj(A,x,kmax){ const out=[x.slice()]; for(let k=0;k<kmax;k++){ x=mulMV(A,x); out.push(x); } return out; }
+const COLS=()=>[col("--s0"),col("--s1"),col("--s2")];
+function col(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+/* ═══════════ 画布 ═══════════ */
+const cD=document.getElementById("cDiag"), gD=cD.getContext("2d"), cC=document.getElementById("cCurve"), gC=cC.getContext("2d");
+let DW=500,DH=260,CW=500,CH=260;
+function setup(c,g,box,ratio,maxH,minH){ const W=Math.max(280,box.clientWidth); const H=Math.round(Math.min(Math.max(W*ratio,minH),maxH));
+  const dpr=Math.min(2,window.devicePixelRatio||1); c.width=Math.round(W*dpr); c.height=Math.round(H*dpr); c.style.width=W+"px"; c.style.height=H+"px"; g.setTransform(dpr,0,0,dpr,0,0); return [W,H]; }
+function resize(){ [DW,DH]=setup(cD,gD,document.getElementById("cvDiag"),0.5,300,220); [CW,CH]=setup(cC,gC,document.getElementById("cvCurve"),0.5,300,220); redraw(); }
+window.addEventListener("resize",resize);
+const CMFONT='"Cambria Math","STIX Two Math",serif', CNFONT='"Microsoft YaHei","Segoe UI",system-ui,sans-serif';
+function toMath(str){ let o=""; for(const ch of str){ const c=ch.codePointAt(0); o+=(c>=0x61&&c<=0x7A)?String.fromCodePoint(c===0x68?0x210E:0x1D44E+c-0x61):(c>=0x41&&c<=0x5A)?String.fromCodePoint(0x1D434+c-0x41):ch; } return o; }
+function label(g,t,x,y,color,px,align,font){ g.save(); g.font=`${px||14}px ${font||CMFONT}`; g.textAlign=align||"center"; g.textBaseline="middle";
+  g.lineJoin="round"; g.lineWidth=3.5; g.strokeStyle="rgba(255,255,255,.95)"; g.strokeText(t,x,y); g.fillStyle=color; g.fillText(t,x,y); g.restore(); }
+function tagLabel(g,t,x,y,color){ g.save(); g.font=`14px ${CMFONT}`; const w=g.measureText(t).width+8, h=18;
+  g.fillStyle="rgba(255,255,255,.95)"; g.strokeStyle=color; g.lineWidth=1; g.beginPath(); if(g.roundRect) g.roundRect(x-w/2,y-h/2,w,h,4); else g.rect(x-w/2,y-h/2,w,h); g.fill(); g.stroke();
+  g.fillStyle=color; g.textAlign="center"; g.textBaseline="middle"; g.fillText(t,x,y+0.5); g.restore(); }
+function wtxt(w){ return trim(w,2).replace("-","−"); }
+function arrowHead(g,x,y,ang,size,color){ g.save(); g.fillStyle=color; g.beginPath(); g.moveTo(x,y);
+  g.lineTo(x-size*Math.cos(ang-0.42),y-size*Math.sin(ang-0.42)); g.lineTo(x-size*Math.cos(ang+0.42),y-size*Math.sin(ang+0.42)); g.closePath(); g.fill(); g.restore(); }
+// 状态转移图：A 列 j → 行 i 的箭头；vals 为节点上显示的数（可为 null）
+function drawDiagram(A,names,vals,valTxt){
+  const g=gD, W=DW, H=DH, n=A.length; g.clearRect(0,0,W,H);
+  const R=Math.max(26,Math.min(38,Math.min(W,H)*0.12));
+  const P= n===2? [[W*0.28,H*0.56],[W*0.72,H*0.56]] : [[W*0.5,H*0.30],[W*0.25,H*0.76],[W*0.75,H*0.76]];
+  const cx=P.reduce((s,p)=>s+p[0],0)/n, cy=n===2?H*0.56:P.reduce((s,p)=>s+p[1],0)/n;
+  const gray="#64748b", C=COLS();
+  // 两点之间的边
+  for(let j=0;j<n;j++) for(let i=0;i<n;i++){ if(i===j) continue; const w=A[i][j]; if(Math.abs(w)<1e-12) continue;
+    const [x1,y1]=P[j],[x2,y2]=P[i]; const dx=x2-x1, dy=y2-y1, L=Math.hypot(dx,dy), nx=-dy/L, ny=dx/L, off=L*(n===3?0.26:0.2);
+    const mx=(x1+x2)/2+nx*off, my=(y1+y2)/2+ny*off;
+    const a1=Math.atan2(my-y1,mx-x1), a2=Math.atan2(y2-my,x2-mx);
+    const sx=x1+R*Math.cos(a1), sy=y1+R*Math.sin(a1), ex=x2-(R+2)*Math.cos(a2), ey=y2-(R+2)*Math.sin(a2);
+    const ec=n===3?C[j]:gray;
+    g.save(); g.strokeStyle=ec; g.globalAlpha=n===3?0.8:1; g.lineWidth=1.2+4*Math.min(1,Math.abs(w)); g.lineCap="round";
+    g.beginPath(); g.moveTo(sx,sy); g.quadraticCurveTo(mx,my,ex-6*Math.cos(a2),ey-6*Math.sin(a2)); g.stroke(); g.restore();
+    arrowHead(g,ex,ey,a2,12,ec);
+    if(n===3){ const lx=0.25*sx+0.5*mx+0.25*ex, ly=0.25*sy+0.5*my+0.25*ey; tagLabel(g,wtxt(w),lx,ly,ec); }
+    else { const lo=12, lx=0.25*sx+0.5*mx+0.25*ex+nx*lo, ly=0.25*sy+0.5*my+0.25*ey+ny*lo; label(g,wtxt(w),lx,ly,"#2d3748",15); }
+  }
+  // 自环
+  for(let j=0;j<n;j++){ const w=A[j][j]; if(Math.abs(w)<1e-12) continue;
+    let ux=P[j][0]-cx, uy=P[j][1]-cy; const L=Math.hypot(ux,uy); if(L<1e-6){ux=0;uy=-1;} else {ux/=L;uy/=L;}
+    if(n===3&&j===0){ ux=0; uy=-1; }
+    const r=R*0.52, ox=P[j][0]+ux*(R+r*0.55), oy=P[j][1]+uy*(R+r*0.55);
+    const base=Math.atan2(-uy,-ux);
+    const lc=n===3?C[j]:gray;
+    g.save(); g.strokeStyle=lc; g.globalAlpha=n===3?0.8:1; g.lineWidth=1.2+4*Math.min(1,Math.abs(w));
+    g.beginPath(); g.arc(ox,oy,r,base+0.95,base+2*Math.PI-0.95); g.stroke(); g.restore();
+    const ea=base+2*Math.PI-0.95, exx=ox+r*Math.cos(ea), eyy=oy+r*Math.sin(ea);
+    arrowHead(g,exx,eyy,ea+Math.PI/2+0.25,11,lc);
+    label(g,wtxt(w),ox+ux*(r+14),oy+uy*(r+12),n===3?C[j]:"#2d3748",15);
+  }
+  // 节点
+  for(let j=0;j<n;j++){ const [x,y]=P[j];
+    g.save(); g.beginPath(); g.arc(x,y,R,0,2*Math.PI); g.fillStyle="#fff"; g.fill(); g.lineWidth=3; g.strokeStyle=C[j]; g.stroke();
+    g.globalAlpha=0.12; g.fillStyle=C[j]; g.fill(); g.restore();
+    if(vals){ label(g,names[j],x,y-9,C[j],13,"center",CNFONT); label(g,valTxt(vals[j]),x,y+10,"#1a202c",15); }
+    else label(g,names[j],x,y,C[j],14,"center",CNFONT);
+  }
+}
+function niceTicks(max){ const raw=max/5, p=Math.pow(10,Math.floor(Math.log10(raw))), m=raw/p; return (m<1.5?1:m<3.5?2:m<7.5?5:10)*p; }
+// 曲线：series=[[...每个状态的值随 k]]，steady=[...]，kNow；faint=[[状态1 的多条轨迹]]
+function drawCurves(series,steady,kNow,ymax,faint){
+  const g=gC, W=CW, H=CH, PL=46, PR=14, PT=14, PB=30; g.clearRect(0,0,W,H);
+  const kmax=series[0].length-1;
+  const X=k=>PL+k/kmax*(W-PL-PR), Y=v=>H-PB-v/ymax*(H-PT-PB);
+  g.fillStyle="#fff"; g.fillRect(PL,PT,W-PL-PR,H-PT-PB);
+  g.font='11px "Segoe UI",system-ui'; g.fillStyle="#718096"; g.lineWidth=1;
+  const ty=niceTicks(ymax), tx=kmax<=10?1:kmax<=20?2:kmax<=40?5:10;
+  for(let v=0; v<=ymax+1e-9; v+=ty){ const p=Math.round(Y(v))+0.5; g.strokeStyle="#e8eef5"; g.beginPath(); g.moveTo(PL,p); g.lineTo(W-PR,p); g.stroke();
+    g.textAlign="right"; g.textBaseline="middle"; g.fillText(trim(v,3),PL-6,p); }
+  for(let k=0;k<=kmax;k+=tx){ const p=Math.round(X(k))+0.5; g.strokeStyle="#eef2f7"; g.beginPath(); g.moveTo(p,PT); g.lineTo(p,H-PB); g.stroke();
+    g.textAlign="center"; g.textBaseline="top"; g.fillText(k,p,H-PB+5); }
+  g.strokeStyle="#94a3b8"; g.lineWidth=1.3; g.strokeRect(PL+0.5,PT+0.5,W-PL-PR-1,H-PT-PB-1);
+  label(g,toMath("k"),W-PR-8,H-PB-12,"#4a5568",16);
+  const C=COLS();
+  if(faint) faint.forEach(tr=>{ g.save(); g.strokeStyle=C[0]; g.globalAlpha=0.28; g.lineWidth=1.6; g.beginPath(); tr.forEach((v,k)=>k?g.lineTo(X(k),Y(v)):g.moveTo(X(k),Y(v))); g.stroke(); g.restore(); });
+  if(steady) steady.forEach((v,i)=>{ g.save(); g.strokeStyle=C[i]; g.setLineDash([6,5]); g.lineWidth=1.3; g.globalAlpha=0.8; g.beginPath(); g.moveTo(PL,Y(v)); g.lineTo(W-PR,Y(v)); g.stroke(); g.restore(); });
+  series.forEach((s,i)=>{ g.save(); g.strokeStyle=C[i]; g.lineWidth=2.4; g.beginPath(); s.forEach((v,k)=>k?g.lineTo(X(k),Y(v)):g.moveTo(X(k),Y(v))); g.stroke();
+    g.fillStyle=C[i]; s.forEach((v,k)=>{ if(k<=kNow){ g.beginPath(); g.arc(X(k),Y(v),k===kNow?5:2.4,0,2*Math.PI); g.fill(); } }); g.restore(); });
+  if(kNow!==null&&kNow!==undefined){ g.save(); g.strokeStyle="#a0aec0"; g.setLineDash([3,3]); g.beginPath(); g.moveTo(X(kNow),PT); g.lineTo(X(kNow),H-PB); g.stroke(); g.restore(); }
+}
+
+/* ═══════════ 自由探索：控件 ═══════════ */
+function sliderHTML(id,lab,min,max,step,val){ return `<div class="sl"><span class="lab">${lab}</span><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}"><span class="v" id="${id}V">${trim(val,2)}</span></div>`; }
+function buildControls(){
+  const pb=document.getElementById("paramBox"), xb=document.getElementById("x0Box");
+  document.getElementById("matErr").textContent="";
+  if(sc.n===2){
+    pb.innerHTML=sliderHTML("pSl",sc.pLab+" <math><mi>p</mi></math>",0,1,0.01,sc.p)+sliderHTML("qSl",sc.qLab+" <math><mi>q</mi></math>",0,1,0.01,sc.q);
+    xb.innerHTML=sliderHTML("x0Sl",sc.x0Lab,0,1,0.01,sc.x0[0])
+      +`<div class="row"><button data-v="1">${sc.btn?sc.btn[0]:"全在"+sc.names[0]}</button><button data-v="0">${sc.btn?sc.btn[1]:"全在"+sc.names[1]}</button><button data-v="0.5">${sc.btn?sc.btn[2]:"各一半"}</button></div>`;
+    ["pSl","qSl"].forEach(id=>document.getElementById(id).addEventListener("input",e=>{ sc[id==="pSl"?"p":"q"]=+e.target.value; document.getElementById(id+"V").textContent=trim(+e.target.value,2); buildA(); redraw(); }));
+    document.getElementById("x0Sl").addEventListener("input",e=>{ const v=+e.target.value; sc.x0=[v,+(1-v).toFixed(10)]; document.getElementById("x0SlV").textContent=trim(v,2); redraw(); });
+    xb.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{ const v=+b.dataset.v; sc.x0=[v,1-v]; document.getElementById("x0Sl").value=v; document.getElementById("x0SlV").textContent=trim(v,2); redraw(); }));
+    document.getElementById("multiWrap").style.display="";
+  }else{
+    let h=`<div class="plabel">转移矩阵 <math>${BA}</math>（第 <math><mi>j</mi></math> 列 = 从第 <math><mi>j</mi></math> 站出发的单车去各站的比例）：</div><table class="inmat"><tr><th></th>${sc.names.map(s=>`<th>从${s}</th>`).join("")}</tr>`;
+    for(let i=0;i<3;i++){ h+=`<tr><th>到${sc.names[i]}</th>`; for(let j=0;j<3;j++) h+=`<td><input type="number" step="0.05" min="0" max="1" id="m${i}${j}" value="${sc.A[i][j]}"></td>`; h+="</tr>"; }
+    h+=`<tr><th>列和</th>${[0,1,2].map(j=>`<td class="sum" id="cs${j}"></td>`).join("")}</tr></table>`;
+    pb.innerHTML=h;
+    for(let i=0;i<3;i++) for(let j=0;j<3;j++) document.getElementById(`m${i}${j}`).addEventListener("input",readMat);
+    xb.innerHTML=`<div class="plabel">初始时各站点的单车数：</div><table class="inmat"><tr>${sc.names.map(s=>`<th>${s}</th>`).join("")}</tr><tr>${[0,1,2].map(j=>`<td><input type="number" step="10" min="0" id="v${j}" value="${sc.x0[j]}"></td>`).join("")}</tr></table>`
+      +`<div class="row"><button data-v="300,0,0">全在${sc.names[0]}</button><button data-v="0,0,300">全在${sc.names[2]}</button><button data-v="100,100,100">平均分</button></div>`;
+    [0,1,2].forEach(j=>document.getElementById(`v${j}`).addEventListener("input",readX0));
+    xb.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{ const v=b.dataset.v.split(",").map(Number); v.forEach((t,j)=>document.getElementById(`v${j}`).value=t); readX0(); }));
+    document.getElementById("multiWrap").style.display="none"; document.getElementById("multiOn").checked=false;
+    readMat(true);
+  }
+  const ks=document.getElementById("kSl"); ks.max=sc.kmax; ks.value=Math.min(K,sc.kmax); K=+ks.value;
+  document.getElementById("kLab").innerHTML=`时间 <math><mi>k</mi></math>（单位：${sc.unit}）`; document.getElementById("kV").textContent=K;
+}
+function readMat(silent){
+  const M=[[0,0,0],[0,0,0],[0,0,0]]; let bad=[], neg=false, nan=false;
+  for(let i=0;i<3;i++) for(let j=0;j<3;j++){ const v=parseFloat(document.getElementById(`m${i}${j}`).value); if(Number.isNaN(v)) nan=true; M[i][j]=v; if(v<0) neg=true; }
+  for(let j=0;j<3;j++){ const s=M[0][j]+M[1][j]+M[2][j]; const el=document.getElementById(`cs${j}`); el.textContent=Number.isNaN(s)?"—":trim(s,3); const ok=Math.abs(s-1)<1e-9; el.classList.toggle("bad",!ok); if(!ok) bad.push(j); }
+  const err=document.getElementById("matErr");
+  if(nan){ err.textContent="请把 9 个数都填上"; matValid=false; }
+  else if(neg){ err.textContent="比例不能是负数"; matValid=false; }
+  else if(bad.length){ err.innerHTML=`第 ${bad.map(j=>j+1).join("、")} 列之和不为 1：从一个站点出发的单车，去各站的比例加起来必须是 1（单车不会凭空增减）。`; matValid=false; }
+  else { err.textContent=""; matValid=true; sc.A=M; buildA(); }
+  if(silent!==true) redraw();
+}
+function readX0(){ const v=[0,1,2].map(j=>Math.max(0,parseFloat(document.getElementById(`v${j}`).value)||0)); if(v.reduce((s,t)=>s+t,0)>0) sc.x0=v; redraw(); }
+
+/* ═══════════ 渲染（自由探索）═══════════ */
+function valTxtFor(count){ return v=>count?trim(v,1):trim(v,3); }
+function redraw(){
+  if(mode==="practice"){ drawQuiz(); return; }
+  if(sc.n===3&&!matValid){ gD.clearRect(0,0,DW,DH); gC.clearRect(0,0,CW,CH); document.getElementById("stepsBox").innerHTML=`<div class="verdict inf">请先把转移矩阵改成合法的（元素非负、每列之和为 1）。</div>`; document.getElementById("readout").innerHTML=""; return; }
+  const tr=traj(A,sc.x0,sc.kmax), xK=tr[K];
+  const total=sc.x0.reduce((s,v)=>s+v,0);
+  const st=solveSteady(A);
+  drawDiagram(A,sc.names,xK,valTxtFor(sc.count));
+  document.getElementById("diagTitle").textContent=sc.n===3?"状态转移图（箭头颜色与出发的站点相同）":"状态转移图";
+  const series=sc.names.map((_,i)=>tr.map(x=>x[i]));
+  let faint=null;
+  if(sc.n===2&&document.getElementById("multiOn").checked) faint=[0,0.25,0.5,0.75,1].map(s=>traj(A,[s,1-s],sc.kmax).map(x=>x[0]));
+  drawCurves(series, st.pi?st.pi.map(v=>v*total):null, K, sc.count?Math.max(total,1):1, faint);
+  document.getElementById("curveTitle").textContent=sc.curveLab||(sc.count?"各站点单车数随时间的变化":"各状态所占比例随时间的变化");
+  const C=COLS();
+  document.getElementById("curveLegend").innerHTML=sc.names.map((s,i)=>`<span><i style="background:${C[i]}"></i>${s}</span>`).join("")+(st.pi?`<span><i class="dash"></i>稳态</span>`:"")+(faint?`<span><i style="background:${C[0]};opacity:.35"></i>其他初始分布下的${sc.names[0]}</span>`:"");
+  document.getElementById("readout").innerHTML=`第 <math><mi>k</mi><mo>=</mo><mn>${K}</mn></math> ${sc.unit}：<math>${xk("k")}${eqs(xK.some(v=>isApprox(v,sc.count?1:4)))}${colML(xK.map(v=>numML(v,sc.count?1:4)))}</math>`
+    +(st.pi?`<span style="margin-left:14px;">${sc.count?"长期":"稳态"} <math>${sc.count?`<mn>${trim(total,1)}</mn>`:""}${BPI}${eqs(st.pi.some(v=>isApprox(v*total,sc.count?1:4)))}${colML(st.pi.map(v=>numML(v*total,sc.count?1:4)))}</math></span>`:"");
+  document.getElementById("stepsBox").innerHTML=stepsHTML(A,sc.x0,K,tr,st,sc);
+}
+
+function stepsHTML(A,x0,K,tr,st,s){
+  const n=A.length, count=!!(s&&s.count), d=count?1:4;
+  const Aml=matML(A.map(r=>r.map(v=>numML(v,2))));
+  let h=`<div class="st">① 转移矩阵与递推</div>`;
+  if(n===2&&s&&s.p!==undefined) h+=`<div class="ctr"><math displaystyle="true">${BA}<mo>=</mo>${matML([[`<mn>1</mn><mo>−</mo><mi>q</mi>`,`<mi>p</mi>`],[`<mi>q</mi>`,`<mn>1</mn><mo>−</mo><mi>p</mi>`]])}<mo>=</mo>${Aml}</math></div>`;
+  else h+=`<div class="ctr"><math displaystyle="true">${BA}<mo>=</mo>${Aml}</math></div>`;
+  if(s&&s.note) h+=`<div class="tip">${s.note}每列之和为 1。</div>`;
+  h+=`<div class="ctr"><math>${xk(K)}${K===0?"":"<mo>=</mo>"+(K===1?BA:`<msup>${BA}<mn>${K}</mn></msup>`)+xk(0)}${eqs(tr[K].some(v=>isApprox(v,d)))}${colML(tr[K].map(v=>numML(v,d)))}</math>`
+    +(K>1?`（也可以逐步递推：<math>${xk(K)}<mo>=</mo>${BA}${xk(K-1)}</math>）`:"")+`</div>`;
+  h+=`<div class="st">② 稳态：特征值 1 对应的特征向量</div>`;
+  if(st.multi){
+    h+=`<div class="verdict inf">方程组 <math><mo>(</mo>${BA}<mo>−</mo>${BE}<mo>)</mo>${BPI}<mo>=</mo><mn mathvariant="bold">0</mn></math> 的基础解系不止一个向量：稳态不唯一，长期分布取决于初始分布（例如 <math>${BA}<mo>=</mo>${BE}</math> 时谁都不迁移，任何分布都不变）。</div>`;
+    return h;
+  }
+  const pi=st.pi;
+  if(n===2&&s&&s.p!==undefined){
+    const p=s.p,q=s.q, P=Math.round(p*100), Q=Math.round(q*100);
+    const fr=(a,b)=>{ const g=gcd(a,b)||1; return b/g===1?`<mn>${a/g}</mn>`:`<mfrac><mn>${a/g}</mn><mn>${b/g}</mn></mfrac>`; };
+    h+=`<div class="ctr"><math displaystyle="true">${BA}${BPI}<mo>=</mo>${BPI}<mo>⟺</mo><mo>(</mo>${BA}<mo>−</mo>${BE}<mo>)</mo>${BPI}<mo>=</mo><mn mathvariant="bold">0</mn><mo>,</mo><mspace width="0.6em"/>${BA}<mo>−</mo>${BE}<mo>=</mo>${matML([[NEG+`<mi>q</mi>`,`<mi>p</mi>`],[`<mi>q</mi>`,NEG+`<mi>p</mi>`]])}</math></div>`
+      +`<div class="ctr">两个方程其实是同一个：<math><mi>q</mi><msub><mi>π</mi><mn>1</mn></msub><mo>=</mo><mi>p</mi><msub><mi>π</mi><mn>2</mn></msub></math>，再加上 <math><msub><mi>π</mi><mn>1</mn></msub><mo>+</mo><msub><mi>π</mi><mn>2</mn></msub><mo>=</mo><mn>1</mn></math>，得</div>`
+      +`<div class="ctr"><math displaystyle="true">${BPI}<mo>=</mo>${colML([`<mfrac><mi>p</mi><mrow><mi>p</mi><mo>+</mo><mi>q</mi></mrow></mfrac>`,`<mfrac><mi>q</mi><mrow><mi>p</mi><mo>+</mo><mi>q</mi></mrow></mfrac>`])}<mo>=</mo>${colML([fr(P,P+Q),fr(Q,P+Q)])}${eqs(isApprox(pi[0])||isApprox(pi[1]))}${colML(pi.map(v=>numML(v,4)))}</math></div>`;
+  }else{
+    const total=x0.reduce((a,b)=>a+b,0);
+    h+=`<div class="ctr">解 <math><mo>(</mo>${BA}<mo>−</mo>${BE}<mo>)</mo>${BPI}<mo>=</mo><mn mathvariant="bold">0</mn></math>，并取各分量之和为 1：</div>`
+      +`<div class="ctr"><math displaystyle="true">${BPI}${eqs(pi.some(v=>!ratOf(v,200)))}${colML(pi.map(v=>{ const f=fracML(v,200); return f||numML(v,4); }))}</math>`
+      +(count?`，长期${s.longLab||"各站点单车数"} <math><mn>${trim(total,1)}</mn>${BPI}${eqs(pi.some(v=>isApprox(v*total,1)))}${colML(pi.map(v=>numML(v*total,1)))}</math>`:"")+`</div>`;
+  }
+  h+=`<div class="tip">为什么一定有特征值 1：<math>${BA}</math> 每列之和为 1，即 <math><msup>${BA}<mi>T</mi></msup><msup><mrow><mo>(</mo><mn>1</mn><mo>,</mo><mo>…</mo><mo>,</mo><mn>1</mn><mo>)</mo></mrow><mi>T</mi></msup><mo>=</mo><msup><mrow><mo>(</mo><mn>1</mn><mo>,</mo><mo>…</mo><mo>,</mo><mn>1</mn><mo>)</mo></mrow><mi>T</mi></msup></math>，所以 1 是 <math><msup>${BA}<mi>T</mi></msup></math> 的特征值；而 <math>${BA}</math> 与 <math><msup>${BA}<mi>T</mi></msup></math> 的特征值相同。</div>`;
+  h+=`<div class="st">③ 对角化看收敛</div>`;
+  if(n===2){
+    const p=A[0][1], q=A[1][0], lam=1-p-q;
+    const L=numML(lam,4), N=x0.reduce((u,v)=>u+v,0), Nml=Math.abs(N-1)<1e-12?"":`<mn>${trim(N,1)}</mn>`;
+    if(!(s&&s.p!==undefined)) h+=`<div class="tip">记 <math><mi>p</mi><mo>=</mo><msub><mi>a</mi><mn>12</mn></msub><mo>=</mo>${numML(p,2)}<mo>,</mo><mspace width="0.4em"/><mi>q</mi><mo>=</mo><msub><mi>a</mi><mn>21</mn></msub><mo>=</mo>${numML(q,2)}</math>，则 <math>${BA}<mo>=</mo>${matML([[`<mn>1</mn><mo>−</mo><mi>q</mi>`,`<mi>p</mi>`],[`<mi>q</mi>`,`<mn>1</mn><mo>−</mo><mi>p</mi>`]])}</math>。</div>`;
+    h+=`<div class="ctr"><math><msub><mi>λ</mi><mn>1</mn></msub><mo>=</mo><mn>1</mn><mo>,</mo><mspace width="0.6em"/><msub><mi>λ</mi><mn>2</mn></msub><mo>=</mo><mi>tr</mi><mspace width="0.2em"/>${BA}<mo>−</mo><mn>1</mn><mo>=</mo><mn>1</mn><mo>−</mo><mi>p</mi><mo>−</mo><mi>q</mi><mo>=</mo>${L}</math>；`
+      +`<math><msub><mi>λ</mi><mn>2</mn></msub></math> 对应的特征向量 <math><msub><mi class="bm">ξ</mi><mn>2</mn></msub><mo>=</mo><msup><mrow><mo>(</mo><mn>1</mn><mo>,</mo>${NEG}<mn>1</mn><mo>)</mo></mrow><mi>T</mi></msup></math></div>`;
+    h+=`<div class="ctr"><math displaystyle="true">${BA}<mo>=</mo><mi class="bm">P</mi><mi class="bm">Λ</mi><msup><mi class="bm">P</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mo>,</mo><mspace width="0.5em"/><mi class="bm">P</mi><mo>=</mo>${matML([[`<mi>p</mi>`,`<mn>1</mn>`],[`<mi>q</mi>`,NEG+`<mn>1</mn>`]])}<mo>,</mo><mspace width="0.5em"/><mi class="bm">Λ</mi><mo>=</mo>${matML([[`<mn>1</mn>`,`<mn>0</mn>`],[`<mn>0</mn>`,`<msub><mi>λ</mi><mn>2</mn></msub>`]])}</math></div>`
+      +`<div class="ctr"><math displaystyle="true"><msup>${BA}<mi>k</mi></msup><mo>=</mo><mi class="bm">P</mi><msup><mi class="bm">Λ</mi><mi>k</mi></msup><msup><mi class="bm">P</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mo>=</mo><mfrac><mn>1</mn><mrow><mi>p</mi><mo>+</mo><mi>q</mi></mrow></mfrac>${matML([[`<mi>p</mi><mo>+</mo><mi>q</mi><msubsup><mi>λ</mi><mn>2</mn><mi>k</mi></msubsup>`,`<mi>p</mi><mo>−</mo><mi>p</mi><msubsup><mi>λ</mi><mn>2</mn><mi>k</mi></msubsup>`],[`<mi>q</mi><mo>−</mo><mi>q</mi><msubsup><mi>λ</mi><mn>2</mn><mi>k</mi></msubsup>`,`<mi>q</mi><mo>+</mo><mi>p</mi><msubsup><mi>λ</mi><mn>2</mn><mi>k</mi></msubsup>`]])}</math></div>`
+      +`<div class="ctr">于是 <math>${xk("k")}<mo>=</mo>${Nml}${BPI}<mo>+</mo><msubsup><mi>λ</mi><mn>2</mn><mi>k</mi></msubsup><mo>(</mo>${xk(0)}<mo>−</mo>${Nml}${BPI}<mo>)</mo></math>（<math>${xk(0)}<mo>−</mo>${Nml}${BPI}</math> 的分量之和为 0，正是 <math><msub><mi class="bm">ξ</mi><mn>2</mn></msub></math> 的倍数）。</div>`;
+    const a=Math.abs(lam);
+    if(a<1e-12) h+=`<div class="verdict uniq"><math><msub><mi>λ</mi><mn>2</mn></msub><mo>=</mo><mn>0</mn></math>：一步就到达稳态。</div>`;
+    else if(a<1-1e-12){ const kk=Math.ceil(Math.log(0.01)/Math.log(a));
+      h+=`<div class="verdict uniq"><math><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><msub><mi>λ</mi><mn>2</mn></msub><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo><mo>=</mo>${numML(a,4)}<mo>&lt;</mo><mn>1</mn></math>，所以 <math><msubsup><mi>λ</mi><mn>2</mn><mi>k</mi></msubsup><mo>→</mo><mn>0</mn></math>，<math>${xk("k")}<mo>→</mo>${Nml}${BPI}</math>，<b>与初始分布无关</b>。与稳态的差每${s?s.unit:"步"}缩小为原来的 ${trim(a,4)} 倍，约 ${kk} ${s?s.unit:"步"}后不超过初始差距的 1%；<math><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo><msub><mi>λ</mi><mn>2</mn></msub><mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></math> 越小收敛越快${lam<0?"。这里 <math><msub><mi>λ</mi><mn>2</mn></msub><mo>&lt;</mo><mn>0</mn></math>，曲线会在稳态上下来回摆动着靠近":""}。</div>`; }
+    else h+=`<div class="verdict inf"><math><msub><mi>λ</mi><mn>2</mn></msub><mo>=</mo>${L}</math>，<math><msubsup><mi>λ</mi><mn>2</mn><mi>k</mi></msubsup></math> 不趋于 0：${lam<0?"分布每一步都在两个状态之间来回翻转，不收敛到稳态（除非一开始就是稳态）。":"谁都不迁移，分布永远保持初始状态。"}</div>`;
+  }else{
+    const tr=A[0][0]+A[1][1]+A[2][2], dt=det3(A), sum=tr-1, disc=sum*sum-4*dt;
+    h+=`<div class="tip">3 个状态时道理相同：若 <math>${BA}</math> 可对角化，把 <math>${xk(0)}</math> 按特征向量分解，<math><msup>${BA}<mi>k</mi></msup></math> 作用后，其余特征值对应的部分乘上 <math><msup><mi>λ</mi><mi>k</mi></msup></math>，只要它们的绝对值都小于 1，这部分就消失，只剩稳态。</div>`;
+    if(disc>=-1e-12){ const r=Math.sqrt(Math.max(0,disc)), l2=(sum+r)/2, l3=(sum-r)/2;
+      h+=`<div class="ctr">本例另两个特征值满足 <math><msub><mi>λ</mi><mn>2</mn></msub><mo>+</mo><msub><mi>λ</mi><mn>3</mn></msub><mo>=</mo><mi>tr</mi><mspace width="0.2em"/>${BA}<mo>−</mo><mn>1</mn><mo>,</mo><mspace width="0.4em"/><msub><mi>λ</mi><mn>2</mn></msub><msub><mi>λ</mi><mn>3</mn></msub><mo>=</mo><mo fence="true" form="prefix" lspace="0" rspace="0">|</mo>${BA}<mo fence="true" form="postfix" lspace="0" rspace="0">|</mo></math>，解得 <math><msub><mi>λ</mi><mn>2</mn></msub><mo>${Math.abs(l2-Math.round(l2*1e4)/1e4)>1e-9?"≈":"="}</mo>${numML(l2,4)}<mo>,</mo><mspace width="0.4em"/><msub><mi>λ</mi><mn>3</mn></msub><mo>${Math.abs(l3-Math.round(l3*1e4)/1e4)>1e-9?"≈":"="}</mo>${numML(l3,4)}</math>。</div>`;
+      if(Math.abs(l2-l3)<1e-9) h+=`<div class="tip">这里 <math><msub><mi>λ</mi><mn>2</mn></msub><mo>=</mo><msub><mi>λ</mi><mn>3</mn></msub></math> 是二重特征值，<math>${BA}</math> 不一定能对角化；但只要它的绝对值小于 1，<math><msup>${BA}<mi>k</mi></msup><msub><mi class="bm">x</mi><mn>0</mn></msub></math> 仍收敛到稳态（证明超出本课程范围）。</div>`;
+      const m=Math.max(Math.abs(l2),Math.abs(l3));
+      if(m<1-1e-9) h+=`<div class="verdict uniq">它们的绝对值都小于 1，所以 <math>${xk("k")}</math> 收敛到稳态，与初始分布无关；绝对值最大的那个（${trim(m,4)}）决定收敛快慢（严格证明超出本课程范围）。</div>`;
+      else h+=`<div class="verdict inf">有一个特征值的绝对值等于 1，<math>${xk("k")}</math> 不一定收敛到稳态。</div>`;
+    }else h+=`<div class="tip">本例看下方曲线：各站点单车数逐渐稳定在稳态（虚线）附近。</div>`;
+  }
+  return h;
+}
+
+/* ═══════════ 时间控制 ═══════════ */
+function setK(k){ K=Math.max(0,Math.min(sc.kmax,k)); document.getElementById("kSl").value=K; document.getElementById("kV").textContent=K; redraw(); }
+function stopPlay(){ if(timer){ clearInterval(timer); timer=null; } document.getElementById("btnPlay").textContent="▶ 播放"; }
+document.getElementById("kSl").addEventListener("input",e=>{ stopPlay(); setK(+e.target.value); });
+document.getElementById("btnStep").addEventListener("click",()=>{ stopPlay(); setK(K+1); });
+document.getElementById("btnK0").addEventListener("click",()=>{ stopPlay(); setK(0); });
+document.getElementById("btnPlay").addEventListener("click",()=>{
+  if(timer){ stopPlay(); return; }
+  if(K>=sc.kmax) setK(0);
+  document.getElementById("btnPlay").textContent="❚❚ 暂停";
+  timer=setInterval(()=>{ if(K>=sc.kmax){ stopPlay(); return; } setK(K+1); },380);
+});
+document.getElementById("multiOn").addEventListener("change",redraw);
+function setScene(i){ stopPlay(); sc=SCENES[i]; K=0;
+  document.querySelectorAll("#presetBox button").forEach((b,j)=>b.classList.toggle("on",j===i));
+  buildA(); buildControls(); redraw(); }
+document.getElementById("presetBox").innerHTML=SCENES.map((s,i)=>`<button data-i="${i}">${s.name}</button>`).join("");
+document.querySelectorAll("#presetBox button").forEach(b=>b.addEventListener("click",()=>setScene(+b.dataset.i)));
+
+/* ═══════════ 练习模式 ═══════════
+   题型：step 算一步 x₁=Ax₀ | steady 求 2×2 稳态 | lam2 求另一特征值 | valid 判断能否作转移矩阵 */
+const QUIZKEY="la-markov-quiz";
+let streak=0, stats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){ if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return; stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats(); }
+function renderStats(){ const acc=stats.attempted?Math.round(stats.correct/stats.attempted*100):0;
+  document.getElementById("quizStats").innerHTML=`已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`; }
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+const QN=["状态 1","状态 2","状态 3"];
+function randCol(n){ if(n===2){ const a=ri(1,9); return [a,10-a]; } const a=ri(0,8), b=ri(1,10-a-1>0?10-a-1:1), c=10-a-b; return shuffle([a,b,Math.max(0,c)]); }
+function fromCols(cols){ const n=cols.length; return Array.from({length:n},(_,i)=>cols.map(c=>c[i]/10)); }
+function genProblem(){
+  const r=Math.random();
+  if(r<0.3){
+    const n=Math.random()<0.5?2:3; let cols; do{ cols=Array.from({length:n},()=>randCol(n)); }while(cols.some(c=>c.reduce((s,v)=>s+v,0)!==10));
+    const A=fromCols(cols), x0=Array.from({length:n},()=>ri(1,10)*10);
+    const x1=A.map((row,i)=>cols.reduce((s,c,j)=>s+c[i]*x0[j],0)/10);
+    return {kind:"step",A,x0,x1,n};
+  }else if(r<0.6){
+    const p=ri(1,9)/10, q=ri(1,9)/10; const A=[[1-q,p],[q,1-p]].map(rw=>rw.map(v=>Math.round(v*10)/10));
+    return {kind:"steady",A,p,q,pi:[p/(p+q),q/(p+q)]};
+  }else if(r<0.8){
+    const p=ri(1,9)/10, q=ri(1,9)/10; const A=[[1-q,p],[q,1-p]].map(rw=>rw.map(v=>Math.round(v*10)/10));
+    return {kind:"lam2",A,p,q,lam:Math.round((1-p-q)*10)/10};
+  }else{
+    const n=Math.random()<0.5?2:3, t=ri(0,2); let A;
+    if(t===0){ let cols; do{ cols=Array.from({length:n},()=>randCol(n)); }while(cols.some(c=>c.reduce((s,v)=>s+v,0)!==10)); A=fromCols(cols); }
+    else if(t===1){ let cols; do{ cols=Array.from({length:n},()=>randCol(n)); }while(cols.some(c=>c.reduce((s,v)=>s+v,0)!==10));
+      const j=ri(0,n-1); const k=ri(1,3); // 让某列出现负元素，但列和仍为 1
+      const i1=ri(0,n-1); let i2; do{ i2=ri(0,n-1); }while(i2===i1);
+      cols[j][i1]=-k; cols[j][i2]=10+k- cols[j].reduce((s,v,idx)=>idx===i1||idx===i2?s:s+v,0); A=fromCols(cols); }
+    else { // 行和为 1、但列和不全为 1（把转移矩阵写成了按行的形式）
+      let rows; do{ rows=Array.from({length:n},()=>randCol(n)); }while(rows.some(c=>c.reduce((s,v)=>s+v,0)!==10) || [...Array(n).keys()].every(j=>rows.reduce((s,rw)=>s+rw[j],0)===10));
+      A=rows.map(rw=>rw.map(v=>v/10)); }
+    return {kind:"valid",A,n,ans:t,selected:-1};
+  }
+}
+const mat10=A=>matML(A.map(r=>r.map(v=>numML(v,2))));
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody"), fb=document.getElementById("qFeedback");
+  q.done=false; q.revealed=false; fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  const Aline=`<div class="qc"><math displaystyle="true">${BA}<mo>=</mo>${mat10(q.A)}</math></div>`;
+  if(q.kind==="step"){
+    body.innerHTML=`${q.n} 个状态（状态 1${q.n===3?"、状态 2、状态 3":"、状态 2"}）之间的转移矩阵与初始人数为${Aline}<div class="qc"><math displaystyle="true">${xk(0)}<mo>=</mo>${colML(q.x0.map(v=>`<mn>${v}</mn>`))}</math></div>`
+      +`求一步之后的 <math>${xk(1)}<mo>=</mo>${BA}${xk(0)}</math>：<div class="qgrid"><math>${xk(1)}<mo>=</mo></math><span class="qvec">${q.x0.map((_,i)=>`<input class="qin" id="qx${i}" type="text">`).join("")}</span></div>`;
+  }else if(q.kind==="steady"){
+    body.innerHTML=`两个状态之间的转移矩阵为${Aline}求稳态分布 <math>${BPI}<mo>=</mo><msup><mrow><mo>(</mo><msub><mi>π</mi><mn>1</mn></msub><mo>,</mo><msub><mi>π</mi><mn>2</mn></msub><mo>)</mo></mrow><mi>T</mi></msup></math>（<math><msub><mi>π</mi><mn>1</mn></msub><mo>+</mo><msub><mi>π</mi><mn>2</mn></msub><mo>=</mo><mn>1</mn></math>；可填分数如 <b>2/3</b>，或保留两位小数）：`
+      +`<div class="qgrid"><math><msub><mi>π</mi><mn>1</mn></msub><mo>=</mo></math><input class="qin" id="qp0" type="text"><span style="width:12px"></span><math><msub><mi>π</mi><mn>2</mn></msub><mo>=</mo></math><input class="qin" id="qp1" type="text"></div>`;
+  }else if(q.kind==="lam2"){
+    body.innerHTML=`转移矩阵${Aline}一定有特征值 <math><msub><mi>λ</mi><mn>1</mn></msub><mo>=</mo><mn>1</mn></math>。求另一个特征值 <math><msub><mi>λ</mi><mn>2</mn></msub></math>：<div class="qgrid"><math><msub><mi>λ</mi><mn>2</mn></msub><mo>=</mo></math><input class="qin" id="ql" type="text"></div>`;
+  }else{
+    const opts=["能作为转移矩阵（元素都非负，每列之和为 1）","不能：有负的元素","不能：某一列的元素之和不为 1"];
+    body.innerHTML=`约定 <math><msub><mi>a</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></math> 表示从状态 <math><mi>j</mi></math> 转到状态 <math><mi>i</mi></math> 的比例。下面的矩阵能否作为转移矩阵？${Aline}<div class="opts" id="qOpts">`
+      +opts.map((t,i)=>`<label data-i="${i}"><input type="radio" name="qopt" value="${i}"><span>${t}</span></label>`).join("")+"</div>";
+    body.querySelectorAll("#qOpts label").forEach(l=>l.addEventListener("click",()=>{
+      body.querySelectorAll("#qOpts label").forEach(x=>x.classList.remove("sel")); l.classList.add("sel"); l.querySelector("input").checked=true; q.selected=+l.dataset.i; }));
+  }
+  body.querySelectorAll("input.qin").forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); }));
+  document.getElementById("stepsBox").innerHTML=`<div class="placeholder">提交答案或点“看解析”后，这里显示完整的计算过程。</div>`;
+  redraw(); renderStats();
+}
+function drawQuiz(){
+  const q=quiz; if(!q) return;
+  const diag=document.getElementById("diagCard"), curve=document.getElementById("curveCard");
+  if(q.kind==="valid"){ diag.style.display="none"; curve.style.display="none"; return; }
+  diag.style.display=""; document.getElementById("diagTitle").textContent=q.A.length===3?"状态转移图（箭头颜色与出发的状态相同）":"状态转移图";
+  const names=QN.slice(0,q.A.length);
+  drawDiagram(q.A,names,q.kind==="step"?q.x0:null,v=>trim(v,1));
+  document.getElementById("readout").innerHTML="";
+  if(!q.revealed){ curve.style.display="none"; return; }
+  curve.style.display="";
+  const x0=q.kind==="step"?q.x0:[1,0], tot=x0.reduce((a,b)=>a+b,0), tr=traj(q.A,x0,15), st=solveSteady(q.A);
+  drawCurves(names.map((_,i)=>tr.map(x=>x[i])), st.pi?st.pi.map(v=>v*tot):null, q.kind==="step"?1:null, tot, null);
+  document.getElementById("curveTitle").innerHTML=q.kind==="step"?"各状态人数随时间的变化":`从 <math>${xk(0)}<mo>=</mo><msup><mrow><mo>(</mo><mn>1</mn><mo>,</mo><mn>0</mn><mo>)</mo></mrow><mi>T</mi></msup></math> 出发，各状态所占比例的变化`;
+  const C=COLS(); document.getElementById("curveLegend").innerHTML=names.map((s,i)=>`<span><i style="background:${C[i]}"></i>${s}</span>`).join("")+`<span><i class="dash"></i>稳态</span>`;
+}
+function parseVal(s){ s=s.trim().replace(/−/g,"-"); if(!s) return NaN;
+  const m=s.match(/^(-?\d+(?:\.\d+)?)\s*(?:\/\s*(\d+(?:\.\d+)?))?$/); if(!m) return NaN;
+  const a=parseFloat(m[1]); if(m[2]===undefined) return a; const b=parseFloat(m[2]); return b===0?NaN:a/b; }
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return; const fb=document.getElementById("qFeedback");
+  const no=t=>{ fb.className="feedback no"; fb.textContent=t; };
+  if(q.kind==="step"){
+    const v=q.x0.map((_,i)=>parseVal(document.getElementById("qx"+i).value));
+    if(v.some(Number.isNaN)) return no("每个分量都要填");
+    const wrong=v.map((t,i)=>Math.abs(t-q.x1[i])>1e-6);
+    q.x0.forEach((_,i)=>document.getElementById("qx"+i).style.borderColor=wrong[i]?"#c53030":"");
+    if(!wrong.some(Boolean)) markCorrect();
+    else if(Math.abs(v.reduce((s,t)=>s+t,0)-q.x0.reduce((s,t)=>s+t,0))>1e-6) no("总人数应当保持不变（A 每列之和为 1），检查一下标红的分量。");
+    else no("标红的分量不对：第 i 个分量 = A 的第 i 行与 x₀ 对应相乘再相加。");
+  }else if(q.kind==="steady"){
+    const a=parseVal(document.getElementById("qp0").value), b=parseVal(document.getElementById("qp1").value);
+    if(Number.isNaN(a)||Number.isNaN(b)) return no("请填写 π₁ 和 π₂（分数 a/b 或小数）");
+    const ok=Math.abs(a-q.pi[0])<0.006&&Math.abs(b-q.pi[1])<0.006;
+    if(ok) markCorrect();
+    else if(Math.abs(a+b-1)>0.011) no("π₁ + π₂ 应当等于 1。");
+    else if(Math.abs(a-q.pi[1])<0.006) no("两个分量好像弄反了：π₁ 是状态 1 的比例。");
+    else no("还不对：解 (A − E)π = 0，即 a₂₁π₁ = a₁₂π₂，再配上 π₁ + π₂ = 1。");
+  }else if(q.kind==="lam2"){
+    const a=parseVal(document.getElementById("ql").value);
+    if(Number.isNaN(a)) return no("请填写一个数");
+    if(Math.abs(a-q.lam)<1e-6) markCorrect();
+    else if(Math.abs(a-1)<1e-6) no("1 是已知的那个特征值，要求的是另一个。");
+    else no("还不对：两个特征值之和等于迹 a₁₁ + a₂₂。");
+  }else{
+    if(q.selected<0) return no("请先选择一个选项");
+    if(q.selected===q.ans) markCorrect();
+    else no("不对哦：先看有没有负数，再逐列（不是逐行）把元素加起来看是否等于 1。");
+  }
+}
+function solHTML(){
+  const q=quiz;
+  if(q.kind==="step") return `<div class="sol"><math>${xk(1)}<mo>=</mo>${BA}${xk(0)}<mo>=</mo>${colML(q.x1.map(v=>numML(v,2)))}</math>。各分量之和仍为 ${q.x0.reduce((a,b)=>a+b,0)}。</div>`;
+  if(q.kind==="steady"){ const P=Math.round(q.p*10), Q=Math.round(q.q*10), g=gcd(P,P+Q), h=gcd(Q,P+Q);
+    const f=(a,b,gg)=>b/gg===1?`<mn>${a/gg}</mn>`:`<mfrac><mn>${a/gg}</mn><mn>${b/gg}</mn></mfrac>`;
+    return `<div class="sol">由 <math><msub><mi>a</mi><mn>21</mn></msub><msub><mi>π</mi><mn>1</mn></msub><mo>=</mo><msub><mi>a</mi><mn>12</mn></msub><msub><mi>π</mi><mn>2</mn></msub></math>，即 <math>${numML(q.q,1)}<msub><mi>π</mi><mn>1</mn></msub><mo>=</mo>${numML(q.p,1)}<msub><mi>π</mi><mn>2</mn></msub></math>，及 <math><msub><mi>π</mi><mn>1</mn></msub><mo>+</mo><msub><mi>π</mi><mn>2</mn></msub><mo>=</mo><mn>1</mn></math>，得 <math displaystyle="true"><msub><mi>π</mi><mn>1</mn></msub><mo>=</mo>${f(P,P+Q,g)}<mo>,</mo><mspace width="0.5em"/><msub><mi>π</mi><mn>2</mn></msub><mo>=</mo>${f(Q,P+Q,h)}</math>。完整过程见左侧。</div>`; }
+  if(q.kind==="lam2") return `<div class="sol"><math><msub><mi>λ</mi><mn>1</mn></msub><mo>+</mo><msub><mi>λ</mi><mn>2</mn></msub><mo>=</mo><msub><mi>a</mi><mn>11</mn></msub><mo>+</mo><msub><mi>a</mi><mn>22</mn></msub><mo>=</mo>${numML(q.A[0][0]+q.A[1][1],2)}</math>，所以 <math><msub><mi>λ</mi><mn>2</mn></msub><mo>=</mo>${numML(q.lam,2)}</math>。${Math.abs(q.lam)<1?"它的绝对值小于 1，所以分布会收敛到稳态。":""}完整过程见左侧。</div>`;
+  const cs=[...Array(q.n).keys()].map(j=>q.A.reduce((s,r)=>s+r[j],0));
+  const txt=["元素都非负，各列之和都是 1，能作为转移矩阵。","有负的元素（比例不能为负），虽然各列之和是 1，也不能作为转移矩阵。","各列之和依次为 "+cs.map(v=>trim(v,2)).join("、")+"，不全为 1（这里是各<b>行</b>之和为 1，行列的含义弄反了）。"][q.ans];
+  return `<div class="sol">${txt}</div>`;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+function showFull(){ const q=quiz; q.revealed=true; redraw();
+  if(q.kind==="valid"){ document.getElementById("stepsBox").innerHTML=`<div class="placeholder">本题只需判断矩阵是否合法，解析见右侧。</div>`; return; }
+  const x0=q.kind==="step"?q.x0:[1,0], tr=traj(q.A,x0,1), st=solveSteady(q.A);
+  const s=q.kind==="step"?{count:true,unit:"步",longLab:"各状态的人数"}:{p:q.p,q:q.q,unit:"步"};
+  document.getElementById("stepsBox").innerHTML=(q.kind==="step"?"":`<div class="tip">下面取 <math>${xk(0)}<mo>=</mo><msup><mrow><mo>(</mo><mn>1</mn><mo>,</mo><mn>0</mn><mo>)</mo></mrow><mi>T</mi></msup></math>（第 0 步全在状态 1）演示递推与收敛。</div>`)+stepsHTML(q.A,x0,1,tr,st,s);
+}
+function markCorrect(){ const q=quiz; q.done=true; stats.attempted++; stats.correct++; streak++; saveStats(); showFull();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML(); lockQ(); renderStats(); }
+function onReveal(){ const q=quiz; if(!q||q.done) return; q.done=true; stats.attempted++; streak=0; saveStats(); showFull();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML(); lockQ(); renderStats(); }
+function onHint(){
+  const q=quiz; if(!q) return; const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="step") fb.innerHTML=`提示：<math>${xk(1)}</math> 的第 <math><mi>i</mi></math> 个分量 = <math><msub><mi>a</mi><mrow><mi>i</mi><mn>1</mn></mrow></msub><msub><mi>x</mi><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mrow><mi>i</mi><mn>2</mn></mrow></msub><msub><mi>x</mi><mn>2</mn></msub><mo>+</mo><mo>⋯</mo></math>；算完可以检查总人数是否不变。`;
+  else if(q.kind==="steady") fb.innerHTML=`提示：稳态满足 <math><mo>(</mo>${BA}<mo>−</mo>${BE}<mo>)</mo>${BPI}<mo>=</mo><mn mathvariant="bold">0</mn></math>，两个方程是同一个；再用 <math><msub><mi>π</mi><mn>1</mn></msub><mo>+</mo><msub><mi>π</mi><mn>2</mn></msub><mo>=</mo><mn>1</mn></math>。`;
+  else if(q.kind==="lam2") fb.innerHTML=`提示：特征值之和等于矩阵的迹 <math><msub><mi>a</mi><mn>11</mn></msub><mo>+</mo><msub><mi>a</mi><mn>22</mn></msub></math>，已知其中一个是 1。`;
+  else fb.innerHTML=`提示：转移矩阵的两个条件——所有元素非负；每<b>列</b>之和为 1（从状态 <math><mi>j</mi></math> 出发，去各处的比例加起来是 1）。`;
+}
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+function setMode(m){
+  stopPlay(); mode=m;
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("exploreSide").style.display=m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display=m==="practice"?"":"none";
+  document.getElementById("diagCard").style.display=""; document.getElementById("curveCard").style.display="";
+  if(m==="practice"){ quiz=genProblem(); renderProblem(); }
+  else { quiz=null; redraw(); }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
+setScene(0); resize();
+</script>
+
+<script>
+/* ── 排版：标点不单独成行、不在行首；左括号不留在行尾 ── */
+(function(){
+  const CLOSE=/^[，。、；：）)！？」》,.;:!?…]+/, OPEN=/[（(「《]+$/;
+  function wrapOf(m){
+    if(m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr")) return m.parentNode;
+    const s=document.createElement("span"); s.className="nobr"; s.style.whiteSpace="nowrap";
+    m.parentNode.insertBefore(s,m); s.appendChild(m); return s;
+  }
+  function glue(root){
+    (root.querySelectorAll?root:document).querySelectorAll("math").forEach(m=>{
+      if(m.closest("math")!==m || m.getAttribute("display")==="block") return;
+      const host=m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let nx=host.nextSibling;
+      if(nx && nx.nodeType===3){ const k=nx.data.match(CLOSE); if(k){ const w=wrapOf(m);
+          w.appendChild(document.createTextNode(k[0])); nx.data=nx.data.slice(k[0].length); } }
+      const h2=m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let pv=h2.previousSibling;
+      if(pv && pv.nodeType===3){ const k=pv.data.match(OPEN); if(k){ const w=wrapOf(m);
+          w.insertBefore(document.createTextNode(k[0]),w.firstChild); pv.data=pv.data.slice(0,pv.data.length-k[0].length); } }
+    });
+  }
+  let busy=false;
+  const ob=new MutationObserver(()=>{ if(busy) return; busy=true; ob.disconnect(); glue(document.body); ob.observe(document.body,{childList:true,subtree:true}); busy=false; });
+  glue(document.body); ob.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-markov";          // ← 计数键：与编号 L# 解耦的稳定标识，永不改动
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PageRank 网页排序 · L24 · 线性代数</title>
+<style>
+  :root{
+    --blue:#2b6cb0; --gold:#b7791f; --green:#2f855a; --purple:#6b46c1; --red:#c53030;
+    --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0; --bg:#f7fafc; --panel:#fff;
+    --hl-cell:#fff3cd; --hl-col:#fde2e2;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;}
+  math{font-family:"Cambria Math","STIX Two Math",serif;font-size:1.05em;}
+  math .bm{font-weight:bold;}
+  header.appbar math{color:#fff;}
+  .formula{text-align:center;margin:12px 0 4px;}
+  .formula math{font-size:1.12em;}
+  header.appbar{background:linear-gradient(90deg,#1e3a8a,#2b6cb0);color:#fff;
+       padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header.appbar h1{font-size:19px;margin:0;font-weight:600;}
+  header.appbar .sub{font-size:12.5px;opacity:.9;}
+  header.appbar .tag{font-size:12px;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:999px;}
+  header.appbar .back{margin-left:auto;color:#fff;text-decoration:none;font-size:13px;
+       background:rgba(255,255,255,.16);padding:5px 12px;border-radius:999px;}
+  header.appbar .back:hover{background:rgba(255,255,255,.3);}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 20px 50px;}
+  .desc{background:#eef4fb;border:1px solid #cfe0f2;border-left:3px solid var(--blue);
+       border-radius:8px;padding:12px 16px;font-size:13.5px;color:#2a4365;margin-bottom:18px;}
+  .desc b{color:var(--blue);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+  .card h2{font-size:14px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.3px;}
+  #canvasContainer{width:100%;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       background:#fbfdff;touch-action:none;}
+  canvas{display:block;cursor:pointer;}
+  .tip{font-size:13px;color:var(--sub);margin-top:6px;text-align:center;line-height:1.8;}
+  button{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;
+       font-size:13.5px;cursor:pointer;color:var(--ink);transition:.15s;}
+  button:hover{border-color:var(--blue);}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green);}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+  .presets button{font-size:12.5px;padding:5px 10px;}
+  .presets button.on{border-color:var(--blue);background:#eef4fb;}
+  .plabel{font-size:12.5px;color:var(--sub);margin:12px 0 2px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+  .sl{display:grid;grid-template-columns:auto 1fr 52px;gap:8px;align-items:center;margin:6px 0;font-size:14px;}
+  .sl input[type=range]{width:100%;accent-color:var(--blue);}
+  .sl .v{font-variant-numeric:tabular-nums;text-align:right;font-family:"Cambria Math","STIX Two Math",serif;}
+  .steps{font-size:14px;line-height:2;}
+  .steps math{font-size:1.05em;}
+  .steps .st{margin:12px 0 2px;font-weight:600;color:var(--sub);font-size:14px;}
+  .steps .st:first-child{margin-top:0;}
+  .steps .ctr{text-align:center;overflow-x:auto;overflow-y:hidden;padding:2px 0;line-height:2.2;}
+  .steps .tip{font-size:14px;color:var(--ink);text-align:left;}
+  .verdict{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:14px;line-height:1.9;}
+  .verdict.uniq{background:#e6fffa;color:#234e52;border:1px solid #b2f5ea;}
+  .verdict.inf{background:#fffaf0;color:#744210;border:1px solid #f6e05e;}
+  .verdict.none{background:#fff5f5;color:#822727;border:1px solid #feb2b2;}
+  .matbox{display:flex;justify-content:center;padding:4px 0;overflow-x:auto;}
+  table.mat{border-collapse:collapse;margin:0 auto;}
+  table.mat td,table.mat th{border:1px solid #cbd5e1;min-width:46px;height:38px;padding:0 6px;text-align:center;
+     vertical-align:middle;font-size:15px;font-variant-numeric:tabular-nums;}
+  table.mat th{background:#f1f5f9;font-weight:600;font-size:13px;color:var(--sub);}
+  table.mat td.num{font-family:"Cambria Math","STIX Two Math",serif;}
+  table.mat td.zero{color:#a0aec0;}
+  table.mat .fc{background:var(--hl-col);}
+  .frac{display:inline-flex;flex-direction:column;vertical-align:middle;line-height:1.05;font-size:.82em;}
+  .frac .num{border-bottom:1.4px solid currentColor;padding:0 3px;}
+  .frac .den{padding:0 3px;}
+  .legend{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:13px;color:var(--sub);margin-top:8px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:14px;height:14px;border:1px solid #cbd5e1;border-radius:3px;display:inline-block;}
+  /* 排名条 */
+  .rbar{display:grid;grid-template-columns:22px 56px 1fr 64px;gap:8px;align-items:center;margin:6px 0;font-size:14px;}
+  .rbar .rk{color:var(--sub);text-align:right;}
+  .rbar .trk{position:relative;height:16px;background:#edf2f7;border-radius:8px;overflow:visible;}
+  .rbar .fill{position:absolute;left:0;top:0;bottom:0;border-radius:8px;background:var(--blue);}
+  .rbar .mk{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--gold);border-radius:2px;}
+  .rbar .val{text-align:right;font-variant-numeric:tabular-nums;font-family:"Cambria Math","STIX Two Math",serif;}
+  .iter{font-size:14px;line-height:2.1;text-align:center;}
+  .iter b{color:var(--blue);}
+  /* 练习 */
+  .modebar{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+       margin-bottom:14px;background:#fff;}
+  .modebar button{border:none;border-radius:0;padding:8px 18px;font-size:13.5px;background:#fff;
+       color:var(--sub);cursor:pointer;transition:.15s;}
+  .modebar button.on{background:var(--blue);color:#fff;}
+  .quizhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .quizhead h2{font-size:14px;color:var(--sub);font-weight:600;margin:0 auto 0 0;letter-spacing:.3px;}
+  .reset-link{font-size:12px;color:#a0aec0;border:none;background:none;padding:2px 4px;text-decoration:underline;cursor:pointer;}
+  .reset-link:hover{color:#c53030;}
+  .stats{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;}
+  .stats b{color:var(--blue);}
+  .qbody{font-size:14.5px;line-height:2;}
+  .qbody input.qin{width:64px;font-size:15px;padding:4px 6px;border:1px solid var(--line);
+       border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;}
+  .qbody input.qin:focus{outline:none;border-color:var(--blue);}
+  .qgrid{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;flex-wrap:wrap;}
+  .qvec{display:inline-grid;grid-template-columns:auto;gap:4px;padding:2px 8px;border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-radius:6px;}
+  .opts{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .opts label{display:flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid var(--line);
+       border-radius:8px;cursor:pointer;font-size:14px;transition:.12s;}
+  .opts label:hover{border-color:var(--blue);}
+  .opts label.sel{border-color:var(--blue);background:#eef4fb;}
+  .opts input{accent-color:var(--blue);}
+  .feedback{margin:12px 0 4px;font-size:14px;min-height:22px;}
+  .feedback.ok{color:var(--green);font-weight:600;}
+  .feedback.no{color:#c53030;font-weight:600;}
+  .feedback .no{color:#c53030;font-weight:600;}
+  .feedback .sol{color:var(--ink);font-weight:400;font-size:14px;margin-top:6px;line-height:1.9;}
+  .qbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,350px);gap:16px;align-items:start;}
+  @media(max-width:860px){ .layout{grid-template-columns:minmax(0,1fr);} .col-right{order:-1;} }
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:#718096;text-align:center;}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <h1>PageRank 网页排序</h1>
+  <span class="sub">网页的重要性 = 链接矩阵特征值 <math><mn>1</mn></math> 对应的特征向量 · <math><mi class="bm">A</mi><mi class="bm">x</mi><mo>=</mo><mi class="bm">x</mi></math></span>
+  <span class="tag">L24 · 应用案例</span>
+  <a class="back" href="./index.html">← 工具箱</a>
+</header>
+
+<div class="wrap">
+  <div class="desc">
+    搜索引擎要给网页排序。PageRank 的想法是：<b>被重要的网页链接，自己也就重要</b>。设第 <math><mi>j</mi></math> 个网页有 <math><msub><mi>n</mi><mi>j</mi></msub></math> 个出链，它把自己的重要性 <math><msub><mi>x</mi><mi>j</mi></msub></math> <b>平分</b>给它链接的网页，于是
+    <div class="formula">
+      <math display="block"><msub><mi>x</mi><mi>i</mi></msub><mo>=</mo><munder><mo>∑</mo><mrow><mi>j</mi><mo>→</mo><mi>i</mi></mrow></munder><mfrac><msub><mi>x</mi><mi>j</mi></msub><msub><mi>n</mi><mi>j</mi></msub></mfrac>
+        <mspace width="1.2em"/><mo>⟺</mo><mspace width="1.2em"/><mi class="bm">A</mi><mi class="bm">x</mi><mo>=</mo><mi class="bm">x</mi><mo>,</mo><mspace width="1em"/>
+        <msub><mi>a</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mrow><mo>{</mo><mtable columnalign="left"><mtr><mtd><mn>1</mn><mo>/</mo><msub><mi>n</mi><mi>j</mi></msub><mo>,</mo></mtd><mtd><mtext>网页</mtext><mspace width="0.25em"/><mi>j</mi><mspace width="0.25em"/><mtext>链接到网页</mtext><mspace width="0.25em"/><mi>i</mi></mtd></mtr><mtr><mtd><mn>0</mn><mo>,</mo></mtd><mtd><mtext>否则</mtext></mtd></mtr></mtable></mrow></math>
+    </div>
+    即排名向量 <math><mi class="bm">x</mi></math> 是链接矩阵 <math><mi class="bm">A</mi></math> 的<b>对应于特征值 <math><mi>λ</mi><mo>=</mo><mn>1</mn></math> 的特征向量</b>（取各分量之和为 <math><mn>1</mn></math>）。<math><mi class="bm">A</mi></math> 的每列之和都是 <math><mn>1</mn></math>，所以 <math><msup><mi class="bm">A</mi><mi>T</mi></msup></math> 有特征向量 <math><msup><mrow><mo>(</mo><mn>1</mn><mo>,</mo><mo>…</mo><mo>,</mo><mn>1</mn><mo>)</mo></mrow><mi>T</mi></msup></math>，而 <math><mi class="bm">A</mi></math> 与 <math><msup><mi class="bm">A</mi><mi>T</mi></msup></math> 的特征值相同，特征值 <math><mn>1</mn></math> 一定存在。
+    没有出链的<b>悬挂网页</b>当作链接到所有网页（该列取 <math><mn>1</mn><mo>/</mo><mi>n</mi></math>）；为了使排名唯一，再引入<b>阻尼系数</b> <math><mi>d</mi></math>，用 Google 矩阵
+    <div class="formula"><math display="block"><mi class="bm">G</mi><mo>=</mo><mo>(</mo><msub><mi>g</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>)</mo><mo>,</mo><mspace width="1em"/><msub><mi>g</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mi>d</mi><msub><mi>a</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>+</mo><mfrac><mrow><mn>1</mn><mo>&#x2212;</mo><mi>d</mi></mrow><mi>n</mi></mfrac><mspace width="1em"/><mo>(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo>=</mo><mn>1</mn><mo>,</mo><mo>…</mo><mo>,</mo><mi>n</mi><mo>)</mo></math></div>
+    代替 <math><mi class="bm">A</mi></math>（即把 <math><mi>d</mi><mi class="bm">A</mi></math> 的每个元素都加上 <math><mfrac><mrow><mn>1</mn><mo>&#x2212;</mo><mi>d</mi></mrow><mi>n</mi></mfrac></math>，相当于“浏览者有 <math><mn>1</mn><mo>&#x2212;</mo><mi>d</mi></math> 的概率随机跳到任一网页”）。实际计算用<b>幂法</b>（一种数值计算方法，超出本课程范围，这里只演示过程）：从 <math><msub><mi class="bm">x</mi><mn>0</mn></msub></math> 出发反复做 <math><msub><mi class="bm">x</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mi class="bm">G</mi><msub><mi class="bm">x</mi><mi>k</mi></msub></math>。
+  </div>
+
+  <div class="modebar">
+    <button id="btnExplore" class="on">自由探索</button>
+    <button id="btnPractice">练习</button>
+  </div>
+
+  <div class="layout">
+  <div class="col-left">
+    <div class="card">
+      <div id="canvasContainer"><canvas id="canvas"></canvas></div>
+      <div class="tip" id="canvasTip"></div>
+    </div>
+    <div class="card" id="rankCard">
+      <h2 id="rankTitle">排名（圆的大小 = 重要性）</h2>
+      <div id="rankBox"></div>
+      <div class="legend" id="rankLegend"><span><i style="background:var(--blue)"></i>稳定排名 <math><mi class="bm">x</mi></math></span><span id="lgIter" style="display:none;"><i style="background:var(--gold)"></i>当前迭代 <math><msub><mi class="bm">x</mi><mi>k</mi></msub></math></span></div>
+    </div>
+    <div class="card"><h2>计算过程</h2><div class="steps" id="stepsBox"></div></div>
+  </div>
+
+  <div class="col-right">
+    <div id="exploreSide">
+      <div class="card">
+        <h2>网页与链接</h2>
+        <div class="plabel" style="margin-top:0;">例子：</div>
+        <div class="presets" id="presetBox"></div>
+        <div class="row">
+          <button id="btnAdd">添加网页</button>
+          <button id="btnDel">删除最后一个网页</button>
+        </div>
+        <div class="verdict uniq" id="presetNote" style="display:none;"></div>
+      </div>
+      <div class="card">
+        <h2>阻尼系数</h2>
+        <div class="sl"><span><math><mi>d</mi></math></span><input type="range" id="dSl" min="0.5" max="1" step="0.01" value="0.85"><span class="v" id="dV"></span></div>
+        <div class="row"><button id="d85">d = 0.85（Google 原始取值）</button><button id="d100">d = 1（不加阻尼）</button></div>
+      </div>
+      <div class="card">
+        <h2>幂法迭代 <math><msub><mi class="bm">x</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mi class="bm">G</mi><msub><mi class="bm">x</mi><mi>k</mi></msub></math></h2>
+        <div class="row" style="margin-top:0;">
+          <button class="primary" id="btnStep">迭代一步 ▸</button>
+          <button id="btnPlay">自动播放</button>
+          <button id="btnIterReset">回到 <math><msub><mi class="bm">x</mi><mn>0</mn></msub></math></button>
+        </div>
+        <div class="iter" id="iterBox"></div>
+      </div>
+    </div>
+
+    <div class="card" id="quizCard" style="display:none;">
+      <div class="quizhead">
+        <h2>练习 · PageRank</h2>
+        <span class="stats" id="quizStats"></span>
+        <button id="qReset" class="reset-link" title="清零本机练习记录">清零</button>
+      </div>
+      <div class="qbody" id="qBody"></div>
+      <div class="feedback" id="qFeedback"></div>
+      <div class="qbtns">
+        <button class="primary" id="qSubmit">提交</button>
+        <button id="qHint">提示</button>
+        <button id="qReveal">看解析</button>
+        <button id="qNext">下一题 ▸</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <footer>© 北京信息科技大学 线性代数课程组 · 本页仅用于教学</footer>
+</div>
+
+<script>
+/* ═══════════ 有理数 ═══════════ */
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; }
+function lcm(a,b){ return a/gcd(a,b)*b; }
+function F(n,d){ d=d||1; if(d<0){n=-n;d=-d;} const g=gcd(n,d)||1; return {n:n/g,d:d/g}; }
+const fadd=(a,b)=>F(a.n*b.d+b.n*a.d,a.d*b.d), fsub=(a,b)=>F(a.n*b.d-b.n*a.d,a.d*b.d),
+      fmul=(a,b)=>F(a.n*b.n,a.d*b.d), fdiv=(a,b)=>F(a.n*b.d,a.d*b.n), fz=a=>a.n===0, fv=a=>a.n/a.d;
+function rrefF(M){
+  const R=M.map(r=>r.slice()); const m=R.length, n=R[0].length; const piv=[]; let row=0;
+  for(let c=0;c<n&&row<m;c++){
+    let p=-1; for(let r=row;r<m;r++) if(!fz(R[r][c])){ p=r; break; }
+    if(p<0) continue;
+    [R[row],R[p]]=[R[p],R[row]];
+    const pv=R[row][c]; R[row]=R[row].map(v=>fdiv(v,pv));
+    for(let r=0;r<m;r++) if(r!==row&&!fz(R[r][c])){ const k=R[r][c]; R[r]=R[r].map((v,j)=>fsub(v,fmul(k,R[row][j]))); }
+    piv.push(c); row++;
+  }
+  return {R,piv};
+}
+
+/* ═══════════ 图 → 矩阵 ═══════════ */
+// edges: Set of "j>i" 表示网页 j 链接到网页 i（0 起编号）
+function outLinks(n,edges,j){ const o=[]; for(let i=0;i<n;i++) if(edges.has(j+">"+i)) o.push(i); return o; }
+function linkMatrix(n,edges){        // 分数矩阵；悬挂网页的列取 1/n
+  const A=[...Array(n)].map(()=>Array(n).fill(null).map(()=>F(0))); const dangling=[];
+  for(let j=0;j<n;j++){ const o=outLinks(n,edges,j);
+    if(!o.length){ dangling.push(j); for(let i=0;i<n;i++) A[i][j]=F(1,n); }
+    else o.forEach(i=>A[i][j]=F(1,o.length)); }
+  return {A,dangling};
+}
+const toNum=A=>A.map(r=>r.map(fv));
+function googleNum(An,d){ const n=An.length; return An.map(r=>r.map(v=>d*v+(1-d)/n)); }
+function matVec(M,x){ return M.map(r=>r.reduce((s,v,j)=>s+v*x[j],0)); }
+// 排名：d<1 数值解；d=1 精确解（可能不唯一）
+function solveRank(Af,d){
+  const n=Af.length;
+  if(d>=0.99999){
+    const M=Af.map((r,i)=>r.map((v,j)=>i===j?fsub(v,F(1)):v));
+    const {R,piv}=rrefF(M); const nul=n-piv.length;
+    if(nul!==1) return {unique:false,nul};
+    const f=[...Array(n).keys()].find(j=>!piv.includes(j));
+    const v=Array(n).fill(null).map(()=>F(0)); v[f]=F(1);
+    piv.forEach((pc,i)=>{ v[pc]=F(-R[i][f].n,R[i][f].d); });
+    let s=F(0); v.forEach(t=>s=fadd(s,t));
+    const x=v.map(t=>fdiv(t,s));
+    return {unique:true,exact:x,x:x.map(fv),nul:1};
+  }
+  const G=googleNum(toNum(Af),d);
+  // (G−E)x=0，最后一行换成 Σx=1
+  const M=G.map((r,i)=>r.map((v,j)=>v-(i===j?1:0))); M[n-1]=Array(n).fill(1);
+  const b=Array(n).fill(0); b[n-1]=1;
+  for(let c=0;c<n;c++){ let p=c; for(let r=c+1;r<n;r++) if(Math.abs(M[r][c])>Math.abs(M[p][c])) p=r;
+    [M[c],M[p]]=[M[p],M[c]]; [b[c],b[p]]=[b[p],b[c]];
+    for(let r=0;r<n;r++) if(r!==c){ const k=M[r][c]/M[c][c]; for(let j=c;j<n;j++) M[r][j]-=k*M[c][j]; b[r]-=k*b[c]; } }
+  return {unique:true,x:b.map((v,i)=>v/M[i][i]),nul:1};
+}
+function powerConverges(G,x0){ let x=x0.slice(); for(let k=0;k<2000;k++){ const y=matVec(G,x); if(y.every((v,i)=>Math.abs(v-x[i])<1e-10)) return {ok:true,x:y,k}; x=y; } return {ok:false,x}; }
+
+/* ═══════════ 显示片段 ═══════════ */
+const NEG='<mo form="prefix" lspace="0" rspace="0">&#x2212;</mo>';
+function fracHTML(f){ if(f.d===1) return (f.n<0?"&#x2212;":"")+Math.abs(f.n); return (f.n<0?"&#x2212;":"")+`<span class="frac"><span class="num">${Math.abs(f.n)}</span><span class="den">${f.d}</span></span>`; }
+function fracML(f){ const a=Math.abs(f.n); const s=f.n<0?NEG:""; return s+(f.d===1?`<mn>${a}</mn>`:`<mfrac><mn>${a}</mn><mn>${f.d}</mn></mfrac>`); }
+function decML(v,dg){ const t=v.toFixed(dg===undefined?4:dg); return t.startsWith("-")?NEG+`<mn>${t.slice(1)}</mn>`:`<mn>${t}</mn>`; }
+function colML(arr){ return `<mrow><mo>(</mo><mtable>${arr.map(v=>`<mtr><mtd><mstyle displaystyle="true">${v}</mstyle></mtd></mtr>`).join("")}</mtable><mo>)</mo></mrow>`; }
+function matML(rows){ return `<mrow><mo>(</mo><mtable>${rows.map(r=>`<mtr>${r.map(v=>`<mtd><mstyle displaystyle="true">${v}</mstyle></mtd>`).join("")}</mtr>`).join("")}</mtable><mo>)</mo></mrow>`; }
+function matTable(M,cellFn,hlCols,plain){
+  const n=M.length;
+  let h='<table class="mat"><tr>'+(plain?"":"<th></th>")+[...Array(n).keys()].map(j=>`<th class="${hlCols&&hlCols.includes(j)?"fc":""}">${plain?`<math><msub><mi>x</mi><mn>${j+1}</mn></msub></math>`:"网页 "+(j+1)}</th>`).join("")+"</tr>";
+  M.forEach((r,i)=>{ h+=`<tr>${plain?"":`<th>网页 ${i+1}</th>`}`+r.map((v,j)=>{ const c=cellFn(v); return `<td class="num${c.zero?" zero":""}${hlCols&&hlCols.includes(j)?" fc":""}">${c.h}</td>`; }).join("")+"</tr>"; });
+  return h+"</table>";
+}
+function orderText(x){ const idx=[...x.keys()].sort((a,b)=>x[b]-x[a]); const pg=i=>`<span style="white-space:nowrap">网页 ${i+1}</span>`; let s=pg(idx[0]);
+  for(let k=1;k<idx.length;k++){ s+=(Math.abs(x[idx[k]]-x[idx[k-1]])<1e-9?" = ":" &gt; ")+pg(idx[k]); } return s; }
+
+/* ═══════════ 例子 ═══════════ */
+const PRESETS=[
+  {name:"4 个网页（经典例子）", d:0.85, pos:[[0.2,0.25],[0.8,0.22],[0.78,0.8],[0.22,0.78]],
+   links:[[1,2],[1,3],[1,4],[2,3],[2,4],[3,1],[4,1],[4,3]],
+   note:"网页 1 只有 2 个入链，网页 3 有 3 个入链，可网页 1 排第一：链接到网页 1 的网页 3 自己很重要，而且只链接网页 1，把重要性全给了它。把 <math><mi>d</mi></math> 调到 <math><mn>1</mn></math>，可以看到精确解 <math><mi class=\"bm\">x</mi><mo>=</mo><msup><mrow><mo>(</mo><mfrac><mn>12</mn><mn>31</mn></mfrac><mo>,</mo><mfrac><mn>4</mn><mn>31</mn></mfrac><mo>,</mo><mfrac><mn>9</mn><mn>31</mn></mfrac><mo>,</mo><mfrac><mn>6</mn><mn>31</mn></mfrac><mo>)</mo></mrow><mi>T</mi></msup></math>。"},
+  {name:"谁更重要：入链多 ≠ 重要", d:0.85, pos:[[0.5,0.18],[0.88,0.2],[0.2,0.55],[0.5,0.85],[0.12,0.88],[0.85,0.75]],
+   links:[[3,1],[4,1],[5,1],[6,1],[1,2],[2,1],[5,3],[6,3],[3,4],[4,6]],
+   note:"网页 3 有 2 个入链，网页 2 只有 1 个入链，但网页 2 的排名远高于网页 3：链接网页 2 的是最重要的网页 1，而且网页 1 只链接它；链接网页 3 的网页 5、6 本身不重要。"},
+  {name:"带悬挂网页", d:0.85, pos:[[0.2,0.15],[0.8,0.15],[0.8,0.68],[0.2,0.68],[0.5,1.0]],
+   links:[[1,2],[2,3],[3,1],[3,4],[4,5],[1,5]],
+   note:"网页 5 没有出链（悬挂网页）：浏览者到这里就“出不去”了。原始矩阵这一列全为 0，每列之和为 1 不再成立；把这一列换成 1/n（当作链接到所有网页）就恢复了，见矩阵中标红的列。"},
+  {name:"两个互不相连的小团", d:1, pos:[[0.15,0.25],[0.4,0.15],[0.3,0.55],[0.65,0.55],[0.88,0.3],[0.85,0.82]],
+   links:[[1,2],[2,3],[3,1],[4,5],[5,6],[6,4],[5,4]],
+   note:"两个小团之间没有链接，<math><mi>d</mi><mo>=</mo><mn>1</mn></math> 时特征值 <math><mn>1</mn></math> 对应的线性无关特征向量有 2 个，排名不唯一（两团之间的比例定不下来）。把 <math><mi>d</mi></math> 调小一点，排名就唯一了：这正是引入阻尼系数的原因。"}
+];
+
+/* ═══════════ 状态 ═══════════ */
+const canvas=document.getElementById("canvas"), ctx=canvas.getContext("2d"), container=document.getElementById("canvasContainer");
+let W=560,H=400;
+let nodes=[], edges=new Set(), d=0.85, preset=0;
+let sel=-1, drag=-1, downPos=null, moved=false;
+let iter={on:false,k:0,x:null}, playTimer=null;
+let mode="explore", quiz=null;
+function loadPreset(i){
+  preset=i; const p=PRESETS[i];
+  nodes=p.pos.map(([u,v])=>({u,v})); edges=new Set(p.links.map(([a,b])=>(a-1)+">"+(b-1)));
+  setD(p.d); sel=-1; resetIter();
+  document.querySelectorAll("#presetBox button").forEach((b,j)=>b.classList.toggle("on",j===i));
+  const nt=document.getElementById("presetNote"); nt.style.display=""; nt.innerHTML=p.note;
+  refresh();
+}
+function setD(v){ d=Math.round(v*100)/100; document.getElementById("dSl").value=d; document.getElementById("dV").textContent=d.toFixed(2); }
+function resetIter(){ stopPlay(); iter={on:false,k:0,x:null}; }
+function stopPlay(){ if(playTimer){ clearInterval(playTimer); playTimer=null; document.getElementById("btnPlay").textContent="自动播放"; } }
+function model(){
+  const n=nodes.length; const {A,dangling}=linkMatrix(n,edges);
+  const An=toNum(A), G=googleNum(An,d), sol=solveRank(A,d);
+  let limit=sol.x, conv=null;
+  if(!sol.unique||d>=0.99999){ conv=powerConverges(G,Array(n).fill(1/n)); if(!sol.unique) limit=conv.x; }
+  return {n,A,An,G,dangling,sol,limit,conv};
+}
+
+/* ═══════════ 画布 ═══════════ */
+function resize(){
+  W=Math.max(300,container.clientWidth); H=Math.round(Math.min(Math.max(W*0.68,280),430));
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr);
+  canvas.style.width=W+"px"; canvas.style.height=H+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0); draw();
+}
+window.addEventListener("resize",resize);
+const PADC=46;
+const px=nd=>({x:PADC+nd.u*(W-2*PADC), y:PADC+nd.v*(H-2*PADC)});
+const CMFONT='"Cambria Math","STIX Two Math",serif';
+function radius(v,n){ return 13+40*Math.sqrt(Math.max(0,v)); }
+function shade(t){ // t∈[0,1] → 浅蓝到深蓝
+  const a=[190,215,240], b=[30,64,150]; return `rgb(${a.map((c,i)=>Math.round(c+(b[i]-c)*t)).join(",")})`; }
+function drawGraph(N,E,vals,opt){
+  opt=opt||{};
+  ctx.clearRect(0,0,W,H);
+  const P=N.map(px), n=N.length, R=P.map((p,i)=>radius(vals?vals[i]:1/n,n));
+  const mx=vals?Math.max(...vals,1e-12):1;
+  // 边
+  E.forEach(key=>{ const [a,b]=key.split(">").map(Number); if(a>=n||b>=n) return;
+    const p=P[a], q=P[b], both=E.has(b+">"+a);
+    const dx=q.x-p.x, dy=q.y-p.y, L=Math.hypot(dx,dy); if(L<1) return;
+    const ux=dx/L, uy=dy/L, nx=-uy, ny=ux, off=both?14:0;
+    const sx=p.x+ux*R[a]+nx*off*0.6, sy=p.y+uy*R[a]+ny*off*0.6, ex=q.x-ux*(R[b]+3)+nx*off*0.6, ey=q.y-uy*(R[b]+3)+ny*off*0.6;
+    const cx=(sx+ex)/2+nx*off, cy=(sy+ey)/2+ny*off;
+    ctx.strokeStyle=opt.hlEdge===key?"#dd6b20":"#94a3b8"; ctx.lineWidth=opt.hlEdge===key?2.6:1.8;
+    ctx.beginPath(); ctx.moveTo(sx,sy); ctx.quadraticCurveTo(cx,cy,ex,ey); ctx.stroke();
+    const ang=Math.atan2(ey-cy,ex-cx), h=10, w=4.5;
+    ctx.fillStyle=ctx.strokeStyle; ctx.beginPath(); ctx.moveTo(ex,ey);
+    ctx.lineTo(ex-h*Math.cos(ang)+w*Math.sin(ang), ey-h*Math.sin(ang)-w*Math.cos(ang));
+    ctx.lineTo(ex-h*Math.cos(ang)-w*Math.sin(ang), ey-h*Math.sin(ang)+w*Math.cos(ang)); ctx.closePath(); ctx.fill();
+  });
+  // 节点
+  P.forEach((p,i)=>{ const t=vals?vals[i]/mx:0.4;
+    ctx.beginPath(); ctx.arc(p.x,p.y,R[i],0,2*Math.PI); ctx.fillStyle=shade(t); ctx.fill();
+    ctx.lineWidth=i===opt.sel?3.5:1.5; ctx.strokeStyle=i===opt.sel?"#dd6b20":(opt.dang&&opt.dang.includes(i)?"#e53e3e":"#fff"); ctx.stroke();
+    ctx.font=`600 ${Math.max(13,Math.min(20,R[i]*0.7))}px ${CMFONT}`; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillStyle=t>0.45?"#fff":"#1a202c"; ctx.fillText(String(i+1),p.x,p.y+1);
+  });
+}
+function draw(){
+  if(mode==="practice"){ drawQuiz(); return; }
+  const m=model(); const vals=iter.on?iter.x:m.limit;
+  drawGraph(nodes,edges,vals,{sel,dang:m.dangling});
+}
+
+/* ═══════════ 交互 ═══════════ */
+function evPos(e){ const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
+function hitNode(p){ const m=model(); const vals=iter.on?iter.x:m.limit; let best=-1,bd=1e9;
+  nodes.forEach((nd,i)=>{ const q=px(nd), dd=Math.hypot(q.x-p.x,q.y-p.y); if(dd<=radius(vals[i])+4&&dd<bd){bd=dd;best=i;} }); return best; }
+canvas.addEventListener("pointerdown",e=>{ if(mode!=="explore") return; const p=evPos(e); const i=hitNode(p);
+  downPos=p; moved=false; drag=i; if(i>=0) canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener("pointermove",e=>{ if(drag<0||!downPos) return; const p=evPos(e);
+  if(Math.hypot(p.x-downPos.x,p.y-downPos.y)>5) moved=true;
+  if(moved){ nodes[drag].u=Math.min(1,Math.max(0,(p.x-PADC)/(W-2*PADC))); nodes[drag].v=Math.min(1,Math.max(0,(p.y-PADC)/(H-2*PADC))); draw(); } });
+canvas.addEventListener("pointerup",e=>{ if(mode!=="explore"||!downPos) return; const i=drag; drag=-1; downPos=null;
+  if(moved) return;
+  if(i<0){ sel=-1; refresh(); return; }
+  if(sel<0){ sel=i; refresh(); return; }
+  if(sel===i){ sel=-1; refresh(); return; }
+  const key=sel+">"+i; if(edges.has(key)) edges.delete(key); else edges.add(key);
+  sel=-1; resetIter(); clearPresetMark(); refresh();
+});
+document.getElementById("presetBox").innerHTML=PRESETS.map((p,i)=>`<button data-i="${i}">${p.name}</button>`).join("");
+document.querySelectorAll("#presetBox button").forEach(b=>b.addEventListener("click",()=>loadPreset(+b.dataset.i)));
+function clearPresetMark(){ document.querySelectorAll("#presetBox button").forEach(b=>b.classList.remove("on")); document.getElementById("presetNote").style.display="none"; }
+document.getElementById("btnAdd").addEventListener("click",()=>{ if(nodes.length>=7) return;
+  // 找一个离已有网页最远的位置
+  let best=null,bd=-1; for(let a=0;a<=10;a++) for(let b=0;b<=10;b++){ const u=a/10,v=b/10; const dm=Math.min(...nodes.map(nd=>Math.hypot(nd.u-u,nd.v-v))); if(dm>bd){bd=dm;best={u,v};} }
+  nodes.push(best); sel=-1; resetIter(); clearPresetMark(); refresh(); });
+document.getElementById("btnDel").addEventListener("click",()=>{ if(nodes.length<=2) return; const k=nodes.length-1; nodes.pop();
+  [...edges].forEach(e=>{ const [a,b]=e.split(">").map(Number); if(a===k||b===k) edges.delete(e); }); sel=-1; resetIter(); clearPresetMark(); refresh(); });
+document.getElementById("dSl").addEventListener("input",e=>{ setD(+e.target.value); resetIter(); refresh(); });
+document.getElementById("d85").addEventListener("click",()=>{ setD(0.85); resetIter(); refresh(); });
+document.getElementById("d100").addEventListener("click",()=>{ setD(1); resetIter(); refresh(); });
+function stepIter(){ const m=model(); if(!iter.on){ iter={on:true,k:0,x:Array(m.n).fill(1/m.n)}; }
+  iter.x=matVec(m.G,iter.x); iter.k++; refresh(); }
+document.getElementById("btnStep").addEventListener("click",()=>{ stopPlay(); stepIter(); });
+document.getElementById("btnPlay").addEventListener("click",()=>{
+  if(playTimer){ stopPlay(); return; }
+  if(!iter.on||iter.k>=60){ iter={on:true,k:0,x:Array(nodes.length).fill(1/nodes.length)}; refresh(); }
+  document.getElementById("btnPlay").textContent="暂停";
+  playTimer=setInterval(()=>{ stepIter(); if(iter.k>=60) stopPlay(); },450); });
+document.getElementById("btnIterReset").addEventListener("click",()=>{ resetIter(); iter={on:true,k:0,x:Array(nodes.length).fill(1/nodes.length)}; refresh(); });
+
+/* ═══════════ 渲染面板 ═══════════ */
+function refresh(){
+  const m=model();
+  draw();
+  document.getElementById("btnAdd").disabled=nodes.length>=7;
+  document.getElementById("btnDel").disabled=nodes.length<=2;
+  document.getElementById("btnDel").title=nodes.length<=2?"至少保留 2 个网页":"";
+  document.getElementById("btnAdd").title=nodes.length>=7?"最多 7 个网页":"";
+  const tip=document.getElementById("canvasTip");
+  tip.innerHTML= sel>=0 ? `已选中网页 ${sel+1}：再点另一个网页，添加或删除“网页 ${sel+1} → 它”的链接；点空白处取消。`
+     : "点一个网页、再点另一个网页，添加或删除它们之间的链接（箭头方向 = 链接方向）；拖动可移动网页。红边框 = 悬挂网页（没有出链）。";
+  renderRank(m); renderIter(m); renderSteps(m);
+}
+function renderRank(m){
+  const x=m.limit, idx=[...x.keys()].sort((a,b)=>x[b]-x[a]), mx=Math.max(...x,1e-9)*1.15;  // 刻度固定，迭代时蓝条不动
+  let h="";
+  idx.forEach((i,r)=>{ const v=x[i];
+    h+=`<div class="rbar"><span class="rk">${r+1}</span><span>网页 ${i+1}</span><span class="trk"><span class="fill" style="width:${(v/mx*100).toFixed(1)}%"></span>`
+      +(iter.on?`<span class="mk" style="left:calc(${(Math.min(iter.x[i]/mx,1)*100).toFixed(1)}% - 1.5px)"></span>`:"")+`</span><span class="val">${v.toFixed(4)}</span></div>`; });
+  if(!m.sol.unique) h=`<div class="verdict none" style="margin:0 0 8px;">排名不唯一，下面是从 <math><msub><mi class="bm">x</mi><mn>0</mn></msub><mo>=</mo><msup><mrow><mo>(</mo><mfrac><mn>1</mn><mi>n</mi></mfrac><mo>,</mo><mo>…</mo><mo>,</mo><mfrac><mn>1</mn><mi>n</mi></mfrac><mo>)</mo></mrow><mi>T</mi></msup></math> 出发${m.conv&&m.conv.ok?"迭代得到的结果，换一个初始向量结果就不同":"迭代 2000 步后的结果（没有收敛）"}。</div>`+h;
+  document.getElementById("rankBox").innerHTML=h;
+  document.getElementById("lgIter").style.display=iter.on?"":"none";
+}
+function renderIter(m){
+  const box=document.getElementById("iterBox");
+  if(!iter.on){ box.innerHTML=`点“迭代一步”，从 <math><msub><mi class="bm">x</mi><mn>0</mn></msub><mo>=</mo><msup><mrow><mo>(</mo><mfrac><mn>1</mn><mi>n</mi></mfrac><mo>,</mo><mo>…</mo><mo>,</mo><mfrac><mn>1</mn><mi>n</mi></mfrac><mo>)</mo></mrow><mi>T</mi></msup></math> 开始，看圆的大小怎样一步步变成稳定排名。`; return; }
+  const err=Math.max(...iter.x.map((v,i)=>Math.abs(v-m.limit[i])));
+  box.innerHTML=`<math><mi>k</mi><mo>=</mo><mn>${iter.k}</mn></math><br><math><msub><mi class="bm">x</mi><mn>${iter.k}</mn></msub><mo>≈</mo>${colML(iter.x.map(v=>decML(v)))}</math>`
+    +`<br>与稳定排名的最大偏差 <math><mo>≈</mo>${decML(err,err<1e-4?6:4)}</math>`
+    +(err<5e-5?`<br><b>已基本收敛</b>`:"")
+    +(m.conv&&!m.conv.ok?`<br><span style="color:#c53030;">此时幂法不收敛，<math><msub><mi class="bm">x</mi><mi>k</mi></msub></math> 来回振荡（见计算过程③下方说明），把 <math><mi>d</mi></math> 调小于 <math><mn>1</mn></math> 试试。</span>`:"");
+}
+function renderSteps(m){
+  const n=m.n;
+  let h=`<div class="st">① 链接矩阵 <math><mi class="bm">A</mi></math>（第 <math><mi>j</mi></math> 列：网页 <math><mi>j</mi></math> 把重要性平分给它链接的网页）</div>`
+    +`<div class="matbox">${matTable(m.A,f=>({h:fracHTML(f),zero:fz(f)}),m.dangling)}</div>`;
+  if(m.dangling.length) h+=`<div class="tip">标红的列是悬挂网页 ${m.dangling.map(j=>j+1).join("、")}：没有出链，这一列换成 <math><mfrac><mn>1</mn><mi>n</mi></mfrac><mo>=</mo><mfrac><mn>1</mn><mn>${n}</mn></mfrac></math>，相当于浏览者随机跳到任一网页。</div>`;
+  h+=`<div class="tip">每一列之和都是 <math><mn>1</mn></math> ⇒ <math><mi class="bm">A</mi></math> 一定有特征值 <math><mn>1</mn></math>。</div>`;
+  if(d<1){
+    h+=`<div class="st">② Google 矩阵 <math><mi class="bm">G</mi></math>： <math><msub><mi>g</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mn>${d.toFixed(2)}</mn><msub><mi>a</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>+</mo><mfrac><mrow><mn>1</mn><mo>&#x2212;</mo><mn>${d.toFixed(2)}</mn></mrow><mn>${n}</mn></mfrac></math>（保留 3 位小数）</div>`
+      +`<div class="matbox">${matTable(m.G,v=>({h:v.toFixed(3),zero:false}))}</div>`
+      +`<div class="tip"><math><mi class="bm">G</mi></math> 的每列之和仍为 <math><mn>1</mn></math>，且所有元素都是正数：这时特征值 <math><mn>1</mn></math> 对应的特征向量（相差倍数）唯一，且各分量都为正（证明超出本课程范围，可参考 Perron–Frobenius 定理）。</div>`;
+  }else{
+    h+=`<div class="st">② <math><mi>d</mi><mo>=</mo><mn>1</mn></math>：不加阻尼，<math><mi class="bm">G</mi><mo>=</mo><mi class="bm">A</mi></math></div>`;
+  }
+  const Gs=d<1?`<mi class="bm">G</mi>`:`<mi class="bm">A</mi>`;
+  h+=`<div class="st">③ 求排名向量：解 <math>${Gs}<mi class="bm">x</mi><mo>=</mo><mi class="bm">x</mi></math>，即 <math><mo>(</mo>${Gs}<mo>&#x2212;</mo><mi class="bm">E</mi><mo>)</mo><mi class="bm">x</mi><mo>=</mo><mn mathvariant="bold">0</mn></math>，再<span style="white-space:nowrap">取各分量之和为 <math><mn>1</mn></math></span></div>`;
+  if(!m.sol.unique){
+    h+=`<div class="verdict none"><math><mi>R</mi><mo>(</mo><mi class="bm">A</mi><mo>&#x2212;</mo><mi class="bm">E</mi><mo>)</mo><mo>=</mo><mn>${n-m.sol.nul}</mn></math>，特征值 <math><mn>1</mn></math> 对应的线性无关特征向量有 <math><mn>${m.sol.nul}</mn></math> 个，<b>排名不唯一</b>。原因是网页分成了互不相通的几部分，浏览者进入一部分就出不来。把 <math><mi>d</mi></math> 调小于 <math><mn>1</mn></math> 即可解决。</div>`;
+  }else{
+    const xv=m.sol.exact?m.sol.exact.map(fracML):m.sol.x.map(v=>decML(v));
+    h+=`<div class="ctr"><math displaystyle="true"><mi class="bm">x</mi>${m.sol.exact?"<mo>=</mo>":"<mo>≈</mo>"}${colML(xv)}</math></div>`
+      +`<div class="ctr">排名：${orderText(m.sol.x)}</div>`;
+  }
+  if(m.conv&&!m.conv.ok) h+=`<div class="verdict inf">此时幂法不收敛：图里有周期性的结构（例如网页轮流指向），<math><msub><mi class="bm">x</mi><mi>k</mi></msub></math> 来回振荡（幂法收敛性的判断超出本课程范围）。阻尼系数同样能解决这个问题。</div>`;
+  h+=`<div class="st">④ 与入链个数比较</div>`;
+  const indeg=[...Array(n).keys()].map(i=>[...Array(n).keys()].filter(j=>j!==i&&edges.has(j+">"+i)).length);
+  h+=`<div class="matbox"><table class="mat"><tr><th></th>${indeg.map((_,i)=>`<th>网页 ${i+1}</th>`).join("")}</tr><tr><th>入链个数</th>${indeg.map(v=>`<td class="num">${v}</td>`).join("")}</tr><tr><th>PageRank</th>${m.limit.map(v=>`<td class="num">${v.toFixed(4)}</td>`).join("")}</tr></table></div>`
+    +`<div class="tip">只数入链个数，等于认为每个链接一样重要；PageRank 还考虑了“是谁链接了你”以及“它链接了多少网页”。</div>`;
+  document.getElementById("stepsBox").innerHTML=h;
+}
+
+/* ═══════════ 练习模式 ═══════════
+   题型：entry 链接矩阵的元素 | vec 求排名向量 | top 哪个网页排第一 | step 幂法迭代一步 */
+const QUIZKEY="la-pagerank-quiz";
+let streak=0, stats=loadStats();
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem(QUIZKEY)); if(s&&typeof s.attempted==="number"){ streak=s.streak||0; return {attempted:s.attempted,correct:s.correct}; } }catch(e){} return {attempted:0,correct:0}; }
+function saveStats(){ try{ localStorage.setItem(QUIZKEY, JSON.stringify({attempted:stats.attempted,correct:stats.correct,streak:streak})); }catch(e){} }
+function resetStats(){ if(!confirm("确定清零本机的练习记录吗？（已答 / 答对 / 连对都会归零，且无法撤销）")) return; stats={attempted:0,correct:0}; streak=0; saveStats(); renderStats(); }
+function renderStats(){ const acc=stats.attempted?Math.round(stats.correct/stats.attempted*100):0;
+  document.getElementById("quizStats").innerHTML=`已答 <b>${stats.attempted}</b> · 答对 <b>${stats.correct}</b> · 正确率 <b>${acc}%</b> · 连对 <b>${streak}</b>`; }
+function ri(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function circlePos(n){ return [...Array(n).keys()].map(k=>{ const t=-Math.PI/2+2*Math.PI*k/n; return {u:0.5+0.42*Math.cos(t), v:0.5+0.42*Math.sin(t)}; }); }
+function strongly(n,E){ for(let s=0;s<n;s++){ const seen=new Set([s]), st=[s]; while(st.length){ const a=st.pop(); for(let b=0;b<n;b++) if(E.has(a+">"+b)&&!seen.has(b)){ seen.add(b); st.push(b); } } if(seen.size<n) return false; } return true; }
+function randGraph(n,strong){
+  for(let t=0;t<500;t++){ const E=new Set();
+    for(let a=0;a<n;a++) for(let b=0;b<n;b++) if(a!==b&&Math.random()<0.45) E.add(a+">"+b);
+    let ok=true; for(let a=0;a<n;a++) if(!outLinks(n,E,a).length) ok=false;
+    if(!ok) continue; if(strong&&!strongly(n,E)) continue; return E; }
+  return null;
+}
+function genProblem(){
+  const r=Math.random();
+  if(r<0.25){
+    const n=ri(3,5), E=randGraph(n,false), A=linkMatrix(n,E).A;
+    let i,j; const nz=[]; for(let a=0;a<n;a++) for(let b=0;b<n;b++) if(!fz(A[a][b])) nz.push([a,b]);
+    if(Math.random()<0.75){ [i,j]=nz[ri(0,nz.length-1)]; } else { i=ri(0,n-1); j=ri(0,n-1); }
+    return {kind:"entry",n,E,A,i,j,ans:A[i][j]};
+  }else if(r<0.75){
+    for(let t=0;t<400;t++){ const n=ri(3,4), E=randGraph(n,true); if(!E) continue; const A=linkMatrix(n,E).A; const s=solveRank(A,1);
+      if(!s.unique) continue; const L=s.exact.reduce((a,f)=>lcm(a,f.d),1); if(L>40) continue;
+      if(s.x.every(v=>Math.abs(v-s.x[0])<1e-12)) continue;   // 各网页一样重要的平凡题不出
+      if(Math.random()<0.6) return {kind:"vec",n,E,A,ans:s.exact};
+      const mx=Math.max(...s.x); if(s.x.filter(v=>Math.abs(v-mx)<1e-12).length!==1) continue;
+      return {kind:"top",n,E,A,ans:s.x.indexOf(mx),x:s.exact,selected:-1}; }
+  }
+  const n=ri(3,4), E=randGraph(n,false), A=linkMatrix(n,E).A;
+  let a; do{ a=[...Array(n)].map(()=>ri(0,4)); }while(a.every(v=>v===0));
+  const s=a.reduce((p,q)=>p+q,0), x=a.map(v=>F(v,s));
+  const y=A.map(row=>row.reduce((acc,f,j)=>fadd(acc,fmul(f,x[j])),F(0)));
+  return {kind:"step",n,E,A,x,ans:y};
+}
+function parseVal(s){ s=s.trim().replace(/−/g,"-"); if(!s) return NaN;
+  const m=s.match(/^(-?\d+(?:\.\d+)?)\s*(?:\/\s*(\d+(?:\.\d+)?))?$/); if(!m) return NaN;
+  const a=parseFloat(m[1]); if(m[2]===undefined) return a; const b=parseFloat(m[2]); return b===0?NaN:a/b; }
+const close=(u,f)=>Math.abs(u-fv(f))<0.006;
+function AmatML(A){ return `<div class="qgrid"><math displaystyle="true"><mi class="bm">A</mi><mo>=</mo>${matML(A.map(r=>r.map(fracML)))}</math></div>`; }
+function vecInputs(n,prefix){ return `<span class="qvec">${[...Array(n).keys()].map(i=>`<input class="qin" id="${prefix}${i}" type="text">`).join("")}</span>`; }
+function renderProblem(){
+  const q=quiz, body=document.getElementById("qBody"), fb=document.getElementById("qFeedback");
+  q.done=false; q.revealed=false; fb.className="feedback"; fb.innerHTML="";
+  ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=false);
+  const head=`左边画布是 ${q.n} 个网页的链接图（箭头 = 链接方向）。`;
+  if(q.kind==="entry"){
+    body.innerHTML=head+`<br>链接矩阵 <math><mi class="bm">A</mi></math> 的元素 <math><msub><mi>a</mi><mrow><mn>${q.i+1}</mn><mn>${q.j+1}</mn></mrow></msub></math>（第 ${q.i+1} 行、第 ${q.j+1} 列）是多少？（可填分数，如 1/3）`
+      +`<div class="qgrid"><math><msub><mi>a</mi><mrow><mn>${q.i+1}</mn><mn>${q.j+1}</mn></mrow></msub><mo>=</mo></math><input class="qin" id="qA" type="text"></div>`;
+  }else if(q.kind==="vec"){
+    body.innerHTML=head+`链接矩阵为${AmatML(q.A)}求排名向量 <math><mi class="bm">x</mi></math>：满足 <math><mi class="bm">A</mi><mi class="bm">x</mi><mo>=</mo><mi class="bm">x</mi></math> 且各分量之和为 <math><mn>1</mn></math>（填分数）：`
+      +`<div class="qgrid"><math><mi class="bm">x</mi><mo>=</mo></math>${vecInputs(q.n,"qx")}</div>`;
+  }else if(q.kind==="top"){
+    body.innerHTML=head+`链接矩阵为${AmatML(q.A)}不加阻尼（<math><mi>d</mi><mo>=</mo><mn>1</mn></math>）时，哪个网页的 PageRank 最高？<div class="opts" id="qOpts">`
+      +[...Array(q.n).keys()].map(i=>`<label data-i="${i}"><input type="radio" name="qopt" value="${i}"><span>网页 ${i+1}</span></label>`).join("")+"</div>";
+    body.querySelectorAll("#qOpts label").forEach(l=>l.addEventListener("click",()=>{
+      body.querySelectorAll("#qOpts label").forEach(x=>x.classList.remove("sel")); l.classList.add("sel");
+      l.querySelector("input").checked=true; q.selected=+l.dataset.i; }));
+  }else{
+    body.innerHTML=head+`链接矩阵和当前向量为<div class="qgrid"><math displaystyle="true"><mi class="bm">A</mi><mo>=</mo>${matML(q.A.map(r=>r.map(fracML)))}<mo>,</mo><mspace width="1em"/><msub><mi class="bm">x</mi><mi>k</mi></msub><mo>=</mo>${colML(q.x.map(fracML))}</math></div>算幂法的下一步 <math><msub><mi class="bm">x</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mi class="bm">A</mi><msub><mi class="bm">x</mi><mi>k</mi></msub></math>（填分数）：`
+      +`<div class="qgrid"><math><msub><mi class="bm">x</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo></math>${vecInputs(q.n,"qy")}</div>`;
+  }
+  body.querySelectorAll("input.qin").forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); }));
+  document.getElementById("stepsBox").innerHTML=`<div class="tip">提交答案或点“看解析”后，这里显示完整的计算过程。</div>`;
+  document.getElementById("rankBox").innerHTML=`<div class="tip">练习模式下圆的大小都相同，揭晓后显示排名。</div>`;
+  document.getElementById("lgIter").style.display="none";
+  draw(); renderStats();
+}
+function drawQuiz(){ const q=quiz; if(!q) return;
+  q.pos=q.pos||circlePos(q.n);
+  let vals=null; if(q.revealed){ const s=solveRank(q.A,1); vals=s.unique?s.x:null; }
+  drawGraph(q.pos,q.E,vals,{}); }
+function submitAnswer(){
+  const q=quiz; if(!q||q.done) return; const fb=document.getElementById("qFeedback");
+  if(q.kind==="entry"){
+    const v=parseVal(document.getElementById("qA").value);
+    if(Number.isNaN(v)){ fb.className="feedback no"; fb.textContent="请填一个数（可以是分数 a/b）"; return; }
+    if(close(v,q.ans)) markCorrect();
+    else{ fb.className="feedback no"; fb.textContent=`还不对～ 看网页 ${q.j+1} 有几个出链、有没有链接到网页 ${q.i+1}。`; }
+  }else if(q.kind==="vec"||q.kind==="step"){
+    const pre=q.kind==="vec"?"qx":"qy"; const v=[...Array(q.n).keys()].map(i=>parseVal(document.getElementById(pre+i).value));
+    if(v.some(Number.isNaN)){ fb.className="feedback no"; fb.textContent="每个分量都要填（整数、分数 a/b 或小数）"; return; }
+    if(v.every((t,i)=>close(t,q.ans[i]))) markCorrect();
+    else if(q.kind==="vec"){
+      const s=v.reduce((a,b)=>a+b,0); const Av=q.A.map(r=>r.reduce((acc,f,j)=>acc+fv(f)*v[j],0));
+      const isEig=Av.every((t,i)=>Math.abs(t-v[i])<0.01*Math.max(1,Math.abs(s)));
+      fb.className="feedback no"; fb.textContent= isEig&&Math.abs(s-1)>0.01 ? "方向对了（满足 Ax = x），但还要把各分量之和化成 1。" : "还不对：解齐次方程组 (A − E)x = 0，再取各分量之和为 1。";
+    }else{ fb.className="feedback no"; fb.textContent="还不对：第 i 个分量 = A 的第 i 行与 xₖ 对应相乘再相加。"; }
+  }else{
+    if(q.selected<0){ fb.className="feedback no"; fb.textContent="请先选择一个网页"; return; }
+    if(q.selected===q.ans) markCorrect();
+    else{ fb.className="feedback no"; fb.textContent="不对哦：要解 Ax = x，比较各分量的大小（入链多不一定排名高）。"; }
+  }
+}
+function solHTML(){
+  const q=quiz;
+  if(q.kind==="entry"){ const o=outLinks(q.n,q.E,q.j); const has=o.includes(q.i);
+    return `<div class="sol">网页 ${q.j+1} 有 ${o.length} 个出链（指向网页 ${o.map(t=>t+1).join("、")}），${has?`其中有网页 ${q.i+1}，所以 <math><msub><mi>a</mi><mrow><mn>${q.i+1}</mn><mn>${q.j+1}</mn></mrow></msub><mo>=</mo>${fracML(q.ans)}</math>`:`没有链接到网页 ${q.i+1}，所以 <math><msub><mi>a</mi><mrow><mn>${q.i+1}</mn><mn>${q.j+1}</mn></mrow></msub><mo>=</mo><mn>0</mn></math>`}。完整矩阵见左侧。</div>`; }
+  if(q.kind==="step") return `<div class="sol"><math displaystyle="true"><msub><mi class="bm">x</mi><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mi class="bm">A</mi><msub><mi class="bm">x</mi><mi>k</mi></msub><mo>=</mo><msup><mrow><mo>(</mo>${q.ans.map(fracML).join("<mo>,</mo>")}<mo>)</mo></mrow><mi>T</mi></msup></math>。各分量之和仍为 <math><mn>1</mn></math>（因为 <math><mi class="bm">A</mi></math> 每列之和为 <math><mn>1</mn></math>）。</div>`;
+  const x=q.kind==="vec"?q.ans:q.x;
+  return `<div class="sol">解 <math><mo>(</mo><mi class="bm">A</mi><mo>&#x2212;</mo><mi class="bm">E</mi><mo>)</mo><mi class="bm">x</mi><mo>=</mo><mn mathvariant="bold">0</mn></math> 并取分量之和为 <math><mn>1</mn></math>，得 <math displaystyle="true"><mi class="bm">x</mi><mo>=</mo><msup><mrow><mo>(</mo>${x.map(fracML).join("<mo>,</mo>")}<mo>)</mo></mrow><mi>T</mi></msup></math>，排名：${orderText(x.map(fv))}。</div>`;
+}
+function quizSteps(){
+  const q=quiz; let h=`<div class="st">链接矩阵 <math><mi class="bm">A</mi></math></div><div class="matbox">${matTable(q.A,f=>({h:fracHTML(f),zero:fz(f)}))}</div>`;
+  if(q.kind==="vec"||q.kind==="top"){
+    const M=q.A.map((r,i)=>r.map((v,j)=>i===j?fsub(v,F(1)):v)); const {R}=rrefF(M);
+    h+=`<div class="st"><math><mi class="bm">A</mi><mo>&#x2212;</mo><mi class="bm">E</mi></math> 化为行最简形</div><div class="matbox">${matTable(R,f=>({h:fracHTML(f),zero:fz(f)}),null,true)}</div>`
+      +`<div class="tip">取自由未知量 <math><msub><mi>x</mi><mn>${q.n}</mn></msub></math>，写出基础解系，再除以各分量之和，使之和为 <math><mn>1</mn></math>。</div>`;
+  }
+  return h;
+}
+function lockQ(){ ["qSubmit","qHint","qReveal"].forEach(id=>document.getElementById(id).disabled=true); }
+function showFull(){ const q=quiz; q.revealed=true; draw(); document.getElementById("stepsBox").innerHTML=quizSteps();
+  const s=solveRank(q.A,1); if(s.unique){ const idx=[...s.x.keys()].sort((a,b)=>s.x[b]-s.x[a]), mx=Math.max(...s.x);
+    document.getElementById("rankBox").innerHTML=idx.map((i,r)=>`<div class="rbar"><span class="rk">${r+1}</span><span>网页 ${i+1}</span><span class="trk"><span class="fill" style="width:${(s.x[i]/mx*100).toFixed(1)}%"></span></span><span class="val">${s.x[i].toFixed(4)}</span></div>`).join(""); } }
+function markCorrect(){ const q=quiz; q.done=true; stats.attempted++; stats.correct++; streak++; saveStats(); showFull();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback ok"; fb.innerHTML="✓ 正确！"+solHTML(); lockQ(); renderStats(); }
+function onReveal(){ const q=quiz; if(!q||q.done) return; q.done=true; stats.attempted++; streak=0; saveStats(); showFull();
+  const fb=document.getElementById("qFeedback"); fb.className="feedback"; fb.innerHTML=`<span class="no">已显示解析（本题记为未答对）</span>`+solHTML(); lockQ(); renderStats(); }
+function onHint(){ const q=quiz; if(!q) return; const fb=document.getElementById("qFeedback"); fb.className="feedback";
+  if(q.kind==="entry") fb.innerHTML=`提示：<math><msub><mi>a</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></math> 看的是第 <math><mi>j</mi></math> 个网页的出链：若它链接到网页 <math><mi>i</mi></math>，<math><msub><mi>a</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mn>1</mn><mo>/</mo></math>（网页 <math><mi>j</mi></math> 的出链个数），否则为 <math><mn>0</mn></math>。`;
+  else if(q.kind==="step") fb.innerHTML="提示：就是矩阵乘向量；结果的各分量之和应该仍为 1，可以用来检查。";
+  else fb.innerHTML=`提示：解齐次方程组 <math><mo>(</mo><mi class="bm">A</mi><mo>&#x2212;</mo><mi class="bm">E</mi><mo>)</mo><mi class="bm">x</mi><mo>=</mo><mn mathvariant="bold">0</mn></math>，基础解系只有一个向量，再把它的各分量之和化成 <math><mn>1</mn></math>。`; }
+function nextProblem(){ quiz=genProblem(); renderProblem(); }
+function setMode(m){
+  mode=m; stopPlay();
+  document.getElementById("btnExplore").classList.toggle("on",m==="explore");
+  document.getElementById("btnPractice").classList.toggle("on",m==="practice");
+  document.getElementById("exploreSide").style.display=m==="explore"?"":"none";
+  document.getElementById("quizCard").style.display=m==="practice"?"":"none";
+  document.getElementById("canvasTip").style.display=m==="explore"?"":"none";
+  document.getElementById("rankTitle").textContent=m==="explore"?"排名（圆的大小 = 重要性）":"排名";
+  if(m==="practice"){ quiz=genProblem(); renderProblem(); } else { quiz=null; refresh(); }
+}
+document.getElementById("btnExplore").addEventListener("click",()=>setMode("explore"));
+document.getElementById("btnPractice").addEventListener("click",()=>setMode("practice"));
+document.getElementById("qSubmit").addEventListener("click",submitAnswer);
+document.getElementById("qHint").addEventListener("click",onHint);
+document.getElementById("qReveal").addEventListener("click",onReveal);
+document.getElementById("qNext").addEventListener("click",nextProblem);
+document.getElementById("qReset").addEventListener("click",resetStats);
+loadPreset(0); resize();
+</script>
+
+<script>
+/* ── 排版：标点不单独成行、不在行首；左括号不留在行尾 ── */
+(function(){
+  const CLOSE=/^[，。、；：）)！？」》,.;:!?…]+/, OPEN=/[（(「《]+$/;
+  function wrapOf(m){
+    if(m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr")) return m.parentNode;
+    const s=document.createElement("span"); s.className="nobr"; s.style.whiteSpace="nowrap";
+    m.parentNode.insertBefore(s,m); s.appendChild(m); return s;
+  }
+  function glue(root){
+    (root.querySelectorAll?root:document).querySelectorAll("math").forEach(m=>{
+      if(m.closest("math")!==m || m.getAttribute("display")==="block") return;
+      const host=m.parentNode && m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let nx=host.nextSibling;
+      if(nx && nx.nodeType===3){ const k=nx.data.match(CLOSE); if(k){ const w=wrapOf(m);
+          w.appendChild(document.createTextNode(k[0])); nx.data=nx.data.slice(k[0].length); } }
+      const h2=m.parentNode.classList && m.parentNode.classList.contains("nobr") ? m.parentNode : m;
+      let pv=h2.previousSibling;
+      if(pv && pv.nodeType===3){ const k=pv.data.match(OPEN); if(k){ const w=wrapOf(m);
+          w.insertBefore(document.createTextNode(k[0]),w.firstChild); pv.data=pv.data.slice(0,pv.data.length-k[0].length); } }
+    });
+  }
+  let busy=false;
+  const ob=new MutationObserver(()=>{ if(busy) return; busy=true; ob.disconnect(); glue(document.body); ob.observe(document.body,{childList:true,subtree:true}); busy=false; });
+  glue(document.body); ob.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<script>
+// ── 访问统计（PV+UV，发往自建 CloudBase 计数服务；离线/连不上时静默跳过，绝不影响工具使用）──
+(function(){
+  var CNT_ENDPOINT = "https://fubian-d6g8u2u9d2f52010b-1475289034.ap-shanghai.app.tcloudbase.com/counter";
+  var TOOL = "la-pagerank";          // ← 计数键：与编号 L# 解耦的稳定标识，永不改动
+  if(!CNT_ENDPOINT || CNT_ENDPOINT.indexOf("REPLACE-ME")>=0) return;
+  try{
+    var seenKey = "latool_seen:" + TOOL;
+    var first = localStorage.getItem(seenKey) ? 0 : 1;
+    if(first) localStorage.setItem(seenKey, "1");
+    var url = CNT_ENDPOINT + "?action=hit&tool=" + encodeURIComponent(TOOL) + "&first=" + first;
+    if(navigator.sendBeacon) navigator.sendBeacon(url);
+    else fetch(url, {mode:"no-cors", keepalive:true});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
