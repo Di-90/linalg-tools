@@ -50,6 +50,7 @@
   button:disabled{opacity:.45;cursor:not-allowed;}
   .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
   .presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .presets button.on{border-color:var(--blue);background:#eef4fb;color:var(--blue);font-weight:600;}
   .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
   .seg button{border:none;border-radius:0;padding:6px 14px;background:#fff;color:var(--sub);}
   .seg button.on{background:var(--blue);color:#fff;}
@@ -192,9 +193,9 @@
     <div class="row">
       <span class="lbl">示例：</span>
       <div class="presets">
-        <button onclick="loadPreset('inv3')">可逆 3×3</button>
-        <button onclick="loadPreset('sing3')">不可逆 3×3</button>
-        <button onclick="loadPreset('inv2')">可逆 2×2</button>
+        <button data-preset="inv3" onclick="loadPreset('inv3')">可逆 3×3</button>
+        <button data-preset="sing3" onclick="loadPreset('sing3')">不可逆 3×3</button>
+        <button data-preset="inv2" onclick="loadPreset('inv2')">可逆 2×2</button>
       </div>
     </div>
     <div class="actions">
@@ -258,11 +259,15 @@ function buildGrid(n, vals){
   }
   document.querySelectorAll("#sizeSeg button").forEach(b=>b.classList.toggle("on",+b.dataset.n===n));
 }
+// 当前选中的示例：逐步变换、自动播放、重置时保持高亮；手动改矩阵或阶数后取消
+function markPreset(key){ document.querySelectorAll(".presets button[data-preset]").forEach(b=>b.classList.toggle("on",b.dataset.preset===key)); }
 function loadPreset(key){
   const M=PRESETS[key];
   buildGrid(M.length, M);
+  markPreset(key);
   buildAndReset();
 }
+document.getElementById("matInputs").addEventListener("input",()=>markPreset(null));
 function readMatrix(){
   const M=[];
   for(let r=0;r<N;r++){ const row=[];
@@ -622,7 +627,7 @@ document.getElementById("qHint").addEventListener("click",onHint);
 document.getElementById("qReveal").addEventListener("click",onReveal);
 document.getElementById("qNext").addEventListener("click",nextProblem);
 document.getElementById("qReset").addEventListener("click",resetStats);
-document.querySelectorAll("#sizeSeg button").forEach(b=>b.addEventListener("click",()=>{ buildGrid(+b.dataset.n); buildAndReset(); }));
+document.querySelectorAll("#sizeSeg button").forEach(b=>b.addEventListener("click",()=>{ markPreset(null); buildGrid(+b.dataset.n); buildAndReset(); }));
 
 // 初始化
 buildGrid(3, PRESETS.inv3);

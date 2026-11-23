@@ -615,5 +615,26 @@ resize();
   }catch(e){}
 })();
 </script>
+
+<script>
+/* ── 例子按钮：选中后保持高亮，手动修改数据后取消 ── */
+(function(){
+  const css=document.createElement("style");
+  css.textContent=".presets button.on,#presetBox button.on{border-color:var(--blue);background:#eef4fb;color:var(--blue);font-weight:600;}";
+  document.head.appendChild(css);
+  const clear=()=>document.querySelectorAll(".presets button.on,#presetBox button.on").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".presets,#presetBox").forEach(g=>{
+    g.addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b||!g.contains(b)) return;
+      g.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); });
+  });
+  document.addEventListener("input",e=>{
+    const t=e.target; if(!e.isTrusted||!t.matches) return;
+    if(t.closest("#quizCard,.modebar,.presets,#presetBox")) return;
+    if(t.matches('input[type=range],input[type=radio],input[type=checkbox]')) return;
+    if(t.matches("input,textarea,select")) clear();
+  },true);
+  
+})();
+</script>
 </body>
 </html>
