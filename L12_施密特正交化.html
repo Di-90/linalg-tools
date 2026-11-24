@@ -101,6 +101,17 @@
   footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
        font-size:12px;color:#718096;text-align:center;}
 </style>
+<!-- 百度统计（与 CloudBase 计数并行；事件标签=稳定计数键）-->
+<script>
+var _hmt = _hmt || [];
+_hmt.push(["_trackEvent", "linalg", "open", "la-gram-schmidt"]);
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?193c927113cbabe0184f0b2e8d61fcc2";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
 </head>
 <body>
 <header class="appbar">
